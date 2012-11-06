@@ -1,6 +1,6 @@
 <?php 
 
-class GO_XPost_GigaOM extends GO_XPost
+class GO_XPost_Gigaom extends GO_XPost
 {
 	/**
 	 * XPost from GO to pC

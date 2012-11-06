@@ -16,7 +16,7 @@ require_once __DIR__ . '/components/functions.php';
 global $goxpost;
 
 // load the business logic we're using and configure
-require_once __DIR__ .'/local/class-go-xpost-'.  go_channel()->go_xpost_config .'.php';
-$go_xpost_class_name = 'GO_XPost_'. ucfirst( go_channel()->go_xpost_config );
+require_once __DIR__ . '/local/class-go-xpost-' .  go_channel()->go_xpost_config .'.php';
+$go_xpost_class_name = 'GO_XPost_' . ucfirst( go_channel()->go_xpost_config );
 $goxpost = new $go_xpost_class_name( go_channel()->go_xpost_config_url );
 unset( $go_xpost_class_name );

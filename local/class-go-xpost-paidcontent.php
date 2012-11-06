@@ -1,6 +1,6 @@
 <?php
 
-class GO_XPost_PaidContent extends GO_XPost
+class GO_XPost_Paidcontent extends GO_XPost
 {
 	/**
 	 * XPost from pC to GO
