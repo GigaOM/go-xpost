@@ -16,4 +16,4 @@ global $goxpost;
 
 // load the business logic we're using and configure
 require_once __DIR__ .'/local/class-go-xpost-pro.php';
-$goxpost = new GO_XPost_Pro( 'http://http://gigaomstaging.wordpress.com/wp-admin/admin-ajax.php' );
+$goxpost = new GO_XPost_Pro( 'http://gigaomstaging.wordpress.com/wp-admin/admin-ajax.php' );

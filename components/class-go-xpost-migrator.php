@@ -259,13 +259,17 @@ class GO_XPost_Migrator
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
 		$post = unserialize( $pull_return['body'] );
 
-		go_slog( 'go-xpost-retrieved-post', 'Original post as retreived by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );
-
-		// check for errors and save
-		if ( ! is_wp_error( $post ) )
+		// confirm we got a result
+		if( is_wp_error( $post ) || ! isset( $post->post->guid ))
 		{
-			$post = $this->save_post( $post );
-		}//end if
+			go_slog( 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );		
+		}
+
+		// report our success
+		go_slog( 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );		
+
+		// save
+		$post = $this->save_post( $post );
 
 		die;
 	}//end receive_push
@@ -562,6 +566,36 @@ class GO_XPost_Migrator
 		// all done, bye bye
 		die;
 	}//end send_post
+
+	/**
+	 * function build_identity_hash
+	 * @param mixed $params Array or String (of query vars)
+	 * @return string $signature
+	 * @author Vasken Hauri
+	 */
+	public function build_identity_hash( $params )
+	{
+		if( ! is_array( $params ))
+		{
+			parse_str( $params , $param_arr );
+			$params = $param_arr;
+		}
+
+		//sort the params
+		ksort( $params );
+
+		//now create the string to sign
+		$string_to_sign = implode( '&' , $params );
+
+		//calculate an HMAC with SHA256 and base64-encoding a la Amazon
+		//http://mierendo.com/software/aws_signed_query/
+		$signature = base64_encode( hash_hmac( 'sha256' , $string_to_sign ,SOCIAL_IDENTITY_SHARED_SECRET ));
+
+		//make sure the signature is url_encoded properly
+		$signature = str_replace( '%7E', '~', rawurlencode( $signature ));
+
+		return $signature;
+	}// end build_identity_hash
 
 	public function utc_offset_from_dates( $utc_string, $local_string )
 	{
