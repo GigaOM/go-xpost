@@ -151,7 +151,7 @@ class GO_XPost_Migrator
 		unset( $r->meta['_go_log'] );
 		unset( $r->meta['_go_comment_cache'] );
 
-		return $r;
+		return apply_filters( 'go_xpost_get_post', $r );
 	}//end get_post
 
 	public function post_exists( $post )

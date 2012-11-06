@@ -17,8 +17,6 @@ abstract class GO_XPost extends GO_XPost_Migrator
 
 		add_action( 'edit_post', array( $this, 'edit_post' ));
 
-		add_filter( 'go_xpost_pre_save_post', 'go_xpost_pre_save_post' );
-
 		add_action( 'wp_ajax_go_xpost_pull', array( $this, 'send_post' ));
 		add_action( 'wp_ajax_nopriv_go_xpost_pull', array( $this, 'send_post' ));
 
