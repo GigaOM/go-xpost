@@ -11,7 +11,6 @@
 
 require_once __DIR__ . '/components/class-go-xpost-migrator.php';
 require_once __DIR__ . '/components/class-go-xpost.php';
-require_once __DIR__ . '/components/functions.php';
 
 global $goxpost;
 
