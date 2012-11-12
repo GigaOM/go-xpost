@@ -262,11 +262,11 @@ class GO_XPost_Migrator
 		// confirm we got a result
 		if( is_wp_error( $post ) || ! isset( $post->post->guid ))
 		{
-			go_slog( 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );		
+			go_slog( 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
 		}
 
 		// report our success
-		go_slog( 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );		
+		go_slog( 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );
 
 		// save
 		$post = $this->save_post( $post );
@@ -504,7 +504,7 @@ class GO_XPost_Migrator
 		}//end foreach
 
 		// Set guest author data if necessary from the check above
-		if ( $guest_author == TRUE && method_exists( 'Go_GuestPost_Plugin', 'save_guest_post_data' ) )
+		if ( $guest_author == TRUE && method_exists( 'Go_GuestPost', 'save_guest_post_data' ) )
 		{
 			// Do we want to set Publication/Source data as well? Maybe using variables inside of the config classes for each domain that we pass on?
 			$guest_author_data = array(
@@ -515,7 +515,7 @@ class GO_XPost_Migrator
 				'author_url' => $post->author->data->user_url,
 			);
 
-			Go_GuestPost_Plugin::save_guest_post_data( $guest_author_data );
+			Go_GuestPost::save_guest_post_data( $guest_author_data );
 		}//end if
 
 		// success log
