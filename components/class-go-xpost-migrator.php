@@ -577,7 +577,7 @@ class GO_XPost_Migrator
 	{
 		if( ! is_array( $params ))
 		{
-			parse_str( $params , $param_arr );
+			parse_str( $params, $param_arr );
 			$params = $param_arr;
 		}
 
@@ -585,11 +585,12 @@ class GO_XPost_Migrator
 		ksort( $params );
 
 		//now create the string to sign
-		$string_to_sign = implode( '&' , $params );
+		$string_to_sign = implode( '&', $params );
 
 		//calculate an HMAC with SHA256 and base64-encoding a la Amazon
 		//http://mierendo.com/software/aws_signed_query/
-		$signature = base64_encode( hash_hmac( 'sha256' , $string_to_sign ,SOCIAL_IDENTITY_SHARED_SECRET ));
+		$config = go_config()->load('social');
+		$signature = base64_encode( hash_hmac( 'sha256', $string_to_sign, $config['social_identity_shared_secret'] ));
 
 		//make sure the signature is url_encoded properly
 		$signature = str_replace( '%7E', '~', rawurlencode( $signature ));
