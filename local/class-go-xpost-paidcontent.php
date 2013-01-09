@@ -9,7 +9,7 @@ class GO_XPost_Paidcontent extends GO_XPost
 	 */
 	public function process_post( $post_id )
 	{
-		go_slog('go-xpost-start', 'XPost from pC to GO: START!',
+		apply_filters( 'go_slog', 'go-xpost-start', 'XPost from pC to GO: START!',
 			array(
 				'post_id' => $post_id,
 				'post_type' => get_post( $post_id )->post_type,

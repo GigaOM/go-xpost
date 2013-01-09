@@ -44,15 +44,15 @@ class GO_XPost_Migrator
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ) )
 		{
-			return go_slog_and_error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: '. $post_id .')', $this->post_log_data($r->post) );
+			return $this->error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: '. $post_id .')', $this->post_log_data($r->post) );
 		}//end if
-
 
 		// get the post
 		$r->post = clone get_post( $post_id );
+
 		if ( is_wp_error( $r->post ) )
 		{
-			return go_slog_and_error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: '. $post_id .')', $this->post_log_data($r->post) );
+			return $this->error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: '. $post_id .')', $this->post_log_data($r->post) );
 		}//end if
 
 		// unset the post ID in the post object now to prevent risk of overwriting a post in another blog
@@ -68,7 +68,7 @@ class GO_XPost_Migrator
 		$r->file->url = wp_get_attachment_url( $post_id );
 
 		// get the terms
-		foreach( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $r->post->post_type )) as $term )
+		foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $r->post->post_type )) as $term )
 		{
 			$r->terms[ $term->taxonomy ][] = $term->name;
 		}//end foreach
@@ -91,21 +91,22 @@ class GO_XPost_Migrator
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ))
 		{
-			return go_slog_and_error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: '. $post_id .')', $r->post );
+			return $this->error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: '. $post_id .')', $r->post );
 		}//end if
 
 		// get the post
 		$r->post = clone get_post( $post_id );
+
 		if ( is_wp_error( $r->post ) )
 		{
-			return go_slog_and_error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: '. $post_id .')', $r->post );
+			return $this->error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: '. $post_id .')', $r->post );
 		}//end if
 
 		// unset the post ID in the post object now to prevent risk of overwriting a post in another blog
 		unset( $r->post->ID );
 
 		// get the postmeta
-		foreach( (array) get_metadata( 'post', $post_id ) as $mkey => $mval )
+		foreach ( (array) get_metadata( 'post', $post_id ) as $mkey => $mval )
 		{
 			$r->meta[ $mkey ] = maybe_unserialize( $mval[0] );
 		}//end foreach
@@ -116,14 +117,14 @@ class GO_XPost_Migrator
 			$r->terms[ $term->taxonomy ][] = $term->name;
 		}//end foreach
 
-		if( $r->post->post_parent )
+		if ( $r->post->post_parent )
 		{
 			$r->parent = get_post( $r->post->post_parent );
 		}//end if
 
 		// map the thumbnail post ID to post/guid
 		// this is compatible with the http://wordpress.org/extend/plugins/multiple-post-thumbnails/ plugin available on VIP
-		foreach( (array) $r->meta as $mkey => $mval )
+		foreach ( (array) $r->meta as $mkey => $mval )
 		{
 			if ( ( strpos( $mkey, '_thumbnail_id' ) !== FALSE ) && ( $attachment = $this->get_attachment( $mval ) ) )
 			{
@@ -204,7 +205,7 @@ class GO_XPost_Migrator
 			'source'  => urlencode( admin_url( '/admin-ajax.php' )),
 			'post_id' => $post_id,
 		);
-		$query_array['signature'] = Go_Auth_Helpers::build_identity_hash( $query_array );
+		$query_array['signature'] = go_socialcomments_authclient()->build_identity_hash( $query_array );
 
 		// send the ping
 		$return = wp_remote_post( $endpoint, array( 'body' => $query_array, 'timeout' => 20 ));
@@ -213,16 +214,16 @@ class GO_XPost_Migrator
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
 
 		// log and return success
-		go_slog( 'go-xpost-send-push', $endpoint .' '. $post_id, $post_id );
+		apply_filters( 'go_slog', 'go-xpost-send-push', $endpoint .' '. $post_id, $post_id );
 
 		return;
 	}//end push
 
 	public function receive_push()
 	{
-		if( empty( $_POST['source'] ) )
+		if ( empty( $_POST['source'] ) )
 		{
-			go_slog_and_die( 'go-xpost-invalid-push', 'Forbidden or missing parameters', $_POST, 403 );
+			$this->error_and_die( 'go-xpost-invalid-push', 'Forbidden or missing parameters', $_POST, 403 );
 		}//end if
 
 		// Tell the pinger that we don't need them anymore
@@ -237,13 +238,13 @@ class GO_XPost_Migrator
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
-		if( ! is_user_logged_in() && $signature != Go_Auth_Helpers::build_identity_hash( $ping_array ))
+		if ( ! is_user_logged_in() && $signature != go_socialcomments_authclient()->build_identity_hash( $ping_array ) )
 		{
-			go_slog_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_POST, 401 );
+			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_POST, 401 );
 		}//end if
 
 		// log this
-		go_slog( 'go-xpost-received-push', urldecode( $_POST['source'] ) .' '. $_POST['post_id'], $_POST );
+		apply_filters( 'go_slog', 'go-xpost-received-push', urldecode( $_POST['source'] ) .' '. $_POST['post_id'], $_POST );
 
 		// OK, we're good to go, but let's wait a moment for everything to settle on the other side
 		sleep( 3 );
@@ -253,20 +254,20 @@ class GO_XPost_Migrator
 			'action'  => 'go_xpost_pull',
 			'post_id' => (int) $_POST['post_id'],
 		);
-		$query_array['signature'] = Go_Auth_Helpers::build_identity_hash( $query_array );
+		$query_array['signature'] = go_socialcomments_authclient()->build_identity_hash( $query_array );
 
 		// fetch and decode the post
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
 		$post = unserialize( $pull_return['body'] );
 
 		// confirm we got a result
-		if( is_wp_error( $post ) || ! isset( $post->post->guid ))
+		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
-			go_slog( 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
+			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
 		}
 
 		// report our success
-		go_slog( 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );
+		apply_filters( 'go_slog', 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );
 
 		// save
 		$post = $this->save_post( $post );
@@ -277,7 +278,7 @@ class GO_XPost_Migrator
 	public function sanitize_post_id( $post_id )
 	{
 		$post_id = (int) $post_id;
-		if( $the_post = wp_is_post_revision( $post_id ))
+		if ( $the_post = wp_is_post_revision( $post_id ) )
 		{
 			$post_id = $the_post;
 		}//end if
@@ -296,9 +297,9 @@ class GO_XPost_Migrator
 		$file = wp_upload_bits( basename( $post->file->url ), 0, '', $post->post->post_date );
 
 		// check and enforce limits on file types
-		if( $file['error'] )
+		if ( $file['error'] )
 		{
-			return go_slog_and_error( 'go-xpost-attachment-badfiletype', 'Bad file for GUID: '. $post->post->guid, $file );
+			return $this->error( 'go-xpost-attachment-badfiletype', 'Bad file for GUID: '. $post->post->guid, $file );
 		}//end if
 
 		$file_path = $file['file'];
@@ -307,22 +308,22 @@ class GO_XPost_Migrator
 		$headers = wp_get_http( $post->file->url, $file['file'] );
 
 		//Request failed
-		if( ! $headers )
+		if ( ! $headers )
 		{
 			@unlink( $file['file'] );
-			return go_slog_and_error( 'go-xpost-attachment-unreachable', 'Remote server did not respond for '. $post->file->url, $this->post_log_data($post) );
+			return $this->error( 'go-xpost-attachment-unreachable', 'Remote server did not respond for '. $post->file->url, $this->post_log_data($post) );
 		}//end if
 
 		// make sure the fetch was successful
 		if ( $headers['response'] != '200' )
 		{
 			@unlink( $file['file'] );
-			return go_slog_and_error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), $this->post_log_data($post) );
+			return $this->error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), $this->post_log_data($post) );
 		}//end if
 		elseif ( isset($headers['content-length']) && filesize( $file['file'] ) != $headers['content-length'] )
 		{
 			@unlink( $file['file'] );
-			return go_slog_and_error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, $this->post_log_data($post) );
+			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, $this->post_log_data($post) );
 		}//end elseif
 
 		$url = $file['url'];
@@ -334,20 +335,21 @@ class GO_XPost_Migrator
 			'url' => $file['url'],
 			'type' => $headers['content-type'],
 		), 'go-xpost' );
+
 		do_action( 'wp_create_file_in_uploads', $file['file'] );
 
 		// look up parent post, fail if it doesn't exist
-		if( $post->parent && ( ! $parent_id = $this->post_exists( $post->parent )))
+		if ( $post->parent && ( ! $parent_id = $this->post_exists( $post->parent ) ) )
 		{
 			@unlink( $file );
-			return go_slog_and_error( 'go-xpost-attachment-noparent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
+			return $this->error( 'go-xpost-attachment-noparent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
 		}//end if
 
 		// Correct the parent ID in the post object, based on the above lookup
 		$post->post->post_parent = $parent_id;
 
 		// Check if author exists, make it a guest author if not
-		if( ! $post_author = get_user_by( 'email', $post->author->data->user_email ))
+		if ( ! $post_author = get_user_by( 'email', $post->author->data->user_email ) )
 		{
 			$post->post->post_author = $this->guest_author_id;
 		}//end if
@@ -359,7 +361,7 @@ class GO_XPost_Migrator
 
 
 		// check if the post exists
-		if( ! ( $post_id = $this->post_exists( $post->post )))
+		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
 		{
 			$post_id = wp_insert_attachment( (array) $post->post, $file );
 			$action = 'Inserted';
@@ -371,29 +373,29 @@ class GO_XPost_Migrator
 			$action = 'Updated';
 		}//end else
 
-		if( is_wp_error( $post_id ) )
+		if ( is_wp_error( $post_id ) )
 		{
 			@unlink( $file );
-			return go_slog_and_error( 'go-xpost-failed-save', 'Failed to save attachment (GUID: '. $post->post->guid .')', $post_id );
+			return $this->error( 'go-xpost-failed-save', 'Failed to save attachment (GUID: '. $post->post->guid .')', $post_id );
 		}//end if
 
 		// set the post meta as received for the post
-		foreach( (array) $post->meta as $meta_key => $meta_values )
+		foreach ( (array) $post->meta as $meta_key => $meta_values )
 		{
-			switch( $meta_key )
+			switch ( $meta_key )
 			{
-			case '_wp_attachment_metadata':
-			case '_wp_attached_file': // don't overwrite the local attachment meta
-				break;
-			case '_edit_lock':
-			case '_edit_last': // edit last and lock are unimportant in the destination
-				break;
-			default:
-				if( ! empty( $meta_values ))
-				{
-					delete_post_meta( $post_id, $meta_key );
-					add_post_meta( $post_id, $meta_key, $meta_values );
-				}//end if
+				case '_wp_attachment_metadata':
+				case '_wp_attached_file': // don't overwrite the local attachment meta
+					break;
+				case '_edit_lock':
+				case '_edit_last': // edit last and lock are unimportant in the destination
+					break;
+				default:
+					if( ! empty( $meta_values ))
+					{
+						delete_post_meta( $post_id, $meta_key );
+						add_post_meta( $post_id, $meta_key, $meta_values );
+					}//end if
 			}//end switch
 		}//end foreach
 
@@ -404,13 +406,13 @@ class GO_XPost_Migrator
 		wp_update_attachment_metadata( $post_id, wp_generate_attachment_metadata( $post_id, $file_path ));
 
 		// set any terms on the attachment
-		foreach( (array) $post->terms as $tax => $terms )
+		foreach ( (array) $post->terms as $tax => $terms )
 		{
 			wp_set_object_terms( $post_id, $terms, $tax, FALSE );
 		}//end foreach
 
 		// success log
-		go_slog( 'go-xpost-save-attachment', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid .')', $this->post_log_data($post) );
+		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid .')', $this->post_log_data($post) );
 
 		return $post_id;
 	}//end save_attachment
@@ -423,7 +425,7 @@ class GO_XPost_Migrator
 		// look up parent post, fail if it doesn't exist
 		if ( isset( $post->parent ) && ( ! $parent_id = $this->post_exists( $post->parent ) ) )
 		{
-			return go_slog_and_error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
+			return $this->error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
 		}//end if
 
 		// Check if author exists, make it a guest author if not
@@ -445,7 +447,7 @@ class GO_XPost_Migrator
 
 		// check if the post exists
 		// insert or update as appropriate
-		if( ! ( $post_id = $this->post_exists( $post->post )))
+		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
 		{
 			$post_id = wp_insert_post( (array) $post->post );
 			$action = 'Inserted';
@@ -460,22 +462,22 @@ class GO_XPost_Migrator
 		}//end else
 
 		// go home crying if we encounter an error inserting or updating the post
-		if( is_wp_error( $post_id ) )
+		if ( is_wp_error( $post_id ) )
 		{
-			return go_slog_and_error( 'go-xpost-failed-save', 'Failed to save post (GUID: '. $post->post->guid .')', $this->post_log_data($post) );
+			return $this->error( 'go-xpost-failed-save', 'Failed to save post (GUID: '. $post->post->guid .')', $this->post_log_data($post) );
 		}//end if
 
 		// set the post meta as received for the post
-		foreach( (array) $post->meta as $meta_key => $meta_values )
+		foreach ( (array) $post->meta as $meta_key => $meta_values )
 		{
 			delete_post_meta( $post_id, $meta_key );
-			switch( $meta_key )
+			switch ( $meta_key )
 			{
 				case '_edit_lock':
 				case '_edit_last': // edit last and lock are unimportant in the destination
 					continue;
 				case strpos( $meta_key, '_thumbnail_id' ) !== FALSE: // Thumbnail Image
-					if( $post->$meta_key && $this->post_exists( $post->$meta_key->post ))
+					if ( $post->$meta_key && $this->post_exists( $post->$meta_key->post ) )
 					{
 						$new_img_id = $this->post_exists( $post->$meta_key->post );
 					}//end if
@@ -484,13 +486,13 @@ class GO_XPost_Migrator
 						$new_img_id = $this->save_attachment( $post->$meta_key );
 					}//end else
 
-					if (isset($new_img_id))
+					if (isset($new_img_id) )
 					{
 						add_post_meta( $post_id, $meta_key, $new_img_id );
 					}//end if
 					break;
 				default:
-					if( ! empty( $meta_values ))
+					if ( ! empty( $meta_values ) )
 					{
 						add_post_meta( $post_id, $meta_key, $meta_values );
 					}//end if
@@ -498,7 +500,7 @@ class GO_XPost_Migrator
 		}//end foreach
 
 		// set the taxonomy terms as received for the post
-		foreach( (array) $post->terms as $tax => $terms )
+		foreach ( (array) $post->terms as $tax => $terms )
 		{
 			wp_set_object_terms( $post_id, $terms, $tax, FALSE );
 		}//end foreach
@@ -519,7 +521,7 @@ class GO_XPost_Migrator
 		}//end if
 
 		// success log
-		go_slog( 'go-xpost-save-post', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid .')', $this->post_log_data($post) );
+		apply_filters( 'go_slog', 'go-xpost-save-post', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid .')', $this->post_log_data($post) );
 
 		return $post_id;
 	}//end save_post
@@ -527,7 +529,7 @@ class GO_XPost_Migrator
 	public function send_post()
 	{
 		// enforce the signed request for users who are not logged in
-		if( ! is_user_logged_in() )
+		if ( ! is_user_logged_in() )
 		{
 			// validate the signature of the sending site
 			$ping_array = $_POST;
@@ -535,9 +537,9 @@ class GO_XPost_Migrator
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
-			if( $signature != Go_Auth_Helpers::build_identity_hash( $ping_array ))
+			if ( $signature != go_socialcomments_authclient()->build_identity_hash( $ping_array ) )
 			{
-				go_slog_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
+				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
 			}//end if
 		}//end if
 		else // allow logged in users to make unsigned requests for easier debugging
@@ -546,13 +548,13 @@ class GO_XPost_Migrator
 		}//end else
 
 		// if we don't have a post ID, don't continue
-		if( ! isset( $ping_array['post_id'] ) || ! is_numeric( $ping_array['post_id'] ) )
+		if ( ! isset( $ping_array['post_id'] ) || ! is_numeric( $ping_array['post_id'] ) )
 		{
-			go_slog_and_die( 'go-xpost-invalid-pull', 'Forbidden or missing parameters', $ping_array, 403 );
+			$this->error_and_die( 'go-xpost-invalid-pull', 'Forbidden or missing parameters', $ping_array, 403 );
 		}//end if
 
 		// we're good, get and send the post
-		if( 'prettyprint' == $ping_array['output'] )
+		if ( 'prettyprint' == $ping_array['output'] )
 		{
 			echo '<pre>'. print_r( $this->get_post( $ping_array['post_id'] ), TRUE ) .'</pre>';
 		}//end if
@@ -561,7 +563,7 @@ class GO_XPost_Migrator
 			echo serialize( $this->get_post( $ping_array['post_id'] ));
 		}//end else
 
-		go_slog( 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] .' '. $ping_array['post_id'], $ping_array );
+		apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] .' '. $ping_array['post_id'], $ping_array );
 
 		// all done, bye bye
 		die;
@@ -575,7 +577,7 @@ class GO_XPost_Migrator
 	 */
 	public function build_identity_hash( $params )
 	{
-		if( ! is_array( $params ))
+		if ( ! is_array( $params ))
 		{
 			parse_str( $params, $param_arr );
 			$params = $param_arr;
@@ -610,7 +612,7 @@ class GO_XPost_Migrator
 
 	public function utc_to_local( $datetime_string, $offset = FALSE )
 	{
-		if( ! $offset )
+		if ( ! $offset )
 		{
 			$offset = get_option( 'gmt_offset' );
 		}//end if
@@ -622,4 +624,17 @@ class GO_XPost_Migrator
 
 		return $date->format('Y-m-d H:i:s');;
 	}//end utc_to_local
+
+	public function error( $code, $message, $data )
+	{
+		apply_filters( 'go_slog', $code, $message, $data );
+		return new WP_Error( $code, $message, $data );
+	}//end error
+
+	public function error_and_die( $code, $message, $data, $http_code )
+	{
+		$this->error( $code, $message, $data );
+		header( $_SERVER[ 'SERVER_PROTOCOL' ] . ' ' . $http_code . ' ' . $message, TRUE, $http_code );
+		die;
+	}//end error_and_die
 }//end class

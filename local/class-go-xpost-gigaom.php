@@ -19,7 +19,7 @@ class GO_XPost_Gigaom extends GO_XPost
 				continue;
 			}//end if
 
-			go_slog('go-xpost-start', 'XPost from GO to pC: START!',
+			apply_filters( 'go_slog', 'go-xpost-start', 'XPost from GO to pC: START!',
 				array(
 					'post_id' => $post_id,
 					'post_type' => get_post( $post_id )->post_type,

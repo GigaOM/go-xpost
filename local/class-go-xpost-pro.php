@@ -16,7 +16,7 @@ class GO_XPost_Pro extends GO_XPost
 	 */
 	public function process_post( $post_id )
 	{
-		go_slog( 'go-xpost-start' , 'XPost from Pro to GO: START!' ,
+		apply_filters( 'go_slog', 'go-xpost-start', 'XPost from Pro to GO: START!',
 			array(
 				'post_id' => $post_id,
 				'post_type' => get_post( $post_id )->post_type,
