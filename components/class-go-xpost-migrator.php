@@ -506,7 +506,7 @@ class GO_XPost_Migrator
 		}//end foreach
 
 		// Set guest author data if necessary from the check above
-		if ( $guest_author == TRUE && method_exists( 'Go_GuestPost', 'save_guest_post_data' ) )
+		if ( $guest_author == TRUE )
 		{
 			// Do we want to set Publication/Source data as well? Maybe using variables inside of the config classes for each domain that we pass on?
 			$guest_author_data = array(
@@ -517,7 +517,7 @@ class GO_XPost_Migrator
 				'author_url' => $post->author->data->user_url,
 			);
 
-			Go_GuestPost::save_guest_post_data( $guest_author_data );
+			go_guestpost()->save_guest_post_data( $guest_author_data );
 		}//end if
 
 		// success log
