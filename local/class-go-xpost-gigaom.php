@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 class GO_XPost_Gigaom extends GO_XPost
 {

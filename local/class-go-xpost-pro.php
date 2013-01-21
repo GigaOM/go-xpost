@@ -4,7 +4,7 @@ class GO_XPost_Pro extends GO_XPost
 {
 	public function __construct( $endpoint )
 	{
-		add_filter( 'go_xpost_get_post', array( $this , 'go_xpost_get_post' ));
+		add_filter( 'go_xpost_get_post', array( $this, 'go_xpost_get_post' ));
 
 		parent::__construct( $endpoint );
 	}// end __construct
@@ -23,14 +23,14 @@ class GO_XPost_Pro extends GO_XPost
 			)
 		);
 
-		$this->push( $this->endpoint , $post_id );
+		$this->push( $this->endpoint, $post_id );
 	}//end process_post
 
 	public function go_xpost_get_post( $post )
 	{
 
 		// this part doesn't do anything yet, as only posts get through an earlier filter
-		if( in_array( $post->post->post_type , array( 'go_shortpost' , 'go_report' )))
+		if( in_array( $post->post->post_type, array( 'go_shortpost', 'go_report' )))
 		{
 			$post->post->post_type = 'post';
 		}
@@ -38,19 +38,19 @@ class GO_XPost_Pro extends GO_XPost
 		// replace the content with the excerpt
 		if( ! empty( $post->post->post_excerpt ))
 		{
-			$post->post->post_content = $post->post->post_excerpt;			
+			$post->post->post_content = $post->post->post_excerpt;
 		}
 
 		// replace the excerpt with the shorter gomcom excerpt
 		if( ! empty( $post->meta['gomcom_ingestion_excerpt'] ))
 		{
-			$post->post->post_excerpt = $post->meta['gomcom_ingestion_excerpt'];			
+			$post->post->post_excerpt = $post->meta['gomcom_ingestion_excerpt'];
 		}
 
 		// replace the title with the gomcom title
 		if( ! empty( $post->meta['gomcom_ingestion_headline'] ))
 		{
-			$post->post->post_title = $post->meta['gomcom_ingestion_headline'];			
+			$post->post->post_title = $post->meta['gomcom_ingestion_headline'];
 		}
 
 		// unset unused meta
@@ -73,10 +73,10 @@ class GO_XPost_Pro extends GO_XPost
 		$post->terms['channel'][] = 'pro';
 
 		// merge all the terms into the post_tags
-		$post->terms['post_tag'] = array_merge( 
-			(array) $post->terms['post_tag'] , 
-			(array) $post->terms['company'] , 
-			(array) $post->terms['technology'] 
+		$post->terms['post_tag'] = array_merge(
+			(array) $post->terms['post_tag'],
+			(array) $post->terms['company'],
+			(array) $post->terms['technology']
 		);
 
 		// unset the unused taxonomies
@@ -85,6 +85,5 @@ class GO_XPost_Pro extends GO_XPost
 
 
 		return $post;
-	}// end go_xpost_pre_save_post
-
+	}// end go_xpost_get_post
 }//end class

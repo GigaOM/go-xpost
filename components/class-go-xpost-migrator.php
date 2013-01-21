@@ -3,7 +3,7 @@
 class GO_XPost_Migrator
 {
 	public $log;
-	public $source_domain = '';
+	public $source_domain   = '';
 	public $guest_author_id = 16281271;
 
 	public function end_http_connection()
@@ -234,7 +234,7 @@ class GO_XPost_Migrator
 
 		// validate the signature of the sending site
 		$ping_array = $_POST;
-		$signature = $ping_array['signature'];
+		$signature  = $ping_array['signature'];
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
@@ -326,7 +326,7 @@ class GO_XPost_Migrator
 			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, $this->post_log_data($post) );
 		}//end elseif
 
-		$url = $file['url'];
+		$url  = $file['url'];
 		$file = $file['file'];
 
 		// do actions for replication
@@ -364,7 +364,7 @@ class GO_XPost_Migrator
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
 		{
 			$post_id = wp_insert_attachment( (array) $post->post, $file );
-			$action = 'Inserted';
+			$action  = 'Inserted';
 		}//end if
 		else
 		{
@@ -442,7 +442,7 @@ class GO_XPost_Migrator
 		}//end else
 
 		// update the post dates based on the local gmt offset
-		$post->post->post_date = $this->utc_to_local( $post->post->post_date_gmt );
+		$post->post->post_date     = $this->utc_to_local( $post->post->post_date_gmt );
 		$post->post->modified_date = $this->utc_to_local( $post->post->modified_date_gmt );
 
 		// check if the post exists
@@ -450,7 +450,7 @@ class GO_XPost_Migrator
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
 		{
 			$post_id = wp_insert_post( (array) $post->post );
-			$action = 'Inserted';
+			$action  = 'Inserted';
 		}//end if
 		else // the post exists, so update it
 		{
@@ -533,7 +533,7 @@ class GO_XPost_Migrator
 		{
 			// validate the signature of the sending site
 			$ping_array = $_POST;
-			$signature = $ping_array['signature'];
+			$signature  = $ping_array['signature'];
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
@@ -591,7 +591,7 @@ class GO_XPost_Migrator
 
 		//calculate an HMAC with SHA256 and base64-encoding a la Amazon
 		//http://mierendo.com/software/aws_signed_query/
-		$config = go_config()->load('social');
+		$config    = go_config()->load('social');
 		$signature = base64_encode( hash_hmac( 'sha256', $string_to_sign, $config['social_identity_shared_secret'] ));
 
 		//make sure the signature is url_encoded properly
@@ -602,9 +602,9 @@ class GO_XPost_Migrator
 
 	public function utc_offset_from_dates( $utc_string, $local_string )
 	{
-		$tz = new DateTimeZone( 'UTC' );
-		$utc = new DateTime( $utc_string, $tz );
-		$local = new DateTime( $local_string, $tz );
+		$tz     = new DateTimeZone( 'UTC' );
+		$utc    = new DateTime( $utc_string, $tz );
+		$local  = new DateTime( $local_string, $tz );
 		$offset = $utc->diff( $local );
 
 		return $offset->format('%R%h');
@@ -617,7 +617,7 @@ class GO_XPost_Migrator
 			$offset = get_option( 'gmt_offset' );
 		}//end if
 
-		$tz = new DateTimeZone( 'UTC' );
+		$tz   = new DateTimeZone( 'UTC' );
 		$date = new DateTime( $datetime_string, $tz );
 
 		$date->modify( $offset .' hours' );
