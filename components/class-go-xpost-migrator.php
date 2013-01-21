@@ -221,6 +221,7 @@ class GO_XPost_Migrator
 
 	public function receive_push()
 	{
+
 		if ( empty( $_POST['source'] ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-push', 'Forbidden or missing parameters', $_POST, 403 );
@@ -258,6 +259,7 @@ class GO_XPost_Migrator
 
 		// fetch and decode the post
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
+
 		$post = unserialize( $pull_return['body'] );
 
 		// confirm we got a result
@@ -519,6 +521,8 @@ class GO_XPost_Migrator
 
 			go_guestpost()->save_guest_post_data( $guest_author_data );
 		}//end if
+
+		do_action( 'go_xpost_save_post', $post_id, $post );
 
 		// success log
 		apply_filters( 'go_slog', 'go-xpost-save-post', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid .')', $this->post_log_data($post) );
