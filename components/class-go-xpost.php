@@ -2,9 +2,7 @@
 
 abstract class GO_XPost extends GO_XPost_Migrator
 {
-	public $post_types = array(
-		'post',
-	);
+	public $post_types = array( 'post', );
 
 	/**
 	 * child classes MUST declare this to process posts
