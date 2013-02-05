@@ -14,6 +14,20 @@ require_once __DIR__ . '/components/class-go-xpost.php';
 
 global $goxpost;
 
-// load the business logic we're using and configure
-require_once __DIR__ .'/local/class-go-xpost-pro.php';
-$goxpost = new GO_XPost_Pro( 'http://gigaomstaging.wordpress.com/wp-admin/admin-ajax.php' );
+$pro_config = array(
+	// The current property that we are currently in
+	'property'  => 'pro',
+	// Properties and their endpoints that we wish to push to
+	'endpoints' => array(
+		'gigaom' => 'http://go.localhost/wp-admin/admin-ajax.php',
+		'search' => 'http://search.localhost/wp-admin/admin-ajax.php',
+	),
+	// Post types that we want to push
+	'post_types' => array(
+		'post',
+		'go_shortpost',
+		'go-datamodule',
+	),
+);
+
+$goxpost = new GO_XPost( go_config()->load('go-xpost') );
