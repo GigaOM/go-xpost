@@ -2,8 +2,10 @@
 
 class GO_XPost_Migrator
 {
-	public $log;
-	public $source_domain   = '';
+	public $property;
+	public $source_property;
+	public $endpoints  = array();
+	public $post_types = array( 'post' );
 	public $guest_author_id = 16281271;
 
 	public function end_http_connection()
@@ -83,7 +85,7 @@ class GO_XPost_Migrator
 		return $r;
 	}//end get_attachment
 
-	public function get_post( $post_id )
+	public function get_post( $post_id, $requesting_property )
 	{
 		// check the post_id
 		$post_id = $this->sanitize_post_id( $post_id );
@@ -152,7 +154,7 @@ class GO_XPost_Migrator
 		unset( $r->meta['_go_log'] );
 		unset( $r->meta['_go_comment_cache'] );
 
-		return apply_filters( 'go_xpost_get_post', $r );
+		return apply_filters( 'go_xpost_get_post_' . $this->property, $r, $requesting_property );
 	}//end get_post
 
 	public function post_exists( $post )
@@ -188,6 +190,7 @@ class GO_XPost_Migrator
 	{
 		// check the post_id
 		$post_id = $this->sanitize_post_id( $post_id );
+		
 		if ( ! $post_id )
 		{
 			return;
@@ -201,10 +204,12 @@ class GO_XPost_Migrator
 
 		// build and sign the request var array
 		$query_array = array(
-			'action'  => 'go_xpost_push',
-			'source'  => urlencode( admin_url( '/admin-ajax.php' )),
-			'post_id' => $post_id,
+			'action'   => 'go_xpost_push',
+			'source'   => urlencode( admin_url( '/admin-ajax.php' )),
+			'post_id'  => $post_id,
+			'property' => $this->property,
 		);
+			
 		$query_array['signature'] = go_socialcomments_authclient()->build_identity_hash( $query_array );
 
 		// send the ping
@@ -221,7 +226,6 @@ class GO_XPost_Migrator
 
 	public function receive_push()
 	{
-
 		if ( empty( $_POST['source'] ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-push', 'Forbidden or missing parameters', $_POST, 403 );
@@ -252,9 +256,11 @@ class GO_XPost_Migrator
 
 		// build and sign the request var array
 		$query_array = array(
-			'action'  => 'go_xpost_pull',
-			'post_id' => (int) $_POST['post_id'],
+			'action'   => 'go_xpost_pull',
+			'post_id'  => (int) $_POST['post_id'],
+			'property' => $this->property,
 		);
+		
 		$query_array['signature'] = go_socialcomments_authclient()->build_identity_hash( $query_array );
 
 		// fetch and decode the post
@@ -551,8 +557,8 @@ class GO_XPost_Migrator
 			$ping_array = $_REQUEST;
 		}//end else
 
-		// if we don't have a post ID, don't continue
-		if ( ! isset( $ping_array['post_id'] ) || ! is_numeric( $ping_array['post_id'] ) )
+		// if we don't have a post ID or property value, don't continue
+		if ( ! isset( $ping_array['post_id'] ) || ! is_numeric( $ping_array['post_id'] ) || ! isset( $ping_array['property'] ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-pull', 'Forbidden or missing parameters', $ping_array, 403 );
 		}//end if
@@ -560,11 +566,11 @@ class GO_XPost_Migrator
 		// we're good, get and send the post
 		if ( 'prettyprint' == $ping_array['output'] )
 		{
-			echo '<pre>'. print_r( $this->get_post( $ping_array['post_id'] ), TRUE ) .'</pre>';
+			echo '<pre>'. print_r( $this->get_post( $ping_array['post_id'], $ping_array['property'] ), TRUE ) .'</pre>';
 		}//end if
 		else
 		{
-			echo serialize( $this->get_post( $ping_array['post_id'] ));
+			echo serialize( $this->get_post( $ping_array['post_id'], $ping_array['property'] ));
 		}//end else
 
 		apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] .' '. $ping_array['post_id'], $ping_array );
