@@ -2,33 +2,31 @@
 
 class GO_XPost_Pro extends GO_XPost
 {
-	public function __construct( $endpoint )
+	public function __construct()
 	{
-		add_filter( 'go_xpost_get_post', array( $this, 'go_xpost_get_post' ));
-
-		parent::__construct( $endpoint );
+		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
+		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
 	}// end __construct
 
 	/**
-	 * XPost from Pro to GO
-	 *
-	 * @param $post_id int Post ID
+	 * Filter whether a post_id should ping a property
+	 * 
+	 * @param  absint $post_id, string $target_property
+	 * @return $post_id or FALSE
 	 */
-	public function process_post( $post_id )
+	public function go_xpost_process_post_pro( $post_id, $target_property )
 	{
-		apply_filters( 'go_slog', 'go-xpost-start', 'XPost from Pro to GO: START!',
-			array(
-				'post_id' => $post_id,
-				'post_type' => get_post( $post_id )->post_type,
-			)
-		);
-
-		$this->push( $this->endpoint, $post_id );
-	}//end process_post
-
-	public function go_xpost_get_post( $post )
+		return $post_id;
+	} // END go_xpost_process_post_pro
+	
+	/**
+	 * Filter the $post object before returning it to a property
+	 * 
+	 * @param  object $post, string $requesting_property
+	 * @return $post
+	 */
+	public function go_xpost_get_post_pro( $post, $requesting_property )
 	{
-
 		// this part doesn't do anything yet, as only posts get through an earlier filter
 		if( in_array( $post->post->post_type, array( 'go_shortpost', 'go_report' )))
 		{
@@ -83,7 +81,6 @@ class GO_XPost_Pro extends GO_XPost
 		unset( $post->terms['category'] );
 		unset( $post->terms['author'] );
 
-
 		return $post;
-	}// end go_xpost_get_post
-}//end class
+	} // END go_xpost_get_post_pro
+} // END GO_XPost_Pro

@@ -2,24 +2,31 @@
 
 class GO_XPost_Paidcontent extends GO_XPost
 {
-	/**
-	 * XPost from pC to GO
-	 *
-	 * @param $post_id int Post ID
-	 */
-	public function process_post( $post_id )
+	public function __construct()
 	{
-		apply_filters( 'go_slog', 'go-xpost-start', 'XPost from pC to GO: START!',
-			array(
-				'post_id' => $post_id,
-				'post_type' => get_post( $post_id )->post_type,
-				'go_mancross_redirect' => get_post_meta( $post_id, 'go_mancross_redirect', TRUE ),
-			)
-		);
+		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
+		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
+	} // END __construct
 
-		// push all posts
-		$this->push( $this->endpoint, $post_id );
-
-		return;
-	}//end process_post
-}//end class
+	/**
+	 * Filter whether a post_id should ping a property
+	 * 
+	 * @param  absint $post_id, string $target_property
+	 * @return $post_id or FALSE
+	 */
+	public function go_xpost_process_post_paidcontent( $post_id, $target_property )
+	{
+		return $post_id;
+	} // END go_xpost_process_post_paidcontent
+	
+	/**
+	 * Filter the $post object before returning it to a property
+	 * 
+	 * @param  object $post, string $requesting_property
+	 * @return $post
+	 */
+	public function go_xpost_get_post_paidcontent( $post, $requesting_property )
+	{
+		return $post;
+	} // END go_xpost_get_post_paidcontent
+} // END GO_XPost_Paidcontent

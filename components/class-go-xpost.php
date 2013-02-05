@@ -8,13 +8,16 @@ abstract class GO_XPost extends GO_XPost_Migrator
 		$this->endpoints  = $config['endpoints'];
 		$this->post_types = ( isset( $config['post_types'] ) ) ? array_merge( $config['post_types'], $this->post_types ) : $this->post_types;
 
-		add_action( 'edit_post', array( $this, 'edit_post' ));
+		add_action( 'edit_post', array( $this, 'edit_post' ) ); 
 
-		add_action( 'wp_ajax_go_xpost_pull', array( $this, 'send_post' ));
-		add_action( 'wp_ajax_nopriv_go_xpost_pull', array( $this, 'send_post' ));
+		add_action( 'wp_ajax_go_xpost_pull', array( $this, 'send_post' ) );
+		add_action( 'wp_ajax_nopriv_go_xpost_pull', array( $this, 'send_post' ) );
 
 		add_action( 'wp_ajax_go_xpost_push', array( $this, 'receive_push' ));
-		add_action( 'wp_ajax_nopriv_go_xpost_push', array( $this, 'receive_push' ));
+		add_action( 'wp_ajax_nopriv_go_xpost_push', array( $this, 'receive_push' ) );
+		
+		// Load appropriate filters for this property
+		require_once dirname( __DIR__ ) . '/local/class-go-xpost-' . $this->property . '.php'; 
 	}//end __construct
 
 	public function process_post( $post_id )
@@ -22,7 +25,7 @@ abstract class GO_XPost extends GO_XPost_Migrator
 		// Loop through endpoints and push to them if appropriate
 		foreach ( $this->endpoints as $target_property => $endpoint )
 		{
-			if ( $post_id = apply_filters( 'go_xpost_process_post_' . $this->property, $post_id, $target_property ); )
+			if ( $post_id = apply_filters( 'go_xpost_process_post_' . $this->property, $post_id, $target_property ) )
 			{
 				apply_filters( 'go_slog', 'go-xpost-start', 'XPost from ' . $this->property . ' to ' . $target_property . ': START!',
 					array(
