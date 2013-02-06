@@ -3,7 +3,6 @@
 class GO_XPost_Migrator
 {
 	public $property;
-	public $source_property;
 	public $endpoints  = array();
 	public $post_types = array( 'post' );
 	public $guest_author_id = 16281271;
@@ -209,7 +208,7 @@ class GO_XPost_Migrator
 			'post_id'  => $post_id,
 			'property' => $this->property,
 		);
-			
+
 		$query_array['signature'] = go_socialcomments_authclient()->build_identity_hash( $query_array );
 
 		// send the ping

@@ -2,15 +2,17 @@
 
 class GO_XPost_Pro extends GO_XPost
 {
-	public function __construct()
+	public function __construct( $config )
 	{
-		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
-		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
-	}// end __construct
+		GO_XPost::__construct( $config );
+
+		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_process_post_pro' ), 10, 2 );
+		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post_pro' ), 10, 2 );
+	} // END __construct
 
 	/**
 	 * Filter whether a post_id should ping a property
-	 * 
+	 *
 	 * @param  absint $post_id, string $target_property
 	 * @return $post_id or FALSE
 	 */
@@ -18,17 +20,17 @@ class GO_XPost_Pro extends GO_XPost
 	{
 		return $post_id;
 	} // END go_xpost_process_post_pro
-	
+
 	/**
 	 * Filter the $post object before returning it to a property
-	 * 
+	 *
 	 * @param  object $post, string $requesting_property
 	 * @return $post
 	 */
 	public function go_xpost_get_post_pro( $post, $requesting_property )
 	{
-		// this part doesn't do anything yet, as only posts get through an earlier filter
-		if( in_array( $post->post->post_type, array( 'go_shortpost', 'go_report' )))
+		// these post types don't exist on GO yet
+		if( in_array( $post->post->post_type, array( 'go_shortpost', 'go-report' )))
 		{
 			$post->post->post_type = 'post';
 		}

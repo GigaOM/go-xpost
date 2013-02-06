@@ -2,15 +2,17 @@
 
 class GO_XPost_Gigaom extends GO_XPost
 {
-	public function __construct()
+	public function __construct( $config )
 	{
-		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
-		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post' ), 2 );
+		GO_XPost::__construct( $config );
+
+		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_process_post_gigaom' ), 10, 2 );
+		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post_gigaom' ), 10, 2 );
 	} // END __construct
 
 	/**
 	 * Filter whether a post_id should ping a property
-	 * 
+	 *
 	 * @param  absint $post_id, string $target_property
 	 * @return $post_id or FALSE
 	 */
@@ -28,13 +30,13 @@ class GO_XPost_Gigaom extends GO_XPost
 				return FALSE;
 			}
 		} // END if
-		
+
 		return $post_id;
 	} // END go_xpost_process_post_gigaom
-	
+
 	/**
 	 * Filter the $post object before returning it to a property
-	 * 
+	 *
 	 * @param  object $post, string $requesting_property
 	 * @return $post
 	 */

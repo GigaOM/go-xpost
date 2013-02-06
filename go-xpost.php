@@ -12,10 +12,8 @@
 require_once __DIR__ . '/components/class-go-xpost-migrator.php';
 require_once __DIR__ . '/components/class-go-xpost.php';
 
-global $goxpost;
-
-$pro_config = array(
-	// The current property that we are currently in
+$config = array(
+	// The property that we are currently in
 	'property'  => 'pro',
 	// Properties and their endpoints that we wish to push to
 	'endpoints' => array(
@@ -30,4 +28,10 @@ $pro_config = array(
 	),
 );
 
-$goxpost = new GO_XPost( go_config()->load('go-xpost') );
+// Load appropriate filters for this property
+require_once __DIR__ . '/local/class-go-xpost-' . $config['property'] . '.php';
+
+// Instantiate the class
+global $goxpost;
+$filter_class = 'GO_XPost_' . ucfirst( $config['property'] );
+$goxpost = new $filter_class( $config );
