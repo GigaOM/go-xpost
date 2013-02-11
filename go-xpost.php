@@ -25,6 +25,7 @@ $config = array(
 		'post',
 		'go_shortpost',
 		'go-datamodule',
+		'go-report',
 	),
 );
 
