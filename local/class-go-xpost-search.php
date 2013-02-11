@@ -4,7 +4,7 @@ class GO_XPost_Paidcontent extends GO_XPost
 {
 	public function __construct( $config )
 	{
-		GO_XPost::__construct( $config );
+		parent::__construct( $config );
 
 		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_process_post_search' ), 10, 2 );
 		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post_search' ), 10, 2 );

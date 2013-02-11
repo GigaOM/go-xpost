@@ -4,7 +4,7 @@ class GO_XPost_Gigaom extends GO_XPost
 {
 	public function __construct( $config )
 	{
-		GO_XPost::__construct( $config );
+		parent::__construct( $config );
 
 		add_filter( 'go_xpost_process_post_' . $this->property, array( $this, 'go_xpost_process_post_gigaom' ), 10, 2 );
 		add_filter( 'go_xpost_get_post_' . $this->property, array( $this, 'go_xpost_get_post_gigaom' ), 10, 2 );
@@ -18,10 +18,10 @@ class GO_XPost_Gigaom extends GO_XPost
 	 */
 	public function go_xpost_process_post_gigaom( $post_id, $target_property )
 	{
-		if ( 'paidcontent' == $target_property )
+		if ( 'paidcontent' == $target_property && 'go-datamodule' != get_post( $post_id )->post_type )
 		{
 			// Get the post channels
-			$channels = wp_get_object_terms( $post_id, 'channel' );
+			$channels = wp_get_object_terms( $post_id, 'channel', array( 'fields' => 'slugs' ) );
 
 			// Check for media in the list of channels
 			if ( ! in_array( 'media', $channels ) )
@@ -29,6 +29,11 @@ class GO_XPost_Gigaom extends GO_XPost
 				// If media isn't in the list we shouldn't push this to paidContent
 				return FALSE;
 			}
+		} // END if
+		else if ( 'pro' == $target_property && 'go-datamodule' != get_post( $post_id )->post_type )
+		{
+			// GO should only push charts to pro
+			return FALSE;
 		} // END if
 
 		return $post_id;
