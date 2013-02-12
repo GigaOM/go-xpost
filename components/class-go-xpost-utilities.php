@@ -1,13 +1,26 @@
 <?php
 
-class GO_XPost_Migrator
+/**
+ * Provides base functionality for cross posting, 
+ * could be leveraged via command line in addition to the typical implementation of GO_XPost
+ */
+
+class GO_XPost_Utilities
 {
 	public $property;
-	public $endpoints  = array();
-	public $post_types = array( 'post' );
+	private $pinged         = array();
+	// @TODO: insert a comment here explaining the significance of this author_id
 	public $guest_author_id = 16281271;
 
-	public function end_http_connection()
+	public function __construct( $property )
+	{
+		$this->property = $$property;
+	}// end __construct
+
+	/**
+	 * Ends the HTTP connection cleanly
+	 */
+	private function end_http_connection()
 	{
 		ob_end_clean();
 		header('Connection: close');
@@ -29,17 +42,17 @@ class GO_XPost_Migrator
 		flush();
 
 		// close current session
-		if (session_id() )
+		if ( session_id() )
 		{
 			session_write_close();
 		}//end if
 	}//end end_http_connection
 
-	public function get_attachment( $post_id )
+	/**
+	 * Get attachement, helps map the thumbnail post ID to post/guid
+	 */
+	private function get_attachment( $post_id )
 	{
-		// get the attachment path and URL from the source blog
-		$this->path_base = wp_upload_dir();
-
 		$post_id = (int) $post_id;
 
 		// confirm that the requested post exists
@@ -153,10 +166,10 @@ class GO_XPost_Migrator
 		unset( $r->meta['_go_log'] );
 		unset( $r->meta['_go_comment_cache'] );
 
-		return apply_filters( 'go_xpost_get_post_' . $this->property, $r, $requesting_property );
+		return apply_filter( 'go_xpost_post_filter', $r, $requesting_property );
 	}//end get_post
 
-	public function post_exists( $post )
+	private function post_exists( $post )
 	{
 		global $wpdb;
 
@@ -165,7 +178,10 @@ class GO_XPost_Migrator
 		return $post_id;
 	}//end post_exists
 
-	public function post_log_data($post)
+	/**
+	 * Convert the post to be easily loggable
+	 */
+	private function post_log_data( $post )
 	{
 		// Logging data needs to be truncated so it'll be under Simple DB's limits
 		$log_data = array(
@@ -174,7 +190,7 @@ class GO_XPost_Migrator
 			'go_mancross_redirect' => $post->meta['go_mancross_redirect'],
 		);
 
-		foreach ($post->meta as $key => $value)
+		foreach ( $post->meta as $key => $value )
 		{
 			if (strncmp('_go_channel_time', $key, 16) == 0)
 			{
@@ -185,11 +201,14 @@ class GO_XPost_Migrator
 		return $log_data;
 	}//end post_log_data
 
+	/**
+	 * Ping an endpoint to tell it to get the post
+	 */
 	public function push( $endpoint, $post_id )
 	{
 		// check the post_id
 		$post_id = $this->sanitize_post_id( $post_id );
-		
+
 		if ( ! $post_id )
 		{
 			return;
@@ -209,20 +228,23 @@ class GO_XPost_Migrator
 			'property' => $this->property,
 		);
 
-		$query_array['signature'] = go_socialcomments_authclient()->build_identity_hash( $query_array );
+		$query_array['signature'] = $this->build_identity_hash( $query_array );
 
 		// send the ping
-		$return = wp_remote_post( $endpoint, array( 'body' => $query_array, 'timeout' => 20 ));
+		$return = wp_remote_post( $endpoint, array( 'body' => $query_array, 'timeout' => 20 ) );
 
 		// save an activity log for this execution instance
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
 
 		// log and return success
-		apply_filters( 'go_slog', 'go-xpost-send-push', $endpoint .' '. $post_id, $post_id );
+		apply_filters( 'go_slog', 'go-xpost-send-push', $endpoint . ' ' . $post_id, $post_id );
 
 		return;
 	}//end push
 
+	/**
+	 * Receive an incoming request to import a new post
+	 */
 	public function receive_push()
 	{
 		if ( empty( $_POST['source'] ) )
@@ -233,16 +255,13 @@ class GO_XPost_Migrator
 		// Tell the pinger that we don't need them anymore
 		$this->end_http_connection();
 
-		// Remove edit_post action so we don't trigger an accidental crosspost
-		remove_action( 'edit_post', array( $this, 'edit_post' ));
-
 		// validate the signature of the sending site
 		$ping_array = $_POST;
 		$signature  = $ping_array['signature'];
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
-		if ( ! is_user_logged_in() && $signature != go_socialcomments_authclient()->build_identity_hash( $ping_array ) )
+		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_POST, 401 );
 		}//end if
@@ -259,8 +278,8 @@ class GO_XPost_Migrator
 			'post_id'  => (int) $_POST['post_id'],
 			'property' => $this->property,
 		);
-		
-		$query_array['signature'] = go_socialcomments_authclient()->build_identity_hash( $query_array );
+
+		$query_array['signature'] = $this->build_identity_hash( $query_array );
 
 		// fetch and decode the post
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
@@ -276,12 +295,18 @@ class GO_XPost_Migrator
 		// report our success
 		apply_filters( 'go_slog', 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );
 
+		// allow the GO_Xpost class (and others) to do something in response to the push being received
+		do_action( 'go_xpost_receive_push', $post );
+
 		// save
 		$post = $this->save_post( $post );
 
 		die;
 	}//end receive_push
 
+	/**
+	 * Clean up the post_id
+	 */
 	public function sanitize_post_id( $post_id )
 	{
 		$post_id = (int) $post_id;
@@ -471,7 +496,7 @@ class GO_XPost_Migrator
 		// go home crying if we encounter an error inserting or updating the post
 		if ( is_wp_error( $post_id ) )
 		{
-			return $this->error( 'go-xpost-failed-save', 'Failed to save post (GUID: '. $post->post->guid .')', $this->post_log_data($post) );
+			return $this->error( 'go-xpost-failed-save', 'Failed to save post (GUID: '. $post->post->guid .')', $this->post_log_data( $post ) );
 		}//end if
 
 		// set the post meta as received for the post
@@ -493,7 +518,7 @@ class GO_XPost_Migrator
 						$new_img_id = $this->save_attachment( $post->$meta_key );
 					}//end else
 
-					if (isset($new_img_id) )
+					if ( isset( $new_img_id ) )
 					{
 						add_post_meta( $post_id, $meta_key, $new_img_id );
 					}//end if
@@ -515,7 +540,7 @@ class GO_XPost_Migrator
 		// Set guest author data if necessary from the check above
 		if ( $guest_author == TRUE )
 		{
-			// Do we want to set Publication/Source data as well? Maybe using variables inside of the config classes for each domain that we pass on?
+			// @TODO: Do we want to set Publication/Source data as well? Maybe using variables inside of the config classes for each domain that we pass on?
 			$guest_author_data = array(
 				'post_id' => $post_id,
 				'author_override' => TRUE,
@@ -546,7 +571,7 @@ class GO_XPost_Migrator
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
-			if ( $signature != go_socialcomments_authclient()->build_identity_hash( $ping_array ) )
+			if ( $signature != $this->build_identity_hash( $ping_array ) )
 			{
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
 			}//end if
@@ -600,6 +625,7 @@ class GO_XPost_Migrator
 
 		//calculate an HMAC with SHA256 and base64-encoding a la Amazon
 		//http://mierendo.com/software/aws_signed_query/
+		// @TODO there is a dependency here on go_config and the social config file.  Is this appropriate
 		$config    = go_config()->load('social');
 		$signature = base64_encode( hash_hmac( 'sha256', $string_to_sign, $config['social_identity_shared_secret'] ));
 
@@ -609,6 +635,7 @@ class GO_XPost_Migrator
 		return $signature;
 	}// end build_identity_hash
 
+	// @TODO: this does not appear to be in use
 	public function utc_offset_from_dates( $utc_string, $local_string )
 	{
 		$tz     = new DateTimeZone( 'UTC' );
@@ -647,3 +674,15 @@ class GO_XPost_Migrator
 		die;
 	}//end error_and_die
 }//end class
+
+function go_xpost_util( $property = '' )
+{
+	global $go_xpost_util;
+
+	if ( ! isset( $go_xpost_util ) )
+	{
+		$go_xpost_util = new GO_XPost_Utilities( $property );
+	}// end if
+
+	return $go_xpost_util;
+}// end go_xpost_util

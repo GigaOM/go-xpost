@@ -1,9 +1,10 @@
 <?php
 
-require_once __DIR__ . '/components/class-go-xpost-migrator.php';
 require_once __DIR__ . '/components/class-go-xpost.php';
+require_once __DIR__ . '/components/class-go-xpost-utilities.php';
 
 $config = go_config()->load('go-xpost');
+$config = apply_filters( 'go_xpost_config', $config );
 
 // Load appropriate filters for this property
 require_once __DIR__ . '/local/class-go-xpost-' . $config['property'] . '.php';

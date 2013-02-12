@@ -9,8 +9,8 @@
  * Author URI: http://gigaom.com/
  */
 
-require_once __DIR__ . '/components/class-go-xpost-migrator.php';
 require_once __DIR__ . '/components/class-go-xpost.php';
+require_once __DIR__ . '/components/class-go-xpost-utilities.php';
 
 $config = array(
 	// The property that we are currently in
@@ -28,6 +28,8 @@ $config = array(
 		'go-report',
 	),
 );
+
+$config = apply_filters( 'go_xpost_config', $config );
 
 // Load appropriate filters for this property
 require_once __DIR__ . '/local/class-go-xpost-' . $config['property'] . '.php';
