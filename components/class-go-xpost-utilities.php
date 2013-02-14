@@ -12,9 +12,9 @@ class GO_XPost_Utilities
 	// @TODO: insert a comment here explaining the significance of this author_id
 	public $guest_author_id = 16281271;
 
-	public function __construct( $property )
+	public function __construct()
 	{
-		$this->property = $$property;
+		$this->property = 'gigaom';
 	}// end __construct
 
 	/**

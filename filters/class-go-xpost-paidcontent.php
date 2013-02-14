@@ -1,10 +1,14 @@
 <?php
 
-class GO_XPost_Paidcontent extends GO_XPost
+class GO_XPost_Filter_Paidcontent
 {
-	public function __construct( $config )
+	/**
+	 * URL of the site that this filter will apply to
+	 */
+	public $endpoint_url;
+
+	public function __construct( $endpoint_url )
 	{
-		parent::__construct( $config );
 	} // END __construct
 
 	/**
@@ -13,7 +17,7 @@ class GO_XPost_Paidcontent extends GO_XPost
 	 * @param  absint $post_id, string $target_property
 	 * @return boolean
 	 */
-	public function should_process_post( $post_id, $target_property )
+	public function should_send_post( $post_id )
 	{
 		if ( 'pro' == $target_property && 'go-datamodule' != get_post( $post_id )->post_type )
 		{
