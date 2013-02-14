@@ -26,6 +26,10 @@ abstract class GO_XPost
 		$this->endpoints  = $config['endpoints'];
 		$this->post_types = ( isset( $config['post_types'] ) ) ? array_merge( $config['post_types'], $this->post_types ) : $this->post_types;
 
+		require __DIR__ . '/class-go-xpost-admin.php';
+		new GO_XPost_Admin;
+
+		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'edit_post', array( $this, 'edit_post' ) );
 		add_action( 'go_xpost_receive_push', array( $this, 'receive_push' ) );
 		add_filter( 'go_xpost_post_filter', array( $this, 'post_filter' ) );
