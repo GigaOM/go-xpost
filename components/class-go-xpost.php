@@ -5,8 +5,10 @@
  */
 class GO_XPost
 {
-	protected $filters = array();
+	protected $filters    = array();
 	protected $post_types = array( 'post' );
+	protected $secret;
+	
 	public $slug = 'go-xpost';
 
 	public function __construct()
@@ -18,6 +20,7 @@ class GO_XPost
 		}// end if
 
 		$this->load_filters();
+		$this->secret = $this->get_secret();
 
 		// @TODO: these need to be defined in the filters?
 		$this->post_types = ( isset( $config['post_types'] ) ) ? array_merge( $config['post_types'], $this->post_types ) : $this->post_types;
@@ -92,7 +95,7 @@ class GO_XPost
 					)
 				);
 
-				go_xpost_util()->push( $filter->endpoint_url, $post_id, $filter->endpoint_secret );
+				go_xpost_util()->push( $filter->endpoint_url, $post_id, $this->secret );
 			}// end if
 		} // END foreach
 	} // END process_post
@@ -125,10 +128,10 @@ class GO_XPost
 	/**
 	 * Get the secret for this site
 	 */
-	public function get_mysecret()
+	public function get_secret()
 	{
-		return get_option( $this->slug . '-mysecret' );
-	} // END get_mysecret
+		return get_option( $this->slug . '-secret' );
+	} // END get_secret
 
 	/**
 	 * Load the filters as defined in settings, will instantiate objects for each
