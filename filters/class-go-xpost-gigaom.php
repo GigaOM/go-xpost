@@ -1,10 +1,14 @@
 <?php
 
-class GO_XPost_Gigaom extends GO_XPost
+class GO_XPost_Filter_Gigaom
 {
-	public function __construct( $config )
+	/**
+	 * URL of the site that this filter will apply to
+	 */
+	public $endpoint_url;
+
+	public function __construct( $endpoint )
 	{
-		parent::__construct( $config );
 	} // END __construct
 
 	/**
