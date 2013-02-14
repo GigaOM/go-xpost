@@ -92,7 +92,7 @@ class GO_XPost
 					)
 				);
 
-				go_xpost_util()->push( $filter->endpoint_url, $post_id );
+				go_xpost_util()->push( $filter->endpoint_url, $post_id, $filter->endpoint_secret );
 			}// end if
 		} // END foreach
 	} // END process_post
@@ -103,7 +103,7 @@ class GO_XPost
 	public function receive_push( $post )
 	{
 		// Remove edit_post action so we don't trigger an accidental crosspost
-		remove_action( 'edit_post', array( $this, 'edit_post' ));
+		remove_action( 'edit_post', array( $this, 'edit_post' ) );
 	}// end receive_push
 
 	/**
@@ -115,11 +115,20 @@ class GO_XPost
 			array(
 				'filter'   => '',
 				'endpoint' => '',
+				'secret' => '',
 			)
 		);
 
 		return get_option( $this->slug . '-settings', $default );
 	} // END get_settings
+
+	/**
+	 * Get the secret for this site
+	 */
+	public function get_mysecret()
+	{
+		return get_option( $this->slug . '-mysecret' );
+	} // END get_mysecret
 
 	/**
 	 * Load the filters as defined in settings, will instantiate objects for each

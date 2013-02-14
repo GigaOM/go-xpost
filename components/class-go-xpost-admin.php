@@ -30,9 +30,11 @@ class GO_XPost_Admin
 		if ( ! current_user_can( 'manage_options' ) )
 		{
 			return;
-		}
+		}// end if
 
 		$settings = go_xpost()->get_settings();
+		$mysecret = go_xpost()->get_mysecret();
+		
 		$filters  = $this->_get_filters();
 
 		$add_link = '<a href="#add-endpoint" title="Add Filter/Endpoint" class="' . $this->slug . '-add-endpoint button">Add Endpoint</a>';
@@ -62,7 +64,7 @@ class GO_XPost_Admin
 					<p><strong><?php echo $this->name ?> settings updated.</strong></p>
 				</div>
 				<?php
-			}
+			}// end if
 			?>
 			<?php screen_icon('options-general'); ?>
 			<?php echo $add_link; ?>
@@ -77,16 +79,20 @@ class GO_XPost_Admin
 						$setting_numbers .= $key + 1 . ',';
 						?>
 						<li>
-							<div class="filter">
+							<div class="xpost-filter">
 								<label for="<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>"><strong>Filter</strong></label><br />
 								<select name='<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>' class='select' id="<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>">
 									<?php echo $this->_build_options( $filters, $item['filter'] ); ?>
 								</select>
 							</div>
-							<div class="endpoint">
+							<div class="xpost-endpoint">
 								<a href="#remove-endpoint" title="Remove Filter/Endpoint" class="<?php echo $this->slug; ?>-delete-endpoint">Delete</a>
 								<label for="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>"><strong>Endpoint</strong></label><br />
-								<input class="input" type="text" name="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" value="<?php echo esc_attr($item['endpoint']); ?>" style="width: 100%;" placeholder="http://domain/wp-admin/admin-ajax.php" />
+								<input class="input" type="text" name="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" value="<?php echo esc_attr($item['endpoint']); ?>" placeholder="http://domain/wp-admin/admin-ajax.php" />
+							</div>
+							<div class="xpost-secret">
+								<label for="<?php echo $this->slug; ?>-secret-<?php echo $key + 1; ?>"><strong>Secret</strong></label><br />
+								<input class="input" type="text" name="<?php echo $this->slug; ?>-secret-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-secret-<?php echo $key + 1; ?>" value="<?php echo esc_attr($item['secret']); ?>" placeholder="something complex" />
 							</div>
 							<input type="hidden" name="<?php echo $this->slug; ?>-number-<?php echo $key + 1; ?>" value="<?php echo $key + 1; ?>" class="number" />
 						</li>
@@ -94,6 +100,12 @@ class GO_XPost_Admin
 					} // END foreach
 					?>
 				</ul>
+
+				<div class="xpost-mysecret">
+					<label for="<?php echo $this->slug; ?>-mysecret"><strong>My Secret</strong></label><br />
+					<input class="input" type="text" name="<?php echo $this->slug; ?>-mysecret" id="<?php echo $this->slug; ?>-mysecret" value="<?php echo esc_attr( $mysecret ); ?>" placeholder="something complex" />
+				</div>	
+
 				<p class="submit">
 					<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
 					<input type="hidden" name="setting-numbers" class="setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
@@ -110,12 +122,12 @@ class GO_XPost_Admin
 		if ( ! isset( $_POST['save-' . $this->slug . '-settings'] ) || ! check_admin_referer( 'save-' . $this->slug . '-settings' ) )
 		{
 			return;
-		}
+		}// end if
 
 		if ( ! current_user_can( 'manage_options' ) )
 		{
 			return;
-		}
+		}// end if
 
 		$numbers_array = explode( ',', $_POST['setting-numbers'] );
 
@@ -126,16 +138,18 @@ class GO_XPost_Admin
 			if ( isset( $_POST[$this->slug . '-endpoint-' . $number] ) && preg_match( '#((https?)\:\/\/)#', $_POST[$this->slug . '-endpoint-' . $number] ) )
 			{
 				$compiled_settings[] = array(
-					'filter'   => $_POST[$this->slug . '-filter-' . $number],
-					'endpoint' => $_POST[$this->slug . '-endpoint-' . $number],
+					'filter'   => $_POST[ $this->slug . '-filter-' . $number ],
+					'endpoint' => $_POST[ $this->slug . '-endpoint-' . $number ],
+					'secret'   => $_POST[ $this->slug . '-secret-' . $number ],
 				);
-			}
+			}// end if
 		} // END foreach
 
 		if ( ! empty( $compiled_settings ) )
 		{
 			update_option( $this->slug . '-settings', $compiled_settings );
-		}
+			update_option( $this->slug . '-mysecret', $_POST[ $this->slug . '-mysecret' ] );
+		}// end if
 	} // END update_settings
 
 	private function _get_filters()
@@ -149,10 +163,10 @@ class GO_XPost_Admin
 			if ( ! $file->isFile() || 'php' != $file->getExtension() )
 			{
 				continue;
-			}
+			}// end if
 
 			$filters[basename( $file )] = basename( $file );
-		}
+		}// end foreach
 
 		return $filters;
 	} // END _get_filters
@@ -164,7 +178,7 @@ class GO_XPost_Admin
 		foreach ( $options as $option => $text )
 		{
 			$select_options .= '<option value="' . $option . '"' . selected( $option, $existing, FALSE ) . '>' . $text . '</option>' . "\n";
-		}
+		}// end foreach
 
 		return $select_options;
 	}// END _build_options

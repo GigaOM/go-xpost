@@ -7,8 +7,15 @@ class GO_XPost_Filter_Paidcontent
 	 */
 	public $endpoint_url;
 
+	/**
+	 * The shared secret that is configured for this endpoint
+	 */
+	public $endpoint_secret;
+
 	public function __construct( $endpoint_url )
 	{
+		$this->endpoint_url = $endpoint_url;
+		$this->endpoint_secret = $endpoint_secret;
 	} // END __construct
 
 	/**
@@ -24,7 +31,7 @@ class GO_XPost_Filter_Paidcontent
 		{
 			return FALSE;
 		}// end if
-		
+
 		// Get the post channels
 		$channels = wp_get_object_terms( $post_id, 'channel', array( 'fields' => 'slugs' ) );
 

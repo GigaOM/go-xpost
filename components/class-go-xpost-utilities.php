@@ -202,7 +202,7 @@ class GO_XPost_Utilities
 	/**
 	 * Ping an endpoint to tell it to get the post
 	 */
-	public function push( $endpoint, $post_id )
+	public function push( $endpoint, $post_id, $secret )
 	{
 		// check the post_id
 		$post_id = $this->sanitize_post_id( $post_id );
@@ -225,7 +225,7 @@ class GO_XPost_Utilities
 			'post_id'  => $post_id,
 		);
 
-		$query_array['signature'] = $this->build_identity_hash( $query_array );
+		$query_array['signature'] = $this->build_identity_hash( $query_array, $secret );
 
 		// send the ping
 		$return = wp_remote_post( $endpoint, array( 'body' => $query_array, 'timeout' => 20 ) );
@@ -258,13 +258,13 @@ class GO_XPost_Utilities
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
-		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array ) )
+		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, go_xpost()->get_mysecret() ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_POST, 401 );
 		}//end if
 
 		// log this
-		apply_filters( 'go_slog', 'go-xpost-received-push', urldecode( $_POST['source'] ) .' '. $_POST['post_id'], $_POST );
+		apply_filters( 'go_slog', 'go-xpost-received-push', urldecode( $_POST['source'] ) . ' ' . $_POST['post_id'], $_POST );
 
 		// OK, we're good to go, but let's wait a moment for everything to settle on the other side
 		sleep( 3 );
@@ -275,7 +275,7 @@ class GO_XPost_Utilities
 			'post_id'  => (int) $_POST['post_id'],
 		);
 
-		$query_array['signature'] = $this->build_identity_hash( $query_array );
+		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->get_mysecret() );
 
 		// fetch and decode the post
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
@@ -286,7 +286,7 @@ class GO_XPost_Utilities
 		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
 			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
-		}
+		}// end if
 
 		// report our success
 		apply_filters( 'go_slog', 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );
@@ -567,7 +567,7 @@ class GO_XPost_Utilities
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
-			if ( $signature != $this->build_identity_hash( $ping_array ) )
+			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->get_mysecret() ) )
 			{
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
 			}//end if
@@ -605,13 +605,13 @@ class GO_XPost_Utilities
 	 * @return string $signature
 	 * @author Vasken Hauri
 	 */
-	public function build_identity_hash( $params )
+	public function build_identity_hash( $params, $secret )
 	{
 		if ( ! is_array( $params ))
 		{
 			parse_str( $params, $param_arr );
 			$params = $param_arr;
-		}
+		}// end if
 
 		//sort the params
 		ksort( $params );
@@ -621,9 +621,7 @@ class GO_XPost_Utilities
 
 		//calculate an HMAC with SHA256 and base64-encoding a la Amazon
 		//http://mierendo.com/software/aws_signed_query/
-		// @TODO there is a dependency here on go_config and the social config file.  Is this appropriate
-		$config    = go_config()->load('social');
-		$signature = base64_encode( hash_hmac( 'sha256', $string_to_sign, $config['social_identity_shared_secret'] ));
+		$signature = base64_encode( hash_hmac( 'sha256', $string_to_sign, $secret ) );
 
 		//make sure the signature is url_encoded properly
 		$signature = str_replace( '%7E', '~', rawurlencode( $signature ));
