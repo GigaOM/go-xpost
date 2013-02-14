@@ -16,7 +16,7 @@ class GO_XPost
 			require __DIR__ . '/class-go-xpost-admin.php';
 			go_xpost_admin();
 		}// end if
-		
+
 		$this->load_filters();
 
 		// @TODO: these need to be defined in the filters?
@@ -24,7 +24,7 @@ class GO_XPost
 
 		add_action( 'edit_post', array( $this, 'edit_post' ) );
 		// hook to the receive push to remove the edit_post action
-		add_action( 'go_xpost_receive_push', array( $this, 'receive_push' ) );		
+		add_action( 'go_xpost_receive_push', array( $this, 'receive_push' ) );
 
 		// hook the utility functions in GO_XPost_Utilities to admin ajax requests
 		add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
@@ -82,7 +82,7 @@ class GO_XPost
 		// Loop through filters and push to them if appropriate
 		foreach ( $this->filters as $filter )
 		{
-			if ( $post_id = $filter->should_process_post( $post_id ) )
+			if ( $post_id = $filter->should_send_post( $post_id ) )
 			{
 				// log that we are xposting
 				apply_filters( 'go_slog', 'go-xpost-start', 'XPost from ' . $this->property . ' to ' . $target_property . ': START!',
@@ -117,22 +117,26 @@ class GO_XPost
 				'endpoint' => '',
 			)
 		);
-		
+
 		return get_option( $this->slug . '-settings', $default );
 	} // END get_settings
-	
+
 	/**
 	 * Load the filters as defined in settings, will instantiate objects for each
 	 */
 	private function load_filters()
 	{
 		$settings = $this->get_settings();
+do_action('debug_robot', print_r($settings,true));
 
 		foreach ( $settings as $setting )
 		{
-			include_once dirname( __DIR__ ) . '/filters/' . $setting['filter'];
-			$classname = 'GO_XPost_Filter_' . ucfirst( preg_replace( '/class-go-xpost-(.*)\.php/', '$1', $setting['filter'] ) );			
-			$this->filters[] = new $classname( $setting['endpoint'] );
+			if ( $setting['filter'] )
+			{
+				include_once dirname( __DIR__ ) . '/filters/' . $setting['filter'];
+				$classname = 'GO_XPost_Filter_' . ucfirst( preg_replace( '/class-go-xpost-(.*)\.php/', '$1', $setting['filter'] ) );
+				$this->filters[] = new $classname( $setting['endpoint'] );
+			}// end if
 		}// end foreach
 	}// end load_filters
 }//end class

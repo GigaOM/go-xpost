@@ -34,7 +34,7 @@ class GO_XPost_Filter_Firehose
 	public function should_send_post( $post_id )
 	{
 		return TRUE;
-	}// end should_process_post
+	}// end should_send_post
 
 	/**
 	 * Alter the $post object before returning it to the endpoint
