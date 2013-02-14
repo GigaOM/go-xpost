@@ -1,0 +1,32 @@
+/* @override 
+	http://pc.localhost/wp-content/themes/vip/gigaom2/plugins/go-xpost/components//css/go-xpost.css?ver=3.5.1 */
+
+a.go-xpost-add-endpoint.button {
+	float: right;
+	margin-top: 1em;
+}
+
+.go-xpost-settings li {
+	background: #eee;
+	border: 1px solid #ddd;
+	margin-bottom: 1em;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	-o-border-radius: 5px;
+	border-radius: 5px;
+	padding: 0.7em 1.3em 1em 0.5em;
+}
+
+.go-xpost-settings li .filter {
+	margin-top: 0;
+	width: 240px;
+	float: left;
+}
+
+.go-xpost-settings li .endpoint {
+	margin-left:  250px;
+}
+
+.go-xpost-settings li .go-xpost-delete-endpoint {
+	float: right;
+}
