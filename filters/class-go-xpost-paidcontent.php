@@ -26,6 +26,6 @@ class GO_XPost_Filter_Paidcontent
 		} // END if
 		
 		return TRUE;
-	} // END should_process_post
+	} // END should_send_post
 
 } // END GO_XPost_Paidcontent

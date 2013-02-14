@@ -17,9 +17,9 @@ class GO_XPost_Filter_Search
 	 * @param  absint $post_id, string $target_property
 	 * @return boolean
 	 */
-	public function should_process_post( $post_id, $target_property )
+	public function should_send_post( $post_id, $target_property )
 	{
 		return TRUE;
-	} // END should_process_post
+	} // END should_send_post
 
 } // END GO_XPost_Search
