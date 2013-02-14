@@ -7,8 +7,15 @@ class GO_XPost_Filter_Gigaom
 	 */
 	public $endpoint_url;
 
+	/**
+	 * The shared secret that is configured for this endpoint
+	 */
+	public $endpoint_secret;
+
 	public function __construct( $endpoint )
 	{
+		$this->endpoint_url = $endpoint_url;
+		$this->endpoint_secret = $endpoint_secret;
 	} // END __construct
 
 	/**
