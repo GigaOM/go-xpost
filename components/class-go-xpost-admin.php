@@ -5,14 +5,14 @@ class GO_XPost_Admin
 	public $name       = 'GigaOM xPost';
 	public $short_name = 'GO xPost';
 	public $slug       = 'go-xpost';
-		
+
 	public function __construct()
 	{
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'admin_init', array( $this, 'update_settings' ) );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'wp_ajax_go_xpost_update_settings', array( $this, 'update_settings' ) );
-	}
+	}// end __construct
 
 	public function init()
 	{
@@ -31,10 +31,10 @@ class GO_XPost_Admin
 		{
 			return;
 		}
-		
-		$settings = $this->_get_settings();
+
+		$settings = go_xpost()->get_settings();
 		$filters  = $this->_get_filters();
-		
+
 		$add_link = '<a href="#add-endpoint" title="Add Filter/Endpoint" class="' . $this->slug . '-add-endpoint button">Add Endpoint</a>';
 		?>
 		<!-- This is for the Add button so it has a template to work off of. -->
@@ -71,7 +71,7 @@ class GO_XPost_Admin
 				<ul class="<?php echo $this->slug; ?>-settings">
 					<?php
 					$setting_numbers = '';
-					
+
 					foreach ( $settings as $key => $item )
 					{
 						$setting_numbers .= $key + 1 . ',';
@@ -103,24 +103,24 @@ class GO_XPost_Admin
 		</div>
 		<?php
 	} // END settings
-	
+
 	public function update_settings()
-	{		
+	{
 		// Check nonce
 		if ( ! isset( $_POST['save-' . $this->slug . '-settings'] ) || ! check_admin_referer( 'save-' . $this->slug . '-settings' ) )
 		{
 			return;
 		}
-		
+
 		if ( ! current_user_can( 'manage_options' ) )
 		{
 			return;
 		}
-		
+
 		$numbers_array = explode( ',', $_POST['setting-numbers'] );
-		
+
 		$compiled_settings = array();
-		
+
 		foreach ( $numbers_array as $number )
 		{
 			if ( isset( $_POST[$this->slug . '-endpoint-' . $number] ) && preg_match( '#((https?)\:\/\/)#', $_POST[$this->slug . '-endpoint-' . $number] ) )
@@ -131,54 +131,53 @@ class GO_XPost_Admin
 				);
 			}
 		} // END foreach
-				
+
 		if ( ! empty( $compiled_settings ) )
-		{			
+		{
 			update_option( $this->slug . '-settings', $compiled_settings );
 		}
 	} // END update_settings
-	
-	private function _get_settings()
-	{
-		$default = array(
-			array(
-				'filter'   => '',
-				'endpoint' => '',
-			)
-		);
-		
-		return get_option( $this->slug . '-settings', $default );
-	} // END _get_settings
-	
+
 	private function _get_filters()
 	{
 		$directory_contents = new DirectoryIterator( dirname( __DIR__ ) . '/filters/' );
-		
+
 		$filters = array();
-		
+
 		foreach ( $directory_contents as $file )
 		{
 			if ( ! $file->isFile() || 'php' != $file->getExtension() )
 			{
 				continue;
 			}
-			
+
 			$filters[basename( $file )] = basename( $file );
 		}
 
 		return $filters;
 	} // END _get_filters
-	
+
 	private function _build_options( $options, $existing )
 	{
 		$select_options = '';
 
 		foreach ( $options as $option => $text )
-		{		
+		{
 			$select_options .= '<option value="' . $option . '"' . selected( $option, $existing, FALSE ) . '>' . $text . '</option>' . "\n";
 		}
 
 		return $select_options;
-	}
-	// END _build_options
+	}// END _build_options
 }//end GO_XPost_Admin
+
+function go_xpost_admin()
+{
+	global $go_xpost_admin;
+
+	if ( ! isset( $go_xpost_admin ) )
+	{
+		$go_xpost_admin = new GO_XPost_Admin();
+	}// end if
+
+	return $go_xpost_admin;
+}// end go_xpost_util

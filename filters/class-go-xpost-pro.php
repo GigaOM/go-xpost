@@ -1,10 +1,14 @@
 <?php
 
-class GO_XPost_Pro extends GO_XPost
+class GO_XPost_Filter_Pro
 {
-	public function __construct( $config )
+	// URL of the site that this filter will apply to
+	public $endpoint_url;
+
+	public function __construct( $endpoint_url )
 	{
-		parent::__construct( $config );
+		$this->endpoint_url = $endpoint_url;
+		add_filter( 'go_xpost_post_filter', array( $this, 'post_filter' ) );
 	} // END __construct
 
 	/**

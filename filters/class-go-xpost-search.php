@@ -1,10 +1,14 @@
 <?php
 
-class GO_XPost_Search extends GO_XPost
+class GO_XPost_Filter_Search
 {
-	public function __construct( $config )
+	/**
+	 * URL of the site that this filter will apply to
+	 */
+	public $endpoint_url;
+
+	public function __construct( $endpoint_url )
 	{
-		parent::__construct( $config );
 	} // END __construct
 
 	/**
