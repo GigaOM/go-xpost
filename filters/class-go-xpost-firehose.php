@@ -42,7 +42,7 @@ class GO_XPost_Filter_Firehose
 	 * @param  object $post, string $requesting_property
 	 * @return $post WP_Post
 	 */
-	public function post_filter( $post, $requesting_property )
+	public function post_filter( $post )
 	{
 		return $post;
 	}// end post_filter
