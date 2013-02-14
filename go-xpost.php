@@ -32,7 +32,7 @@ $config = array(
 $config = apply_filters( 'go_xpost_config', $config );
 
 // Load appropriate filters for this property
-require_once __DIR__ . '/local/class-go-xpost-' . $config['property'] . '.php';
+require_once __DIR__ . '/filter/class-go-xpost-' . $config['property'] . '.php';
 
 // Instantiate the class
 global $goxpost;
