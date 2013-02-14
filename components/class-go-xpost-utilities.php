@@ -258,7 +258,7 @@ class GO_XPost_Utilities
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
-		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, $this->secret ) )
+		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_POST, 401 );
 		}//end if
@@ -275,7 +275,7 @@ class GO_XPost_Utilities
 			'post_id'  => (int) $_POST['post_id'],
 		);
 
-		$query_array['signature'] = $this->build_identity_hash( $query_array, $this->secret );
+		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->secret );
 
 		// fetch and decode the post
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
@@ -567,7 +567,7 @@ class GO_XPost_Utilities
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
-			if ( $signature != $this->build_identity_hash( $ping_array, $this->secret ) )
+			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 			{
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
 			}//end if

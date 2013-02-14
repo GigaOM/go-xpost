@@ -7,9 +7,9 @@ class GO_XPost
 {
 	protected $filters    = array();
 	protected $post_types = array( 'post' );
-	protected $secret;
 	
 	public $slug = 'go-xpost';
+	public $secret;
 
 	public function __construct()
 	{
