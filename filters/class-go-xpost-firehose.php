@@ -12,15 +12,21 @@ class GO_XPost_Filter_Firehose
 	 * URL of the site that this filter will apply to
 	 */
 	public $endpoint_url;
+	
+	/**
+	 * The shared secret that is configured for this endpoint
+	 */
+	public $endpoint_secret;
 
 	/**
-	 * set the endpoint and 
+	 * set the endpoint and secret
 	 *
 	 * @param $endpoint string URL of the endpoint
 	 */
-	public function __construct( $endpoint_url )
+	public function __construct( $endpoint_url, $endpoint_secret )
 	{
 		$this->endpoint_url = $endpoint_url;
+		$this->endpoint_secret = $endpoint_secret;
 
 		add_filter( 'go_xpost_post_filter', array( $this, 'post_filter' ) );
 	}// end __construct

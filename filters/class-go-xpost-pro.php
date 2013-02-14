@@ -2,12 +2,21 @@
 
 class GO_XPost_Filter_Pro
 {
-	// URL of the site that this filter will apply to
+	/**
+	 * URL of the site that this filter will apply to
+	 */
 	public $endpoint_url;
+
+	/**
+	 * The shared secret that is configured for this endpoint
+	 */
+	public $endpoint_secret;
 
 	public function __construct( $endpoint_url )
 	{
 		$this->endpoint_url = $endpoint_url;
+		$this->endpoint_secret = $endpoint_secret;
+
 		add_filter( 'go_xpost_post_filter', array( $this, 'post_filter' ) );
 	} // END __construct
 
@@ -42,7 +51,7 @@ class GO_XPost_Filter_Pro
 		{
 			// go_shortpost and go-report don't exist on GO or pC
 			$post->post->post_type = 'post';
-			
+
 			// replace the content with the excerpt
 			if ( ! empty( $post->post->post_excerpt ))
 			{
@@ -91,7 +100,7 @@ class GO_XPost_Filter_Pro
 			unset( $post->terms['category'] );
 			unset( $post->terms['author'] );
 		} // END if
-		
+
 		return $post;
 	} // END post_filter
 } // END GO_XPost_Pro

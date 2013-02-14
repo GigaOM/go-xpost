@@ -6,9 +6,16 @@ class GO_XPost_Filter_Search
 	 * URL of the site that this filter will apply to
 	 */
 	public $endpoint_url;
+	
+	/**
+	 * The shared secret that is configured for this endpoint
+	 */
+	public $endpoint_secret;
 
-	public function __construct( $endpoint_url )
+	public function __construct( $endpoint_url, $endpoint_secret )
 	{
+		$this->endpoint_url = $endpoint_url;
+		$this->endpoint_secret = $endpoint_secret;
 	} // END __construct
 
 	/**
