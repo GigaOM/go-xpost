@@ -7,14 +7,12 @@
 
 class GO_XPost_Utilities
 {
-	public $property;
 	private $pinged         = array();
 	// @TODO: insert a comment here explaining the significance of this author_id
 	public $guest_author_id = 16281271;
 
 	public function __construct()
 	{
-		$this->property = 'gigaom';
 	}// end __construct
 
 	/**
@@ -22,12 +20,13 @@ class GO_XPost_Utilities
 	 */
 	private function end_http_connection()
 	{
-		ob_end_clean();
+		// suppressing errors from output bufferringn because this is precautionary, and will throw a notice in many cases.
+		@ob_end_clean();
 		header('Connection: close');
 		header("Content-Encoding: none\r\n");
 
 		// buffer all upcoming output
-		ob_start();
+		@ob_start();
 
 		print TRUE;
 		// get the size of the output
@@ -38,7 +37,6 @@ class GO_XPost_Utilities
 
 		// flush all output
 		ob_end_flush();
-		ob_flush();
 		flush();
 
 		// close current session
@@ -97,7 +95,7 @@ class GO_XPost_Utilities
 		return $r;
 	}//end get_attachment
 
-	public function get_post( $post_id, $requesting_property )
+	public function get_post( $post_id )
 	{
 		// check the post_id
 		$post_id = $this->sanitize_post_id( $post_id );
@@ -166,7 +164,7 @@ class GO_XPost_Utilities
 		unset( $r->meta['_go_log'] );
 		unset( $r->meta['_go_comment_cache'] );
 
-		return apply_filter( 'go_xpost_post_filter', $r, $requesting_property );
+		return apply_filters( 'go_xpost_post_filter', $r );
 	}//end get_post
 
 	private function post_exists( $post )
@@ -225,7 +223,6 @@ class GO_XPost_Utilities
 			'action'   => 'go_xpost_push',
 			'source'   => urlencode( admin_url( '/admin-ajax.php' )),
 			'post_id'  => $post_id,
-			'property' => $this->property,
 		);
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array );
@@ -276,7 +273,6 @@ class GO_XPost_Utilities
 		$query_array = array(
 			'action'   => 'go_xpost_pull',
 			'post_id'  => (int) $_POST['post_id'],
-			'property' => $this->property,
 		);
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array );
@@ -575,26 +571,33 @@ class GO_XPost_Utilities
 			{
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
 			}//end if
+			
+			
+			do_action('debug_robot', site_url());
+			do_action('debug_robot', $signature);
+			do_action('debug_robot', print_r($ping_array,true));
+
+			
 		}//end if
 		else // allow logged in users to make unsigned requests for easier debugging
 		{
 			$ping_array = $_REQUEST;
 		}//end else
 
-		// if we don't have a post ID or property value, don't continue
-		if ( ! isset( $ping_array['post_id'] ) || ! is_numeric( $ping_array['post_id'] ) || ! isset( $ping_array['property'] ) )
+		// if we don't have a post ID, don't continue
+		if ( ! isset( $ping_array['post_id'] ) || ! is_numeric( $ping_array['post_id'] ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-pull', 'Forbidden or missing parameters', $ping_array, 403 );
 		}//end if
 
 		// we're good, get and send the post
-		if ( 'prettyprint' == $ping_array['output'] )
+		if ( isset( $ping_array['output'] ) && 'prettyprint' == $ping_array['output'] )
 		{
-			echo '<pre>'. print_r( $this->get_post( $ping_array['post_id'], $ping_array['property'] ), TRUE ) .'</pre>';
+			echo '<pre>'. print_r( $this->get_post( $ping_array['post_id'] ), TRUE ) .'</pre>';
 		}//end if
 		else
 		{
-			echo serialize( $this->get_post( $ping_array['post_id'], $ping_array['property'] ));
+			echo serialize( $this->get_post( $ping_array['post_id'] ) );
 		}//end else
 
 		apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] .' '. $ping_array['post_id'], $ping_array );
@@ -675,13 +678,13 @@ class GO_XPost_Utilities
 	}//end error_and_die
 }//end class
 
-function go_xpost_util( $property = '' )
+function go_xpost_util()
 {
 	global $go_xpost_util;
 
 	if ( ! isset( $go_xpost_util ) )
 	{
-		$go_xpost_util = new GO_XPost_Utilities( $property );
+		$go_xpost_util = new GO_XPost_Utilities();
 	}// end if
 
 	return $go_xpost_util;

@@ -82,10 +82,10 @@ class GO_XPost
 		// Loop through filters and push to them if appropriate
 		foreach ( $this->filters as $filter )
 		{
-			if ( $post_id = $filter->should_send_post( $post_id ) )
+			if ( $filter->should_send_post( $post_id ) )
 			{
 				// log that we are xposting
-				apply_filters( 'go_slog', 'go-xpost-start', 'XPost from ' . $this->property . ' to ' . $target_property . ': START!',
+				apply_filters( 'go_slog', 'go-xpost-start', 'XPost from ' . site_url() . ' to ' . $filter->endpoint_url . ': START!',
 					array(
 						'post_id'   => $post_id,
 						'post_type' => get_post( $post_id )->post_type,
@@ -127,7 +127,6 @@ class GO_XPost
 	private function load_filters()
 	{
 		$settings = $this->get_settings();
-do_action('debug_robot', print_r($settings,true));
 
 		foreach ( $settings as $setting )
 		{
