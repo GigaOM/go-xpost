@@ -19,14 +19,16 @@ class GO_XPost_Filter_Pro
 	 */
 	public function should_send_post( $post_id, $target_property )
 	{
-		// GO should not get graphs from PRO
-		if ( 'gigaom' == $target_property && 'go-datamodule' == get_post( $post_id)->post_type )
+		// Pro wants charts
+		if ( 'go-datamodule' == get_post( $post_id )->post_type )
 		{
-			return FALSE;
+			return TRUE;
 		} // END if
-		
-		return TRUE;
+
+		return FALSE;
 	} // END should_send_post
+
+	// @TODO: this filter is currently out of place
 
 	/**
 	 * Get the $post object before returning it to a property

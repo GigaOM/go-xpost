@@ -571,13 +571,6 @@ class GO_XPost_Utilities
 			{
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
 			}//end if
-			
-			
-			do_action('debug_robot', site_url());
-			do_action('debug_robot', $signature);
-			do_action('debug_robot', print_r($ping_array,true));
-
-			
 		}//end if
 		else // allow logged in users to make unsigned requests for easier debugging
 		{
