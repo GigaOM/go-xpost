@@ -19,12 +19,22 @@ class GO_XPost_Filter_Paidcontent
 	 */
 	public function should_send_post( $post_id )
 	{
-		if ( 'pro' == $target_property && 'go-datamodule' != get_post( $post_id )->post_type )
+		// Don't send any graphs to PC
+		if ( 'go-datamodule' == get_post( $post_id )->post_type )
 		{
-			// pC should only push charts to pro
 			return FALSE;
-		} // END if
+		}// end if
 		
+		// Get the post channels
+		$channels = wp_get_object_terms( $post_id, 'channel', array( 'fields' => 'slugs' ) );
+
+		// Check for media in the list of channels
+		if ( is_array( $channels ) && ! in_array( 'media', $channels ) )
+		{
+			// If media isn't in the list we shouldn't push this to paidContent
+			return FALSE;
+		}
+
 		return TRUE;
 	} // END should_send_post
 
