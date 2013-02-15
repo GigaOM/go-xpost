@@ -33,7 +33,7 @@ class GO_XPost_Admin
 		}// end if
 
 		$settings = go_xpost()->get_settings();
-		$mysecret = go_xpost()->get_mysecret();
+		$secret   = go_xpost()->get_secret();
 		
 		$filters  = $this->_get_filters();
 
@@ -41,27 +41,27 @@ class GO_XPost_Admin
 		?>
 		<!-- This is for the Add button so it has a template to work off of. -->
 		<li style="display: none;" class="<?php echo $this->slug; ?>-setting-template">
-			<div class="filter">
+			<a href="#remove-endpoint" title="Remove Filter/Endpoint" class="<?php echo $this->slug; ?>-delete-endpoint">Delete</a>
+			<div class="<?php echo $this->slug; ?>-filter">
 				<label for="<?php echo $this->slug; ?>-filter-keynum"><strong>Filter</strong></label><br />
 				<select name='<?php echo $this->slug; ?>-filter-keynum' class='select' id="<?php echo $this->slug; ?>-filter-keynum">
 					<?php echo $this->_build_options( $filters, ''); ?>
 				</select>
 			</div>
-			<div class="endpoint">
-				<a href="#remove-endpoint" title="Remove Filter/Endpoint" class="<?php echo $this->slug; ?>-delete-endpoint">Delete</a>
+			<div class="<?php echo $this->slug; ?>-endpoint">
 				<label for="<?php echo $this->slug; ?>-endpoint-keynum"><strong>Endpoint</strong></label><br />
-				<input class="input" type="text" name="<?php echo $this->slug ;?>-endpoint-keynum" id="<?php echo $this->slug; ?>-endpoint-keynum" value="" style="width: 100%;" placeholder="http://domain/wp-admin/admin-ajax.php" />
+				<input class="input" type="text" name="<?php echo $this->slug ;?>-endpoint-keynum" id="<?php echo $this->slug; ?>-endpoint-keynum" value="" placeholder="http://domain/wp-admin/admin-ajax.php" />
 			</div>
 			<input type="hidden" name="<?php echo $this->slug; ?>-number-keynum" value="keynum" class="number" />
 		</li>
 		<div class="wrap">
 			<?php
-			if ( isset( $_GET['updated'] ) )
+			if ( isset( $_POST['updated'] ) )
 			{
 				?>
 				<br />
 				<div id="go-xpost-settings-updated" class="updated fade">
-					<p><strong><?php echo $this->name ?> settings updated.</strong></p>
+					<p><strong>Settings updated.</strong></p>
 				</div>
 				<?php
 			}// end if
@@ -79,20 +79,16 @@ class GO_XPost_Admin
 						$setting_numbers .= $key + 1 . ',';
 						?>
 						<li>
-							<div class="xpost-filter">
+							<a href="#remove-endpoint" title="Remove Filter/Endpoint" class="<?php echo $this->slug; ?>-delete-endpoint">Delete</a>
+							<div class="<?php echo $this->slug; ?>-filter">
 								<label for="<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>"><strong>Filter</strong></label><br />
 								<select name='<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>' class='select' id="<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>">
 									<?php echo $this->_build_options( $filters, $item['filter'] ); ?>
 								</select>
 							</div>
-							<div class="xpost-endpoint">
-								<a href="#remove-endpoint" title="Remove Filter/Endpoint" class="<?php echo $this->slug; ?>-delete-endpoint">Delete</a>
+							<div class="<?php echo $this->slug; ?>-endpoint">
 								<label for="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>"><strong>Endpoint</strong></label><br />
 								<input class="input" type="text" name="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" value="<?php echo esc_attr($item['endpoint']); ?>" placeholder="http://domain/wp-admin/admin-ajax.php" />
-							</div>
-							<div class="xpost-secret">
-								<label for="<?php echo $this->slug; ?>-secret-<?php echo $key + 1; ?>"><strong>Secret</strong></label><br />
-								<input class="input" type="text" name="<?php echo $this->slug; ?>-secret-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-secret-<?php echo $key + 1; ?>" value="<?php echo esc_attr($item['secret']); ?>" placeholder="something complex" />
 							</div>
 							<input type="hidden" name="<?php echo $this->slug; ?>-number-<?php echo $key + 1; ?>" value="<?php echo $key + 1; ?>" class="number" />
 						</li>
@@ -101,9 +97,10 @@ class GO_XPost_Admin
 					?>
 				</ul>
 
-				<div class="xpost-mysecret">
-					<label for="<?php echo $this->slug; ?>-mysecret"><strong>My Secret</strong></label><br />
-					<input class="input" type="text" name="<?php echo $this->slug; ?>-mysecret" id="<?php echo $this->slug; ?>-mysecret" value="<?php echo esc_attr( $mysecret ); ?>" placeholder="something complex" />
+				<div class="<?php echo $this->slug; ?>-secret">
+					<label for="<?php echo $this->slug; ?>-secret"><strong>Shared Secret</strong></label><br />
+					<input class="input" type="text" name="<?php echo $this->slug; ?>-secret" id="<?php echo $this->slug; ?>-secret" value="<?php echo esc_attr( $secret ); ?>" placeholder="Something complex..." /><br />
+					<em>Secret that is shared between all of the sites being xPosted to/from.</em>
 				</div>	
 
 				<p class="submit">
@@ -140,16 +137,14 @@ class GO_XPost_Admin
 				$compiled_settings[] = array(
 					'filter'   => $_POST[ $this->slug . '-filter-' . $number ],
 					'endpoint' => $_POST[ $this->slug . '-endpoint-' . $number ],
-					'secret'   => $_POST[ $this->slug . '-secret-' . $number ],
+					//'secret'   => $_POST[ $this->slug . '-secret-' . $number ],
 				);
 			}// end if
 		} // END foreach
 
-		if ( ! empty( $compiled_settings ) )
-		{
-			update_option( $this->slug . '-settings', $compiled_settings );
-			update_option( $this->slug . '-mysecret', $_POST[ $this->slug . '-mysecret' ] );
-		}// end if
+		update_option( $this->slug . '-settings', $compiled_settings );
+		update_option( $this->slug . '-secret', $_POST[ $this->slug . '-secret' ] );
+		$_POST['updated'] = TRUE;
 	} // END update_settings
 
 	private function _get_filters()
@@ -159,13 +154,23 @@ class GO_XPost_Admin
 		$filters = array();
 
 		foreach ( $directory_contents as $file )
-		{
+		{			
 			if ( ! $file->isFile() || 'php' != $file->getExtension() )
 			{
 				continue;
 			}// end if
 
-			$filters[basename( $file )] = basename( $file );
+			$template_data = implode( '', file( $file->getPathname() ));
+			
+			$name = '';
+			
+			if ( preg_match( '|Filter Name:(.*)$|mi', $template_data, $name ))
+			{
+				$name = _cleanup_header_comment( $name[1] );
+			}
+
+			$filter = substr( basename( $file, '.php' ), 15 );
+			$filters[$filter] = ( $name ) ? $filter . ' - ' . $name : $filter;
 		}// end foreach
 
 		return $filters;
@@ -194,4 +199,4 @@ function go_xpost_admin()
 	}// end if
 
 	return $go_xpost_admin;
-}// end go_xpost_util
+}// end go_xpost_admin

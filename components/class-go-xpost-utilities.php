@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Provides base functionality for cross posting, 
+ * Provides base functionality for cross posting,
  * could be leveraged via command line in addition to the typical implementation of GO_XPost
  */
 
@@ -202,7 +202,7 @@ class GO_XPost_Utilities
 	/**
 	 * Ping an endpoint to tell it to get the post
 	 */
-	public function push( $endpoint, $post_id, $secret )
+	public function push( $endpoint, $post_id, $secret, $filter )
 	{
 		// check the post_id
 		$post_id = $this->sanitize_post_id( $post_id );
@@ -220,9 +220,10 @@ class GO_XPost_Utilities
 
 		// build and sign the request var array
 		$query_array = array(
-			'action'   => 'go_xpost_push',
-			'source'   => urlencode( admin_url( '/admin-ajax.php' )),
-			'post_id'  => $post_id,
+			'action'  => 'go_xpost_push',
+			'source'  => urlencode( admin_url( '/admin-ajax.php' )),
+			'post_id' => $post_id,
+			'filter'  => $filter,
 		);
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array, $secret );
@@ -258,7 +259,7 @@ class GO_XPost_Utilities
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
-		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, go_xpost()->get_mysecret() ) )
+		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_POST, 401 );
 		}//end if
@@ -271,11 +272,12 @@ class GO_XPost_Utilities
 
 		// build and sign the request var array
 		$query_array = array(
-			'action'   => 'go_xpost_pull',
-			'post_id'  => (int) $_POST['post_id'],
+			'action'  => 'go_xpost_pull',
+			'post_id' => (int) $_POST['post_id'],
+			'filter'  => $_POST['filter'],
 		);
 
-		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->get_mysecret() );
+		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->secret );
 
 		// fetch and decode the post
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
@@ -567,7 +569,7 @@ class GO_XPost_Utilities
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
-			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->get_mysecret() ) )
+			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 			{
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
 			}//end if
@@ -583,14 +585,19 @@ class GO_XPost_Utilities
 			$this->error_and_die( 'go-xpost-invalid-pull', 'Forbidden or missing parameters', $ping_array, 403 );
 		}//end if
 
-		// we're good, get and send the post
+		// Load the filter we got passed
+		$filter = go_xpost()->filters[$_POST['filter']];
+
+		// we're good, get the post, filter it, and then echo it out
+		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ) );
+
 		if ( isset( $ping_array['output'] ) && 'prettyprint' == $ping_array['output'] )
 		{
-			echo '<pre>'. print_r( $this->get_post( $ping_array['post_id'] ), TRUE ) .'</pre>';
+			echo '<pre>'. print_r( $post, TRUE ) .'</pre>';
 		}//end if
 		else
 		{
-			echo serialize( $this->get_post( $ping_array['post_id'] ) );
+			echo serialize( $post );
 		}//end else
 
 		apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] .' '. $ping_array['post_id'], $ping_array );
