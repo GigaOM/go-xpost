@@ -160,17 +160,18 @@ class GO_XPost_Admin
 				continue;
 			}// end if
 
-			$template_data = implode( '', file( $file->getPathname() ));
+			$template_data = implode( '', file( $file->getPathname() ) );
 			
 			$name = '';
 			
+			// only load filters that have names, this will skip the abstract parent
 			if ( preg_match( '|Filter Name:(.*)$|mi', $template_data, $name ))
 			{
-				$name = _cleanup_header_comment( $name[1] );
-			}
+				// remove the class-go-xpost-filter portion of the file
+				$filter = substr( basename( $file, '.php' ), 22 );
 
-			$filter = substr( basename( $file, '.php' ), 15 );
-			$filters[$filter] = ( $name ) ? $filter . ' - ' . $name : $filter;
+				$filters[$filter] = $filter . ' - ' . _cleanup_header_comment( $name[1] );
+			}// end if
 		}// end foreach
 
 		return $filters;
