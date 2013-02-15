@@ -149,9 +149,7 @@ class GO_XPost
 		{
 			if ( $setting['filter'] )
 			{
-				include_once dirname( __DIR__ ) . '/filters/class-go-xpost-' . $setting['filter'] . '.php';
-				$classname = 'GO_XPost_Filter_' . ucfirst( $setting['filter'] );
-				$this->filters[$setting['filter']] = new $classname;
+				$this->load_filter( $setting['filter'] );
 				$this->filters[$setting['filter']]->endpoint = $setting['endpoint'];
 			}// end if
 		}// end foreach
@@ -164,7 +162,7 @@ class GO_XPost
 	{
 		if ( ! isset( $this->filters[$filter] ) )
 		{
-			include_once dirname( __DIR__ ) . '/filters/class-go-xpost-' . $filter . '.php';
+			include_once dirname( __DIR__ ) . '/filters/class-go-xpost-filter-' . $filter . '.php';
 			$classname = 'GO_XPost_Filter_' . ucfirst( $filter );
 			$this->filters[$filter] = new $classname;
 		}

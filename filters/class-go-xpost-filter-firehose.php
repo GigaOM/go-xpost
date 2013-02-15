@@ -1,19 +1,15 @@
 <?php
 
 /*
-Filter Name: Everying -> Endpoint
+Filter Name: Everything -> Endpoint
 */
 
 /**
  * Basic example filter that sends EVERYTHING to the defined endpoint
- *
- * the post_filter added here is entirely uneccessary, but establishes a generic example for others
  */
 
-class GO_XPost_Filter_Firehose
+class GO_XPost_Filter_Firehose extends GO_XPost_Filter
 {
-	public $endpoint = '';
-	
 	/**
 	 * Determine whether a post_id should ping a site
 	 *

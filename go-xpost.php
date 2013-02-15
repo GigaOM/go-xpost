@@ -11,5 +11,6 @@
 
 require_once __DIR__ . '/components/class-go-xpost.php';
 require_once __DIR__ . '/components/class-go-xpost-utilities.php';
+require_once __DIR__ . '/filters/class-go-xpost-filter.php';
 
 go_xpost();
