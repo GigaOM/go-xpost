@@ -1,5 +1,9 @@
 <?php
 
+/*
+Filter Name: Firehose
+*/
+
 /**
  * Basic example filter that sends EVERYTHING to the defined endpoint
  *
@@ -8,33 +12,12 @@
 
 class GO_XPost_Filter_Firehose
 {
-	/**
-	 * URL of the site that this filter will apply to
-	 */
-	public $endpoint_url;
+	public $endpoint = '';
 	
 	/**
-	 * The shared secret that is configured for this endpoint
-	 */
-	public $endpoint_secret;
-
-	/**
-	 * set the endpoint and secret
+	 * Determine whether a post_id should ping a site
 	 *
-	 * @param $endpoint string URL of the endpoint
-	 */
-	public function __construct( $endpoint_url, $endpoint_secret )
-	{
-		$this->endpoint_url = $endpoint_url;
-		$this->endpoint_secret = $endpoint_secret;
-
-		add_filter( 'go_xpost_post_filter', array( $this, 'post_filter' ) );
-	}// end __construct
-
-	/**
-	 * Determine whether a post_id should ping a property
-	 *
-	 * @param  absint $post_id, string $target_property
+	 * @param  absint $post_id
 	 * @return boolean
 	 */
 	public function should_send_post( $post_id )
@@ -45,12 +28,11 @@ class GO_XPost_Filter_Firehose
 	/**
 	 * Alter the $post object before returning it to the endpoint
 	 *
-	 * @param  object $post, string $requesting_property
+	 * @param  object $post
 	 * @return $post WP_Post
 	 */
 	public function post_filter( $post )
 	{
 		return $post;
 	}// end post_filter
-
 }// end GO_XPost_Filter_Firehose

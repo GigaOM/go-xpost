@@ -5,10 +5,10 @@
  */
 class GO_XPost
 {
-	protected $filters    = array();
 	protected $post_types = array( 'post' );
-	
-	public $slug = 'go-xpost';
+
+	public $filters = array();
+	public $slug    = 'go-xpost';
 	public $secret;
 
 	public function __construct()
@@ -83,19 +83,24 @@ class GO_XPost
 		}// end if
 
 		// Loop through filters and push to them if appropriate
-		foreach ( $this->filters as $filter )
+		foreach ( $this->filters as $filter_name => $filter )
 		{
+			if ( empty( $filter->endpoint ) )
+			{
+				continue;
+			}
+			
 			if ( $filter->should_send_post( $post_id ) )
 			{
 				// log that we are xposting
-				apply_filters( 'go_slog', 'go-xpost-start', 'XPost from ' . site_url() . ' to ' . $filter->endpoint_url . ': START!',
+				apply_filters( 'go_slog', 'go-xpost-start', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': START!',
 					array(
 						'post_id'   => $post_id,
 						'post_type' => get_post( $post_id )->post_type,
 					)
 				);
 
-				go_xpost_util()->push( $filter->endpoint_url, $post_id, $this->secret );
+				go_xpost_util()->push( $filter->endpoint, $post_id, $this->secret, $filter_name );
 			}// end if
 		} // END foreach
 	} // END process_post
@@ -144,12 +149,26 @@ class GO_XPost
 		{
 			if ( $setting['filter'] )
 			{
-				include_once dirname( __DIR__ ) . '/filters/' . $setting['filter'];
-				$classname = 'GO_XPost_Filter_' . ucfirst( preg_replace( '/class-go-xpost-(.*)\.php/', '$1', $setting['filter'] ) );
-				$this->filters[] = new $classname( $setting['endpoint'] );
+				include_once dirname( __DIR__ ) . '/filters/class-go-xpost-' . $setting['filter'] . '.php';
+				$classname = 'GO_XPost_Filter_' . ucfirst( $setting['filter'] );
+				$this->filters[$setting['filter']] = new $classname;
+				$this->filters[$setting['filter']]->endpoint = $setting['endpoint'];
 			}// end if
 		}// end foreach
 	}// end load_filters
+	
+	/**
+	 * Load a single filter
+	 */
+	public function load_filter( $filter )
+	{
+		if ( ! isset( $this->filters[$filter] ) )
+		{
+			include_once dirname( __DIR__ ) . '/filters/class-go-xpost-' . $filter . '.php';
+			$classname = 'GO_XPost_Filter_' . ucfirst( $filter );
+			$this->filters[$filter] = new $classname;
+		}
+	} // END load_filter
 }//end class
 
 function go_xpost()

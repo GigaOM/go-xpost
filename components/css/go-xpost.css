@@ -25,7 +25,7 @@ a.go-xpost-add-endpoint.button {
 	margin-bottom: 0.5em;
 }
 
-.go-xpost-settings li .xpost-endpoint input {
+.go-xpost-settings li .go-xpost-endpoint input {
 	width: 350px;
 }
 
