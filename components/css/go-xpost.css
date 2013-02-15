@@ -14,29 +14,25 @@ a.go-xpost-add-endpoint.button {
 	-moz-border-radius: 5px;
 	-o-border-radius: 5px;
 	border-radius: 5px;
-	padding: 0.7em 1.3em 1em 0.5em;
+	padding: 0.7em 1.3em 0.5em 0.5em;
 }
 
-.go-xpost-settings li>div {
+.go-xpost-settings li > div {
 	display: inline-block;
 	margin-top: 0;
 	margin-right: 20px;
 	vertical-align: top;
+	margin-bottom: 0.5em;
 }
 
-.go-xpost-settings li .xpost-endpoint input {
+.go-xpost-settings li .go-xpost-endpoint input {
 	width: 350px;
 }
-
-.go-xpost-settings li .xpost-secret  input{
-	width: 200px;
-}
-
 
 .go-xpost-settings li .go-xpost-delete-endpoint {
 	float: right;
 }
 
-.go-xpost-settings .xpost-mysecret input {
-	width: 200px;
+input#go-xpost-secret.input {
+	width: 530px;
 }
