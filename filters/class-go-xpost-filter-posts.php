@@ -12,7 +12,7 @@ class GO_XPost_Filter_Posts extends GO_XPost_Filter
 	 * @param  absint $post_id
 	 * @return boolean
 	 */
-	public function should_send_post( $post_id, $target_property )
+	public function should_send_post( $post_id )
 	{
 		// Only send posts
 		if ( 'post' != get_post( $post_id )->post_type )
