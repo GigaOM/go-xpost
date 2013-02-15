@@ -1,7 +1,7 @@
 <?php
 
 /*
-Filter Name: Firehose
+Filter Name: Everying -> Endpoint
 */
 
 /**
