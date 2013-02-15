@@ -18,7 +18,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			'go_shortpost',
 			'go-report',
 			'go-datamodule',
-			'go_event',
 			'go_webinar',
 			'post',
 		);
