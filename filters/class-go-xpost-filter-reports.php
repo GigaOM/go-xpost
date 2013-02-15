@@ -4,10 +4,8 @@
 Filter Name: Reports -> Endpoint
 */
 
-class GO_XPost_Filter_Reports
+class GO_XPost_Filter_Reports extends GO_XPost_Filter
 {
-	public $endpoint = '';
-	
 	/**
 	 * Determine whether a post_id should ping a property
 	 *
