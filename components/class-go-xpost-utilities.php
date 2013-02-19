@@ -281,6 +281,13 @@ class GO_XPost_Utilities
 
 		// fetch and decode the post
 		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
+		
+		// confirm we got a response
+		if ( is_wp_error( $post ) )
+		{
+			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
+			die;
+		}// end if
 
 		$post = unserialize( $pull_return['body'] );
 
@@ -288,6 +295,7 @@ class GO_XPost_Utilities
 		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
 			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
+			die;
 		}// end if
 
 		// report our success
