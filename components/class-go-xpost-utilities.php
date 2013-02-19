@@ -228,8 +228,10 @@ class GO_XPost_Utilities
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array, $secret );
 
+		$endpoint_get = $this->build_get_url( $endpoint, $query_array );
+
 		// send the ping
-		$return = wp_remote_post( $endpoint, array( 'body' => $query_array, 'timeout' => 20 ) );
+		$return = wp_remote_get( $endpoint_get, array( 'timeout' => 20 ) );
 
 		// save an activity log for this execution instance
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
@@ -245,27 +247,27 @@ class GO_XPost_Utilities
 	 */
 	public function receive_push()
 	{
-		if ( empty( $_POST['source'] ) )
+		if ( empty( $_GET['source'] ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-push', 'Forbidden or missing parameters', $_POST, 403 );
+			$this->error_and_die( 'go-xpost-invalid-push', 'Forbidden or missing parameters', $_GET, 403 );
 		}//end if
 
 		// Tell the pinger that we don't need them anymore
 		$this->end_http_connection();
 
 		// validate the signature of the sending site
-		$ping_array = $_POST;
+		$ping_array = $_GET;
 		$signature  = $ping_array['signature'];
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
 		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_POST, 401 );
+			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_GET, 401 );
 		}//end if
 
 		// log this
-		apply_filters( 'go_slog', 'go-xpost-received-push', urldecode( $_POST['source'] ) . ' ' . $_POST['post_id'], $_POST );
+		apply_filters( 'go_slog', 'go-xpost-received-push', urldecode( $_GET['source'] ) . ' ' . $_GET['post_id'], $_GET );
 
 		// OK, we're good to go, but let's wait a moment for everything to settle on the other side
 		sleep( 3 );
@@ -273,28 +275,30 @@ class GO_XPost_Utilities
 		// build and sign the request var array
 		$query_array = array(
 			'action'  => 'go_xpost_pull',
-			'post_id' => (int) $_POST['post_id'],
-			'filter'  => $_POST['filter'],
+			'post_id' => (int) $_GET['post_id'],
+			'filter'  => $_GET['filter'],
 		);
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->secret );
 
+		$endpoint_get = $this->build_get_url( urldecode( $_GET['source'] ), $query_array );
+
 		// fetch and decode the post
-		$pull_return = wp_remote_post( urldecode( $_POST['source'] ), array( 'body' => $query_array ));
-		
+		$pull_return = wp_remote_get( $endpoint_get );
+
 		// confirm we got a response
-		if ( is_wp_error( $post ) )
+		if ( is_wp_error( $pull_return ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
+			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be retrieved (source: '. $_GET['source'] . ')', $query_array );
 			die;
 		}// end if
 
 		$post = unserialize( $pull_return['body'] );
 
-		// confirm we got a result
+		// confirm we got a good result
 		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_POST['source'] . ')', $query_array );
+			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_GET['source'] . ')', $query_array );
 			die;
 		}// end if
 
@@ -309,6 +313,34 @@ class GO_XPost_Utilities
 
 		die;
 	}//end receive_push
+
+	/**
+	 * Build a GET URL from an endpoint and query_array
+	 *
+	 * @param $endpoint string URL that will be requested
+	 * @param $query array and get parameters that need to be added to the query string
+	 * @return string URL with query string added
+	 */
+	private function build_get_url( $url, $query = array() )
+	{
+		// split out the query string from the url
+		$parts = parse_url( $url );
+
+		// split the query string off the base URL
+		list( $url ) = explode( '?', $url );
+
+		// turn the query string into an associative array
+		parse_str( $parts['query'], $new_query );
+
+		// override any variables in the original url with the variables in the passed in query
+		$new_query = array_merge( $new_query, $query );
+
+		// concatenate!
+		$url .= '?' . http_build_query( $new_query );
+
+		return $url;
+	}// end build_get_url
+
 
 	/**
 	 * Clean up the post_id
@@ -572,14 +604,14 @@ class GO_XPost_Utilities
 		if ( ! is_user_logged_in() )
 		{
 			// validate the signature of the sending site
-			$ping_array = $_POST;
+			$ping_array = $_GET;
 			$signature  = $ping_array['signature'];
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
 			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 			{
-				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_POST, 401 );
+				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_GET, 401 );
 			}//end if
 		}//end if
 		else // allow logged in users to make unsigned requests for easier debugging
@@ -594,7 +626,7 @@ class GO_XPost_Utilities
 		}//end if
 
 		// Load the filter we got passed
-		$filter = go_xpost()->filters[$_POST['filter']];
+		$filter = go_xpost()->filters[$_GET['filter']];
 
 		// we're good, get the post, filter it, and then echo it out
 		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ) );
