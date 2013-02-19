@@ -277,6 +277,8 @@ class GO_XPost_Admin
 					'operator' => 'NOT IN',
 				),
 			),
+			'orderby' => 'ID',
+			'order' => 'ASC',
 			'posts_per_page' => $limit,
 		);
 		$query = new WP_Query( $args );
