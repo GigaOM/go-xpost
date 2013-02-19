@@ -5,8 +5,6 @@
  */
 class GO_XPost
 {
-	protected $post_types = array( 'post' );
-
 	public $filters = array();
 	public $slug    = 'go-xpost';
 	public $secret;
@@ -52,12 +50,6 @@ class GO_XPost
 		$post_id = go_xpost_util()->sanitize_post_id( $post_id );
 
 		if ( ! $post_id )
-		{
-			return;
-		}//end if
-
-		// only act on whitelisted post types
-		if ( ! in_array( get_post( $post_id )->post_type, $this->post_types ) )
 		{
 			return;
 		}//end if
