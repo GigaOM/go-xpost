@@ -5,6 +5,7 @@ class GO_XPost_Admin
 	public $name       = 'GigaOM xPost';
 	public $short_name = 'GO xPost';
 	public $slug       = 'go-xpost';
+	private $batch_taxonomy = 'go-xpost-batch';
 
 	public function __construct()
 	{
@@ -12,12 +13,24 @@ class GO_XPost_Admin
 		add_action( 'admin_init', array( $this, 'update_settings' ) );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'wp_ajax_go_xpost_update_settings', array( $this, 'update_settings' ) );
+
+		add_action( 'wp_ajax_go_xpost_batch', array( $this, 'batch' ) );
 	}// end __construct
 
 	public function init()
 	{
 		wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
 		wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
+
+		// taxonomy for keeping track of xpost imports
+		register_taxonomy(
+			$this->batch_taxonomy,
+			'post',
+			array(
+				'label' => __( 'Batch Names' ),
+				'public' => false,
+			)
+		);
 	} // END init
 
 	public function admin_menu()
@@ -34,7 +47,7 @@ class GO_XPost_Admin
 
 		$settings = go_xpost()->get_settings();
 		$secret   = go_xpost()->get_secret();
-		
+
 		$filters  = $this->_get_filters();
 
 		$add_link = '<a href="#add-endpoint" title="Add Filter/Endpoint" class="' . $this->slug . '-add-endpoint button">Add Endpoint</a>';
@@ -101,13 +114,22 @@ class GO_XPost_Admin
 					<label for="<?php echo $this->slug; ?>-secret"><strong>Shared Secret</strong></label><br />
 					<input class="input" type="text" name="<?php echo $this->slug; ?>-secret" id="<?php echo $this->slug; ?>-secret" value="<?php echo esc_attr( $secret ); ?>" placeholder="Something complex..." /><br />
 					<em>Secret that is shared between all of the sites being xPosted to/from.</em>
-				</div>	
+				</div>
 
 				<p class="submit">
 					<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
 					<input type="hidden" name="setting-numbers" class="setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
 					<input type="submit" class="button button-primary" name="save-<?php echo $this->slug; ?>-settings" value="Save Changes" />
 				</p>
+			</form>
+			<hr />
+			<h4>Batch posting</h4>
+			<em>This is an advanced feature and should *only* be used with full understanding of the code</em>
+			<form method="get" action="admin-ajax.php">
+				<label for="batch_name">Batch Name: </label><input type="text" name="batch_name" /><br/>
+				<label for="post_types">Post types: </label><input type="text" name="post_types" /> <em>(comma separated)</em><br/>
+				<input type="submit" class="button button-primary" value="Process" />
+				<input type="hidden" name="action" value="go_xpost_batch" />
 			</form>
 		</div>
 		<?php
@@ -154,16 +176,16 @@ class GO_XPost_Admin
 		$filters = array();
 
 		foreach ( $directory_contents as $file )
-		{			
+		{
 			if ( ! $file->isFile() || 'php' != $file->getExtension() )
 			{
 				continue;
 			}// end if
 
 			$template_data = implode( '', file( $file->getPathname() ) );
-			
+
 			$name = '';
-			
+
 			// only load filters that have names, this will skip the abstract parent
 			if ( preg_match( '|Filter Name:(.*)$|mi', $template_data, $name ))
 			{
@@ -188,6 +210,79 @@ class GO_XPost_Admin
 
 		return $select_options;
 	}// END _build_options
+
+	/**
+	 * Hooked to admin ajax request
+	 */
+	public function batch()
+	{
+		$batch_name = sanitize_key( $_GET['batch_name'] );
+		$post_types = sanitize_text_field( $_GET['post_types'] );
+		$posts = $this->get_posts_to_batch( $batch_name, $post_types );
+
+		foreach ( $posts as $post )
+		{
+			if ( $post->ID )
+			{
+				echo $post->ID . '<br/>';
+				go_xpost()->process_post( $post->ID );
+				wp_set_post_terms( $post->ID, $batch_name, $this->batch_taxonomy, true );
+
+				sleep(2);
+			}// end if
+		}// end foreach
+
+		?>
+		<script>
+			var reloader = window.setTimeout(function(){
+				window.location = "?action=go_xpost_batch&batch_name=<?php echo $batch_name?>&post_types=<?php echo $post_types;?>&page=<?php echo $_GET['page']+1;?>";
+			}, 5000);
+		</script>
+		<br/><br/>
+		<a href="#stop" onclick="clearTimeout(reloader)">Stop</a><br/>
+		Will reload to the next 10, every 5 seconds.
+		<?php
+		die;
+	}// end batch
+
+	/**
+	 * get posts for a given batch name
+	 *
+	 * @param $batch_name string batch name slug
+	 * @param $limit int how many do you want?
+	 */
+	private function get_posts_to_batch( $batch_name, $post_types, $limit = 10 )
+	{
+		if ( $post_types )
+		{
+			$post_types = explode( ',', $post_types );
+			foreach ( $post_types as &$post_type )
+			{
+				$post_type = sanitize_key( $post_type );
+			}// end foreach
+		}// end if
+		else
+		{
+			$post_types = 'post';
+		}// end else
+
+		$args = array(
+			'post_status' => 'publish',
+			'post_type' => $post_types,
+			'tax_query' => array(
+				array(
+					'taxonomy' => $this->batch_taxonomy,
+					'field' => 'slug',
+					'terms' => sanitize_key( $batch_name ),
+					'operator' => 'NOT IN',
+				),
+			),
+			'posts_per_page' => $limit,
+		);
+		$query = new WP_Query( $args );
+
+		return $query->posts;
+	}// end get_events_by_type
 }//end GO_XPost_Admin
 
 function go_xpost_admin()

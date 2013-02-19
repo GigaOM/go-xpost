@@ -74,7 +74,7 @@ class GO_XPost
 	/**
 	 * Helper function for edit_post, loops over filters and calls Go_XPost_Utilities::push()
 	 */
-	protected function process_post( $post_id )
+	public function process_post( $post_id )
 	{
 		// In some cases we may want to receive xposts but not send them
 		if ( FALSE == $this->filters )
@@ -89,7 +89,7 @@ class GO_XPost
 			{
 				continue;
 			}
-			
+
 			if ( $filter->should_send_post( $post_id ) )
 			{
 				// log that we are xposting
@@ -107,6 +107,8 @@ class GO_XPost
 
 	/**
 	 * Remove the edit_post action when receiving a post
+	 *
+	 * @param $post WP_Post object
 	 */
 	public function receive_push( $post )
 	{
@@ -154,7 +156,7 @@ class GO_XPost
 			}// end if
 		}// end foreach
 	}// end load_filters
-	
+
 	/**
 	 * Load a single filter
 	 */
