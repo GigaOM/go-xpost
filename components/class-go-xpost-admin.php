@@ -267,7 +267,7 @@ class GO_XPost_Admin
 		}// end else
 
 		$args = array(
-			'post_status' => 'publish',
+			'post_status' => array( 'publish', 'inherit' ),
 			'post_type' => $post_types,
 			'tax_query' => array(
 				array(
@@ -277,6 +277,8 @@ class GO_XPost_Admin
 					'operator' => 'NOT IN',
 				),
 			),
+			'orderby' => 'ID',
+			'order' => 'ASC',
 			'posts_per_page' => $limit,
 		);
 		$query = new WP_Query( $args );
