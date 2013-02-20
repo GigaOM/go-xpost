@@ -1,7 +1,7 @@
 <?php
 
 /*
-Filter Name: Reports -> Endpoint
+Filter Name: Reports (Parent) -> Endpoint
 */
 
 class GO_XPost_Filter_Reports extends GO_XPost_Filter
