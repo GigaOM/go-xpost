@@ -17,6 +17,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
+			'go-report-section',
 			'go-datamodule',
 			'go_webinar',
 			'post',
