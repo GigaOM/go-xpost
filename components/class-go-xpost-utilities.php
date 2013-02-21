@@ -420,6 +420,7 @@ class GO_XPost_Utilities
 		// Correct the parent ID in the post object, based on the above lookup
 		$post->post->post_parent = $parent_id;
 
+		// @TODO: we do the author check in both the post and attachment saving, perhaps this should be moved to a function?
 		// Check if author exists, make it a guest author if not
 		if ( ! $post_author = get_user_by( 'email', $post->author->data->user_email ) )
 		{
@@ -500,6 +501,7 @@ class GO_XPost_Utilities
 			return $this->error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
 		}//end if
 
+		// @TODO: @zbtirrell pointed out that we need to handle non-existent authors differently for the Search site. We'll need to figure out how we want to create user records for missing authors there, while still supporting the guest author stuff on GO/pC
 		// Check if author exists, make it a guest author if not
 		$guest_author = FALSE;
 		if ( ! $post_author = get_user_by( 'email', $post->author->data->user_email ) )
