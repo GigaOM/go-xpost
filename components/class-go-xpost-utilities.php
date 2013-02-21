@@ -9,6 +9,7 @@ class GO_XPost_Utilities
 {
 	private $pinged         = array();
 	// @TODO: insert a comment here explaining the significance of this author_id
+	// @TODO: we should figure out how to move this GigaOM-specific feature outside this core code
 	public $guest_author_id = 16281271;
 
 	public function __construct()
@@ -156,13 +157,14 @@ class GO_XPost_Utilities
 		// unset the meta that we don't want to attempt to copy
 		unset( $r->meta['_edit_lock'] );
 		unset( $r->meta['_edit_last'] );
+
+		// @TODO: these are GigaOM-specific meta keys, perhaps we should remove these in the go_xpost_post_filter?
 		unset( $r->meta['_go_comment_cache'] );
 		unset( $r->meta['_go_comment_cache_full'] );
 		unset( $r->meta['go_oc_settings'] );
 		unset( $r->meta['oc_commit_id'] );
 		unset( $r->meta['oc_metadata'] );
 		unset( $r->meta['_go_log'] );
-		unset( $r->meta['_go_comment_cache'] );
 
 		return apply_filters( 'go_xpost_post_filter', $r );
 	}//end get_post
@@ -575,6 +577,7 @@ class GO_XPost_Utilities
 			wp_set_object_terms( $post_id, $terms, $tax, FALSE );
 		}//end foreach
 
+		// @TODO: figure out how to move this GigaOM-specific feature out of the core code
 		// Set guest author data if necessary from the check above
 		if ( $guest_author == TRUE )
 		{
