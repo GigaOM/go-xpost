@@ -255,11 +255,7 @@ class GO_XPost_Admin
 	{
 		if ( $post_types )
 		{
-			$post_types = explode( ',', $post_types );
-			foreach ( $post_types as &$post_type )
-			{
-				$post_type = sanitize_key( $post_type );
-			}// end foreach
+			$post_types = array_map( 'sanitize_key', (array) explode( ',', $post_types ) );
 		}// end if
 		else
 		{

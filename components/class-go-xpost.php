@@ -54,6 +54,7 @@ class GO_XPost
 			return;
 		}//end if
 
+		// @TODO: there are a lot of dependencies on go-mancross. We should refoctor that plugin into this one, or add more hooks to it so we're not interacting through postmeta
 		// don't attempt to crosspost a crosspost
 		if ( (bool) get_post_meta( $post_id, 'go_mancross_redirect', TRUE ) )
 		{
