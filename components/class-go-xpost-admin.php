@@ -19,8 +19,11 @@ class GO_XPost_Admin
 
 	public function init()
 	{
-		wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
-		wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
+		if ( is_admin() )
+		{
+			wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
+			wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
+		}
 
 		// taxonomy for keeping track of xpost imports
 		register_taxonomy(
@@ -118,7 +121,7 @@ class GO_XPost_Admin
 
 				<p class="submit">
 					<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
-					<input type="hidden" name="setting-numbers" class="setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
+					<input type="hidden" name="<?php echo $this->slug; ?>-setting-numbers" class="<?php echo $this->slug; ?>-setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
 					<input type="submit" class="button button-primary" name="save-<?php echo $this->slug; ?>-settings" value="Save Changes" />
 				</p>
 			</form>
@@ -148,7 +151,7 @@ class GO_XPost_Admin
 			return;
 		}// end if
 
-		$numbers_array = explode( ',', $_POST['setting-numbers'] );
+		$numbers_array = explode( ',', $_POST[$this->slug . '-setting-numbers'] );
 
 		$compiled_settings = array();
 
