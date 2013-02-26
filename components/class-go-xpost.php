@@ -20,9 +20,6 @@ class GO_XPost
 		$this->load_filters();
 		$this->secret = $this->get_secret();
 
-		// @TODO: these need to be defined in the filters?
-		$this->post_types = ( isset( $config['post_types'] ) ) ? array_merge( $config['post_types'], $this->post_types ) : $this->post_types;
-
 		add_action( 'edit_post', array( $this, 'edit_post' ) );
 		// hook to the receive push to remove the edit_post action
 		add_action( 'go_xpost_receive_push', array( $this, 'receive_push' ) );
