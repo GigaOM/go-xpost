@@ -34,6 +34,8 @@ class GO_XPost
 
 	/**
 	 * hook to the edit_post action, possibly ping other sites with the change
+	 *
+	 * @param $post_id int wordpress $post_id to edit
 	 */
 	public function edit_post( $post_id )
 	{
@@ -63,6 +65,8 @@ class GO_XPost
 
 	/**
 	 * Helper function for edit_post, loops over filters and calls Go_XPost_Utilities::push()
+	 *
+	 * @param $post_id int wordpress $post_id to edit
 	 */
 	public function process_post( $post_id )
 	{
@@ -108,6 +112,8 @@ class GO_XPost
 
 	/**
 	 * Get settings for the plugin
+	 *
+	 * @return get_option: Mixed values for the option. If option does not exist, return boolean FALSE.
 	 */
 	public function get_settings()
 	{
@@ -124,6 +130,8 @@ class GO_XPost
 
 	/**
 	 * Get the secret for this site
+	 *
+	 * @return  Mixed values for the option. If option does not exist, return boolean FALSE.
 	 */
 	public function get_secret()
 	{
@@ -149,6 +157,8 @@ class GO_XPost
 
 	/**
 	 * Load a single filter
+	 *
+	 * @param $filter wordpress $filter to load
 	 */
 	public function load_filter( $filter )
 	{
