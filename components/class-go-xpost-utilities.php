@@ -49,6 +49,10 @@ class GO_XPost_Utilities
 
 	/**
 	 * Get attachement, helps map the thumbnail post ID to post/guid
+	 *
+	 * @param $post_id int wordpress $post_id to get attachment
+	 *
+	 * @return attachment $r
 	 */
 	private function get_attachment( $post_id )
 	{
@@ -95,6 +99,14 @@ class GO_XPost_Utilities
 
 		return $r;
 	}//end get_attachment
+
+	/**
+	 * Get post
+	 *
+	 * @param $post_id int wordpress $post_id to get attachment
+	 *
+	 * @return apply_filters: The type of return should be the same as the type of $r
+	 */
 
 	public function get_post( $post_id )
 	{
@@ -169,6 +181,14 @@ class GO_XPost_Utilities
 		return apply_filters( 'go_xpost_post_filter', $r );
 	}//end get_post
 
+	/**
+	 * Check post exists
+	 *
+	 * @param $post wp_postobject
+	 *
+	 * @return $post_id int
+	 */
+
 	private function post_exists( $post )
 	{
 		global $wpdb;
@@ -180,6 +200,10 @@ class GO_XPost_Utilities
 
 	/**
 	 * Convert the post to be easily loggable
+	 *
+	 * @param $post wp_postobject
+	 *
+	 * @return $log_data array
 	 */
 	private function post_log_data( $post )
 	{
@@ -203,6 +227,9 @@ class GO_XPost_Utilities
 
 	/**
 	 * Ping an endpoint to tell it to get the post
+	 *
+	 * @param $endpoint string URL that will be requested
+	 * @param $post_id int wordpress $post_id to push
 	 */
 	public function push( $endpoint, $post_id, $secret, $filter )
 	{
@@ -321,6 +348,7 @@ class GO_XPost_Utilities
 	 *
 	 * @param $endpoint string URL that will be requested
 	 * @param $query array and get parameters that need to be added to the query string
+	 *
 	 * @return string URL with query string added
 	 */
 	private function build_get_url( $url, $query = array() )
@@ -346,6 +374,10 @@ class GO_XPost_Utilities
 
 	/**
 	 * Clean up the post_id
+	 *
+	 * @param $post_id int wordpess $post_id to sanitize
+	 *
+	 * @return sanitized $post_id
 	 */
 	public function sanitize_post_id( $post_id )
 	{
@@ -357,7 +389,15 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end sanitize_post_id
-
+	
+	/**
+	 * Save post attachment
+	 *
+	 * @param $post wp_postobject $post to save attachment
+	 *
+	 * @return $post_id
+	 */
+	
 	public function save_attachment( $post )
 	{
 		// a lot of the code below comes from
@@ -489,6 +529,14 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end save_attachment
+
+	/**
+	 * Save post
+	 *
+	 * @param $post wp_postobject
+	 *
+	 * @return $post_id
+	 */
 
 	public function save_post( $post )
 	{
