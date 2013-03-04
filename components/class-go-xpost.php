@@ -30,6 +30,9 @@ class GO_XPost
 
 		add_action( 'wp_ajax_go_xpost_push', array( go_xpost_util(), 'receive_push' ));
 		add_action( 'wp_ajax_nopriv_go_xpost_push', array( go_xpost_util(), 'receive_push' ) );
+		
+		// Filter comment counts for crossposted content.
+		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
 	}//end __construct
 
 	/**
@@ -169,6 +172,19 @@ class GO_XPost
 			$this->filters[$filter] = new $classname;
 		}
 	} // END load_filter
+	
+	/**
+	 * Filter get_comments_number value for crossposted content
+	 */
+	public function get_comments_number( $count, $post_id )
+	{
+	 	if ( $xpost_count = get_post_meta( $post_id, 'go_xpost_comment_count', TRUE ) )
+	 	{
+	 		return $xpost_count;
+	 	} // END if
+		
+		return $count;
+	} // END get_comments_number
 }//end class
 
 function go_xpost()

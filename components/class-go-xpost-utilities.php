@@ -166,6 +166,9 @@ class GO_XPost_Utilities
 		// add meta to identify this as a crosspost and link to the original
 		$r->meta['go_mancross_redirect'] = $r->origin->permalink;
 
+		// Record comment count to a meta value so we can filter it on the receiving end
+		$r->mega['go_xpost_comment_count'] = $r->post->comment_count;
+
 		// unset the meta that we don't want to attempt to copy
 		unset( $r->meta['_edit_lock'] );
 		unset( $r->meta['_edit_last'] );
