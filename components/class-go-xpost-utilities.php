@@ -675,7 +675,6 @@ class GO_XPost_Utilities
 			// in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
 			return apply_filters( 'go_xpost_unknown_author', $author->ID, $author );
 		}//end if
-do_action('debug_robot', 'get author: '.print_r($post_author,true));
 
 		// ID could be different so lets replace it with the local one
 		return $post_author->ID;
