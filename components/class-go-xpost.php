@@ -30,9 +30,14 @@ class GO_XPost
 
 		add_action( 'wp_ajax_go_xpost_push', array( go_xpost_util(), 'receive_push' ));
 		add_action( 'wp_ajax_nopriv_go_xpost_push', array( go_xpost_util(), 'receive_push' ) );
-		
+
 		// Filter comment counts for crossposted content.
 		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
+
+		if ( $this->create_author() )
+		{
+			add_filter( 'go_xpost_unknown_author', array( $this, 'go_xpost_unknown_author' ), 10, 2 );
+		}// end if
 	}//end __construct
 
 	/**
@@ -172,7 +177,7 @@ class GO_XPost
 			$this->filters[$filter] = new $classname;
 		}
 	} // END load_filter
-	
+
 	/**
 	 * Filter get_comments_number value for crossposted content
 	 */
@@ -182,9 +187,40 @@ class GO_XPost
 	 	{
 	 		return $xpost_count;
 	 	} // END if
-		
+
 		return $count;
 	} // END get_comments_number
+
+	/**
+	 * Filter that creates a user account for authors provided via an xpost
+	 *
+	 * @param $author_id int ID for the author provided in the xpost but not unknown
+	 * @param $author WP_User object provided in the xpost, contains data for creating the user
+	 * @return int author_id
+	 */
+	public function go_xpost_unknown_author( $author_id, $author )
+	{
+		$userdata = array(
+			'user_login' => $author->user_login,
+			'user_nicename' => $author->user_nicename,
+			'user_email' => $author->user_email,
+			'user_url' => $author->user_url,
+			'user_registered' => $author->user_registered,
+			'display_name' => $author->display_name,
+		);
+
+		return wp_insert_user( $userdata );
+	}// end go_xpost_unknown_author
+
+	/**
+	 * Determine if an author account should be created when receiving an xpost
+	 * @return boolean
+	 */
+	public function create_author()
+	{
+		return (bool) get_option( $this->slug . '-create-author' );
+	}// end create_author
+>>>>>>> added capability to configure author auto-creation
 }//end class
 
 function go_xpost()

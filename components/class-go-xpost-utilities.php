@@ -357,14 +357,17 @@ class GO_XPost_Utilities
 		// split the query string off the base URL
 		list( $url ) = explode( '?', $url );
 
-		// turn the query string into an associative array
-		parse_str( $parts['query'], $new_query );
-
-		// override any variables in the original url with the variables in the passed in query
-		$new_query = array_merge( $new_query, $query );
+		if ( isset( $parts['query'] ) )
+		{
+			// turn the query string into an associative array
+			parse_str( $parts['query'], $new_query );
+	
+			// override any variables in the original url with the variables in the passed in query
+			$query = array_merge( $new_query, $query );
+		}// end if
 
 		// concatenate!
-		$url .= '?' . http_build_query( $new_query );
+		$url .= '?' . http_build_query( $query );
 
 		return $url;
 	}// end build_get_url
@@ -643,6 +646,8 @@ class GO_XPost_Utilities
 
 		// we're good, get the post, filter it, and then echo it out
 		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ) );
+		
+		$post = apply_filters( 'go_xpost_pre_send_post', $post );
 
 		if ( isset( $ping_array['output'] ) && 'prettyprint' == $ping_array['output'] )
 		{
@@ -662,7 +667,7 @@ class GO_XPost_Utilities
 	/**
 	 * Get the author of the post
 	 */
-	private function get_author( $author )
+	public function get_author( $author )
 	{
 		// Check if author exists, allow it to be hooked if not
 		if ( ! $post_author = get_user_by( 'email', $author->data->user_email ) )
@@ -670,6 +675,7 @@ class GO_XPost_Utilities
 			// in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
 			return apply_filters( 'go_xpost_unknown_author', $author->ID, $author );
 		}//end if
+do_action('debug_robot', 'get author: '.print_r($post_author,true));
 
 		// ID could be different so lets replace it with the local one
 		return $post_author->ID;
