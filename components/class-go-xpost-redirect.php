@@ -20,7 +20,7 @@ class GO_XPost_Redirect
 			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'post', 'advanced', 'high' );
 			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'page', 'advanced', 'high' );
 			
-			add_action( 'save_post', array( $this, 'save_post' ), 2 );
+			add_action( 'save_post', array( $this, 'save_post' ) );
 			add_filter( 'display_post_states', array( $this, 'display_post_states' ) );
 		}//end if
 	}//end admin_init
