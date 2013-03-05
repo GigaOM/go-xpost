@@ -7,10 +7,7 @@
 
 class GO_XPost_Utilities
 {
-	private $pinged         = array();
-	// @TODO: insert a comment here explaining the significance of this author_id
-	// @TODO: we should figure out how to move this GigaOM-specific feature outside this core code
-	public $guest_author_id = 16281271;
+	private $pinged = array();
 
 	public function __construct()
 	{
@@ -107,7 +104,6 @@ class GO_XPost_Utilities
 	 *
 	 * @return apply_filters: The type of return should be the same as the type of $r
 	 */
-
 	public function get_post( $post_id )
 	{
 		// check the post_id
@@ -191,7 +187,6 @@ class GO_XPost_Utilities
 	 *
 	 * @return $post_id int
 	 */
-
 	private function post_exists( $post )
 	{
 		global $wpdb;
@@ -362,14 +357,17 @@ class GO_XPost_Utilities
 		// split the query string off the base URL
 		list( $url ) = explode( '?', $url );
 
-		// turn the query string into an associative array
-		parse_str( $parts['query'], $new_query );
-
-		// override any variables in the original url with the variables in the passed in query
-		$new_query = array_merge( $new_query, $query );
+		if ( isset( $parts['query'] ) )
+		{
+			// turn the query string into an associative array
+			parse_str( $parts['query'], $new_query );
+	
+			// override any variables in the original url with the variables in the passed in query
+			$query = array_merge( $new_query, $query );
+		}// end if
 
 		// concatenate!
-		$url .= '?' . http_build_query( $new_query );
+		$url .= '?' . http_build_query( $query );
 
 		return $url;
 	}// end build_get_url
@@ -400,7 +398,6 @@ class GO_XPost_Utilities
 	 *
 	 * @return $post_id
 	 */
-	
 	public function save_attachment( $post )
 	{
 		// a lot of the code below comes from
@@ -463,18 +460,7 @@ class GO_XPost_Utilities
 		// Correct the parent ID in the post object, based on the above lookup
 		$post->post->post_parent = $parent_id;
 
-		// @TODO: we do the author check in both the post and attachment saving, perhaps this should be moved to a function?
-		// Check if author exists, make it a guest author if not
-		if ( ! $post_author = get_user_by( 'email', $post->author->data->user_email ) )
-		{
-			$post->post->post_author = $this->guest_author_id;
-		}//end if
-		else
-		{
-			// ID could be different so lets replace it with the local one
-			$post->post->post_author = $post_author->ID;
-		}//end else
-
+		$post->post->post_author = $this->get_author( $post->author );
 
 		// check if the post exists
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
@@ -540,7 +526,6 @@ class GO_XPost_Utilities
 	 *
 	 * @return $post_id
 	 */
-
 	public function save_post( $post )
 	{
 		// allow other plugins to modify the post
@@ -552,19 +537,7 @@ class GO_XPost_Utilities
 			return $this->error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
 		}//end if
 
-		// @TODO: @zbtirrell pointed out that we need to handle non-existent authors differently for the Search site. We'll need to figure out how we want to create user records for missing authors there, while still supporting the guest author stuff on GO/pC
-		// Check if author exists, make it a guest author if not
-		$guest_author = FALSE;
-		if ( ! $post_author = get_user_by( 'email', $post->author->data->user_email ) )
-		{
-			$post->post->post_author = $this->guest_author_id;
-			$guest_author = TRUE;
-		}//end if
-		else
-		{
-			// ID could be different so lets replace it with the local one
-			$post->post->post_author = $post_author->ID;
-		}//end else
+		$post->post->post_author = $this->get_author( $post->author );
 
 		// update the post dates based on the local gmt offset
 		$post->post->post_date     = $this->utc_to_local( $post->post->post_date_gmt );
@@ -630,22 +603,6 @@ class GO_XPost_Utilities
 			wp_set_object_terms( $post_id, $terms, $tax, FALSE );
 		}//end foreach
 
-		// @TODO: figure out how to move this GigaOM-specific feature out of the core code
-		// Set guest author data if necessary from the check above
-		if ( $guest_author == TRUE )
-		{
-			// @TODO: Do we want to set Publication/Source data as well? Maybe using variables inside of the config classes for each domain that we pass on?
-			$guest_author_data = array(
-				'post_id' => $post_id,
-				'author_override' => TRUE,
-				'source_override' => FALSE,
-				'author_name' => $post->author->data->display_name,
-				'author_url' => $post->author->data->user_url,
-			);
-
-			go_guestpost()->save_guest_post_data( $guest_author_data );
-		}//end if
-
 		do_action( 'go_xpost_save_post', $post_id, $post );
 
 		// success log
@@ -654,6 +611,9 @@ class GO_XPost_Utilities
 		return $post_id;
 	}//end save_post
 
+	/**
+	 * Send a post for xposting
+	 */
 	public function send_post()
 	{
 		// enforce the signed request for users who are not logged in
@@ -686,6 +646,8 @@ class GO_XPost_Utilities
 
 		// we're good, get the post, filter it, and then echo it out
 		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ) );
+		
+		$post = apply_filters( 'go_xpost_pre_send_post', $post );
 
 		if ( isset( $ping_array['output'] ) && 'prettyprint' == $ping_array['output'] )
 		{
@@ -701,6 +663,22 @@ class GO_XPost_Utilities
 		// all done, bye bye
 		die;
 	}//end send_post
+
+	/**
+	 * Get the author of the post
+	 */
+	public function get_author( $author )
+	{
+		// Check if author exists, allow it to be hooked if not
+		if ( ! $post_author = get_user_by( 'email', $author->data->user_email ) )
+		{
+			// in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
+			return apply_filters( 'go_xpost_unknown_author', $author->ID, $author );
+		}//end if
+
+		// ID could be different so lets replace it with the local one
+		return $post_author->ID;
+	}// end get_author
 
 	/**
 	 * function build_identity_hash
@@ -732,17 +710,9 @@ class GO_XPost_Utilities
 		return $signature;
 	}// end build_identity_hash
 
-	// @TODO: this does not appear to be in use
-	public function utc_offset_from_dates( $utc_string, $local_string )
-	{
-		$tz     = new DateTimeZone( 'UTC' );
-		$utc    = new DateTime( $utc_string, $tz );
-		$local  = new DateTime( $local_string, $tz );
-		$offset = $utc->diff( $local );
-
-		return $offset->format('%R%h');
-	}//end utc_offset_from_dates
-
+	/**
+	 * Convert UTC time to the blog configured timezone time
+	 */
 	public function utc_to_local( $datetime_string, $offset = FALSE )
 	{
 		if ( ! $offset )
@@ -758,12 +728,18 @@ class GO_XPost_Utilities
 		return $date->format('Y-m-d H:i:s');;
 	}//end utc_to_local
 
+	/**
+	 * Log an error and get a WP_Error object
+	 */
 	public function error( $code, $message, $data )
 	{
 		apply_filters( 'go_slog', $code, $message, $data );
 		return new WP_Error( $code, $message, $data );
 	}//end error
 
+	/**
+	 * Output the error and stop execution
+	 */
 	public function error_and_die( $code, $message, $data, $http_code )
 	{
 		$this->error( $code, $message, $data );
