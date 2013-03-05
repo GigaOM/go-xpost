@@ -59,7 +59,7 @@ class GO_XPost_Redirect
 	public function is_xpost( $post_id = 0 )
 	{
 		$post_id = ( $post_id ) ? (int) $post_id : get_the_ID();
-		return (bool) $this->get_post_meta( $post_id, 'go_mancross_redirect' );
+		return (bool) $this->get_post_meta( $post_id );
 	} // END is_xpost
 
 	/**
