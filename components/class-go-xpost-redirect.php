@@ -210,7 +210,7 @@ class GO_XPost_Redirect
 	 */
 	public function get_post_meta( $post_id )
 	{		
-		$redirect = get_post_meta( $post_id, $this->meta_key, TRUE )
+		$redirect = get_post_meta( $post_id, $this->meta_key, TRUE );
 		
 		return apply_filters( 'go_xpost_redirect_meta', $redirect, $post_id );
 	} // END get_post_meta
