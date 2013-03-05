@@ -48,8 +48,8 @@ class GO_XPost_Admin
 			return;
 		}// end if
 
-		$settings       = go_xpost()->get_settings();
-		$secret         = go_xpost()->get_secret();
+		$settings      = go_xpost()->get_settings();
+		$secret        = go_xpost()->get_secret();
 		$create_author = go_xpost()->create_author();
 
 		$filters  = $this->_get_filters();
