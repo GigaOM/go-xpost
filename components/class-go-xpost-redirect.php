@@ -210,7 +210,7 @@ class GO_XPost_Redirect
 	 */
 	public function get_post_meta( $post_id )
 	{
-		if ( ! $redirect =  get_post_meta( $post_id, $this->meta_key, TRUE ) )
+		if ( ! $redirect = get_post_meta( $post_id, $this->meta_key, TRUE ) )
 		{
 			// Check for old go_mancross_redirect meta and upgrade if it has a value
 			if ( $redirect = get_post_meta( $post_id, 'go_mancross_redirect', TRUE ) )
