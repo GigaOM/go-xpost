@@ -209,18 +209,10 @@ class GO_XPost_Redirect
 	 * @param $post_id int Post ID
 	 */
 	public function get_post_meta( $post_id )
-	{
-		if ( ! $redirect = get_post_meta( $post_id, $this->meta_key, TRUE ) )
-		{
-			// Check for old go_mancross_redirect meta and upgrade if it has a value
-			if ( $redirect = get_post_meta( $post_id, 'go_mancross_redirect', TRUE ) )
-			{
-				$this->update_post_meta( $post_id, $redirect );
-				delete_post_meta( $post_id, 'go_mancross_redirect' );
-			} // END if
-		} // END if
+	{		
+		$redirect = get_post_meta( $post_id, $this->meta_key, TRUE )
 		
-		return $redirect;
+		return apply_filters( 'go_xpost_redirect_meta', $redirect, $post_id );
 	} // END get_post_meta
 } // END GO_XPost_Redirect
 
