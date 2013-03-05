@@ -160,7 +160,7 @@ class GO_XPost_Utilities
 		$r->origin->permalink = get_permalink( $post_id );
 
 		// add meta to identify this as a crosspost and link to the original
-		$r->meta['go_mancross_redirect'] = $r->origin->permalink;
+		$r->meta[go_xpost_redirect()->meta_key] = $r->origin->permalink;
 
 		// Record comment count to a meta value so we can filter it on the receiving end
 		$r->mega['go_xpost_comment_count'] = $r->post->comment_count;
@@ -209,8 +209,9 @@ class GO_XPost_Utilities
 		$log_data = array(
 			'post_date' => $post->post->post_date,
 			'post_date_gmt' => $post->post->post_date_gmt,
-			'go_mancross_redirect' => $post->meta['go_mancross_redirect'],
 		);
+
+		$log_data[go_xpost_redirect()->meta_key] = $post->meta[go_xpost_redirect()->meta_key];
 
 		foreach ( $post->meta as $key => $value )
 		{
