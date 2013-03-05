@@ -30,4 +30,17 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		return FALSE;
 	} // END should_send_post
+
+	/**
+	 * Alter the $post object before returning it to the endpoint
+	 *
+	 * @param  object $post
+	 * @return $post WP_Post
+	 */
+	public function post_filter( $post )
+	{
+		$post->terms['go-property'][0] = go_config()->get_config_name();
+
+		return $post;
+	}// end post_filter
 } // END GO_XPost_Filter_Search
