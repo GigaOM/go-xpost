@@ -220,7 +220,6 @@ class GO_XPost
 	{
 		return (bool) get_option( $this->slug . '-create-author' );
 	}// end create_author
->>>>>>> added capability to configure author auto-creation
 }//end class
 
 function go_xpost()
