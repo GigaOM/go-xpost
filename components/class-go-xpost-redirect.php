@@ -77,7 +77,7 @@ class GO_XPost_Redirect
 		</p>
 		<p class="target_url">
 			<label for="<?php echo $this->meta_key; ?>"><strong>Target URL</strong></label><br />
-			<input type="text" name="<?php echo $this->meta_key; ?>" id="<?php echo $this->meta_key; ?>" value="<?php echo $redirect; ?>" placeholder="http://path/to/original/post/" style="width: 100%;" />
+			<input type="text" name="<?php echo $this->meta_key; ?>" id="<?php echo $this->meta_key; ?>" value="<?php echo $redirect; ?>" placeholder="http://path/to/original/post/" class="widefat" />
 		</p>
 		<?php
 		echo '<input type="hidden" name="' . $this->meta_key . '_nonce" id="' . $this->meta_key . '_nonce" value="' . wp_create_nonce( __FILE__ ) . '" />';
