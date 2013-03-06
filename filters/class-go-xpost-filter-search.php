@@ -39,7 +39,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function post_filter( $post )
 	{
-		$post->terms['go-property'][0] = go_config()->get_config_name();
+		$post->terms['go-property'][0] = go_config()->get_property();
 
 		return $post;
 	}// end post_filter
