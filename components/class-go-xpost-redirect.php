@@ -23,7 +23,7 @@ class GO_XPost_Redirect
 			add_action( 'save_post', array( $this, 'save_post' ) );
 			add_action( 'go_xpost_set_redirect', array( $this, 'set_redirect' ), 10, 3 );
 			add_filter( 'display_post_states', array( $this, 'display_post_states' ) );
-			add_filter( 'go_xpost_set_redirect', array( $this, 'go_xpost_is_xpost' ), 10, 2 );
+			add_filter( 'go_xpost_is_xpost', array( $this, 'go_xpost_is_xpost' ), 10, 2 );
 		}//end if
 	}//end admin_init
 
@@ -65,11 +65,16 @@ class GO_XPost_Redirect
 	} // END is_xpost
 	
 	/**
-	 * Filter the go_xpost_is_xpost and return TRUE/FALSE
+	 * Filter go_xpost_is_xpost and return TRUE/FALSE
 	 */
 	public function go_xpost_is_xpost( $is_xpost, $post_id )
 	{
-		return $this->is_xpost( $post_id );
+		if ( $this->is_xpost( $post_id ) )
+		{
+			return TRUE;
+		} // END if
+		
+		return $is_xpost;
 	} // END go_xpost_is_xpost
 
 	/**
