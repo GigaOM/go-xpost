@@ -21,7 +21,9 @@ class GO_XPost_Redirect
 			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'page', 'advanced', 'high' );
 			
 			add_action( 'save_post', array( $this, 'save_post' ) );
+			add_action( 'go_xpost_set_redirect', array( $this, 'set_redirect' ), 10, 3 );
 			add_filter( 'display_post_states', array( $this, 'display_post_states' ) );
+			add_filter( 'go_xpost_set_redirect', array( $this, 'go_xpost_is_xpost' ), 10, 2 );
 		}//end if
 	}//end admin_init
 
@@ -61,6 +63,14 @@ class GO_XPost_Redirect
 		$post_id = ( $post_id ) ? (int) $post_id : get_the_ID();
 		return (bool) $this->get_post_meta( $post_id );
 	} // END is_xpost
+	
+	/**
+	 * Filter the go_xpost_is_xpost and return TRUE/FALSE
+	 */
+	public function go_xpost_is_xpost( $is_xpost, $post_id )
+	{
+		return $this->is_xpost( $post_id );
+	} // END go_xpost_is_xpost
 
 	/**
 	 * Dump out a metabox for specifying cross post status
@@ -115,7 +125,7 @@ class GO_XPost_Redirect
 		}// end if
 
 		// Don't run on post revisions (almost always happens just before the real post is saved)
-		if ( wp_is_post_revision( $post->ID ) )
+		if ( wp_is_post_revision( $post_id ) )
 		{
 			return;
 		}// end if
@@ -127,21 +137,13 @@ class GO_XPost_Redirect
 		}// end if
 
 		// Check the permissions
-		if ( ! current_user_can( 'edit_post', $post->ID  ) )
+		if ( ! current_user_can( 'edit_post', $post_id ) )
 		{
 			return;
 		}// end if
 
-		$redirect = esc_url_raw( $_POST[$this->meta_key] );
-
-		if ( is_null( $redirect ) || ! isset( $_POST[$this->meta_key . '_x'] ) )
-		{
-			delete_post_meta( $post_id, $this->meta_key );
-		}//end if
-		elseif ( ! is_null( $redirect ) && isset( $_POST[$this->meta_key . '_x'] ) )
-		{
-			$this->update_post_meta( $post_id, $redirect );
-		}//end elseif
+		$force_delete = ( ! isset( $_POST[$this->meta_key . '_x'] ) ) ? TRUE : FALSE;
+		$this->set_redirect( $post_id, $_POST[$this->meta_key], $force_delete );
 
 		return $post_id;
 	}//end save_post
@@ -191,6 +193,22 @@ class GO_XPost_Redirect
 			exit;
 		}//end if
 	}//end template_redirect
+
+	/**
+	 * Sets redirect while checking to make sure the redirect value isn't empty
+	 */
+	public function set_redirect( $post_id, $redirect = '', $force_delete = FALSE )
+	{
+		if ( '' == $redirect || is_null( $redirect ) || TRUE == $force_delete )
+		{
+			delete_post_meta( $post_id, $this->meta_key );
+		}//end if
+		else
+		{
+			$redirect = esc_url_raw( $redirect );
+			$this->update_post_meta( $post_id, $redirect );
+		}//end else
+	} // END set_redirect
 
 	/**
 	 * Update the redirect value
