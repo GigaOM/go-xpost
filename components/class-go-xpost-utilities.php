@@ -646,7 +646,7 @@ class GO_XPost_Utilities
 		$filter = go_xpost()->filters[$_GET['filter']];
 
 		// we're good, get the post, filter it, and then echo it out
-		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ) );
+		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ), $ping_array['post_id'] );
 		
 		$post = apply_filters( 'go_xpost_pre_send_post', $post );
 
