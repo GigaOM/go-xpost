@@ -48,9 +48,8 @@ class GO_XPost_Admin
 			return;
 		}// end if
 
-		$settings      = go_xpost()->get_settings();
-		$secret        = go_xpost()->get_secret();
-		$create_author = go_xpost()->create_author();
+		$settings = go_xpost()->get_settings();
+		$secret   = go_xpost()->get_secret();
 
 		$filters  = $this->_get_filters();
 
@@ -120,12 +119,6 @@ class GO_XPost_Admin
 					<em>Secret that is shared between all of the sites being xPosted to/from.</em>
 				</div>
 
-				<div class="<?php echo $this->slug; ?>-create-author">
-					<label for="<?php echo $this->slug; ?>-create-author"><strong>Create Authors?</strong></label><br />
-					<input class="checkbox" type="checkbox" name="<?php echo $this->slug; ?>-create-author" id="<?php echo $this->slug; ?>-create-author" <?php echo $create_author ? 'checked="checked"' : ''; ?> value="1" /><br />
-					<em>Check this to have author accounts automatically created for xposted posts.</em>
-				</div>
-
 				<p class="submit">
 					<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
 					<input type="hidden" name="<?php echo $this->slug; ?>-setting-numbers" class="<?php echo $this->slug; ?>-setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
@@ -174,7 +167,6 @@ class GO_XPost_Admin
 			}// end if
 		} // END foreach
 
-		update_option( $this->slug . '-create-author', (bool) $_POST[ $this->slug . '-create-author'] );
 		update_option( $this->slug . '-settings', $compiled_settings );
 		update_option( $this->slug . '-secret', $_POST[ $this->slug . '-secret' ] );
 		$_POST['updated'] = TRUE;
