@@ -14,6 +14,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function should_send_post( $post_id )
 	{
+		if ( apply_filters( 'go_sponsor_posts_is_sponsor_post', FALSE, $post_id ) )
+		{
+			return FALSE;
+		} // END if
+		
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
@@ -23,12 +28,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			'post',
 		);
 		
-		if ( in_array( get_post( $post_id )->post_type, $valid_post_types ) )
+		if ( ! in_array( get_post( $post_id )->post_type, $valid_post_types ) )
 		{
-			return TRUE;
+			return FALSE;
 		} // END if
 
-		return FALSE;
+		return TRUE;
 	} // END should_send_post
 	
 	/**
