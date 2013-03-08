@@ -98,7 +98,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		} // END elseif
 		elseif ( function_exists( 'go_waterfall_options' ) ) // or maybe go_config()->dir != '_pro' at some point?
 		{
-			if ( 'video' == go_waterfall_options()->get_type( $post_id ) )
+			if ( 
+				'video' == go_waterfall_options()->get_type( $post_id )
+				|| ( isset( $post->terms['go_syn_media'] ) && in_array( 'video', $post->terms['go_syn_media'] ) )
+			)
 			{
 				$post->terms['go-type'][] = 'Video';
 			} // END elseif
