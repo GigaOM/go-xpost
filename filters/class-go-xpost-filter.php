@@ -20,9 +20,10 @@ abstract class GO_XPost_Filter
 	 * Alter the $post object before returning it to the endpoint
 	 *
 	 * @param  object $post
+	 * @param  int $post_id
 	 * @return $post WP_Post
 	 */
-	public function post_filter( $post )
+	public function post_filter( $post, $post_id )
 	{
 		return $post;
 	}// end post_filter
