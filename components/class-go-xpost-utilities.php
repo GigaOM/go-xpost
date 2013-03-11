@@ -315,7 +315,7 @@ class GO_XPost_Utilities
 		$pull_return = wp_remote_get( $endpoint_get );
 
 		// confirm we got a response
-		if ( is_wp_error( $post ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
+		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
 		{
 			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_GET['source'] . ')', $query_array );
 			die;
