@@ -317,7 +317,7 @@ class GO_XPost_Utilities
 		// confirm we got a response
 		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post could not be retrieved (source: '. $_GET['source'] . ')', $query_array );
+			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be retrieved (source: '. $_GET['source'] . ')', $query_array );
 			die;
 		}// end if
 
@@ -326,7 +326,7 @@ class GO_XPost_Utilities
 		// confirm we got a good result
 		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be unserialized (source: '. $_GET['source'] . ')', $query_array );
+			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post was not a valid object after unserializing (source: '. $_GET['source'] . ')', $query_array );
 			die;
 		}// end if
 
