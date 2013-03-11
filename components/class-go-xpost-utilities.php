@@ -324,7 +324,7 @@ class GO_XPost_Utilities
 		$post = unserialize( $body );
 
 		// confirm we got a good result
-		if ( ! isset( $post->post->guid ) )
+		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
 			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be unserialized (source: '. $_GET['source'] . ')', $query_array );
 			die;
