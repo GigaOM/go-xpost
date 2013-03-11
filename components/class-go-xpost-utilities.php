@@ -228,9 +228,9 @@ class GO_XPost_Utilities
 	 * Ping an endpoint to tell it to get the post
 	 *
 	 * @param $endpoint string URL that will be requested
-	 * @param $post_id int wordpress $post_id to push
+	 * @param $post_id int wordpress $post_id to ping
 	 */
-	public function push( $endpoint, $post_id, $secret, $filter )
+	public function ping( $endpoint, $post_id, $secret, $filter )
 	{
 		// check the post_id
 		$post_id = $this->sanitize_post_id( $post_id );
@@ -246,10 +246,15 @@ class GO_XPost_Utilities
 			return;
 		}//end if
 
+		$source = urlencode( admin_url( '/admin-ajax.php' ) );
+
+		// curl and HTTPS self-signed certificates do not play nice together
+		$source = ( defined( 'GO_DEV' ) && GO_DEV ) ? preg_replace( '/^https/', 'http', $source ) : $source;
+
 		// build and sign the request var array
 		$query_array = array(
-			'action'  => 'go_xpost_push',
-			'source'  => urlencode( admin_url( '/admin-ajax.php' )),
+			'action'  => 'go_xpost_ping',
+			'source'  => $source,
 			'post_id' => $post_id,
 			'filter'  => $filter,
 		);
@@ -265,19 +270,19 @@ class GO_XPost_Utilities
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
 
 		// log and return success
-		apply_filters( 'go_slog', 'go-xpost-send-push', $endpoint . ' ' . $post_id, $post_id );
+		apply_filters( 'go_slog', 'go-xpost-send-ping', $endpoint . ' ' . $post_id, $post_id );
 
 		return;
-	}//end push
+	}//end ping
 
 	/**
 	 * Receive an incoming request to import a new post
 	 */
-	public function receive_push()
+	public function receive_ping()
 	{
 		if ( empty( $_GET['source'] ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-push', 'Forbidden or missing parameters', $_GET, 403 );
+			$this->error_and_die( 'go-xpost-invalid-ping', 'Forbidden or missing parameters', $_GET, 403 );
 		}//end if
 
 		// Tell the pinger that we don't need them anymore
@@ -285,17 +290,21 @@ class GO_XPost_Utilities
 
 		// validate the signature of the sending site
 		$ping_array = $_GET;
+
+		// curl and HTTPS self-signed certificates do not play nice together
+		$ping_array['source'] = ( defined( 'GO_DEV' ) && GO_DEV ) ? preg_replace( '/^https/', 'http', $ping_array['source'] ) : $ping_array['source'];
+
 		$signature  = $ping_array['signature'];
 		unset( $ping_array['signature'] );
 
 		// die if the signature doesn't match
 		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-push', 'Unauthorized activity', $_GET, 401 );
+			$this->error_and_die( 'go-xpost-invalid-ping', 'Unauthorized activity', $ping_array, 401 );
 		}//end if
 
 		// log this
-		apply_filters( 'go_slog', 'go-xpost-received-push', urldecode( $_GET['source'] ) . ' ' . $_GET['post_id'], $_GET );
+		apply_filters( 'go_slog', 'go-xpost-received-ping', urldecode( $ping_array['source'] ) . ' ' . $ping_array['post_id'], $ping_array );
 
 		// OK, we're good to go, but let's wait a moment for everything to settle on the other side
 		sleep( 3 );
@@ -309,7 +318,7 @@ class GO_XPost_Utilities
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->secret );
 
-		$endpoint_get = $this->build_get_url( urldecode( $_GET['source'] ), $query_array );
+		$endpoint_get = $this->build_get_url( urldecode( $ping_array['source'] ), $query_array );
 
 		// fetch and decode the post
 		$pull_return = wp_remote_get( $endpoint_get );
@@ -333,14 +342,13 @@ class GO_XPost_Utilities
 		// report our success
 		apply_filters( 'go_slog', 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data($post) );
 
-		// allow the GO_Xpost class (and others) to do something in response to the push being received
-		do_action( 'go_xpost_receive_push', $post );
+		// allow the GO_Xpost class (and others) to do something in response to the ping being received
+		do_action( 'go_xpost_receive_ping', $post );
 
 		// save
-		$post = $this->save_post( $post );
-
+		$post_id = $this->save_post( $post );
 		die;
-	}//end receive_push
+	}//end receive_ping
 
 	/**
 	 * Build a GET URL from an endpoint and query_array
@@ -362,7 +370,7 @@ class GO_XPost_Utilities
 		{
 			// turn the query string into an associative array
 			parse_str( $parts['query'], $new_query );
-	
+
 			// override any variables in the original url with the variables in the passed in query
 			$query = array_merge( $new_query, $query );
 		}// end if
@@ -391,7 +399,7 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end sanitize_post_id
-	
+
 	/**
 	 * Save post attachment
 	 *
@@ -647,7 +655,7 @@ class GO_XPost_Utilities
 
 		// we're good, get the post, filter it, and then echo it out
 		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ), $ping_array['post_id'] );
-		
+
 		$post = apply_filters( 'go_xpost_pre_send_post', $post );
 
 		if ( isset( $ping_array['output'] ) && 'prettyprint' == $ping_array['output'] )
