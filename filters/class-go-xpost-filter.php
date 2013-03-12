@@ -17,14 +17,15 @@ abstract class GO_XPost_Filter
 	abstract protected function should_send_post( $post_id );
 
 	/**
-	 * Alter the $post object before returning it to the endpoint
+	 * Alter the $xpost object before returning it to the endpoint
+	 * Note: $xpost is NOT a WP_Post object, but it contains one in $xpost->post
 	 *
-	 * @param  object $post
+	 * @param  object $xpost
 	 * @param  int $post_id
-	 * @return $post WP_Post
+	 * @return custom object containing WP_Post
 	 */
-	public function post_filter( $post, $post_id )
+	public function post_filter( $xpost, $post_id )
 	{
-		return $post;
+		return $xpost;
 	}// end post_filter
 }// end GO_XPost_Filter
