@@ -18,7 +18,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			return FALSE;
 		} // END if
-		
+
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
@@ -27,7 +27,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			'go_webinar',
 			'post',
 		);
-		
+
 		if ( ! in_array( get_post( $post_id )->post_type, $valid_post_types ) )
 		{
 			return FALSE;
@@ -35,7 +35,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		return TRUE;
 	} // END should_send_post
-	
+
 	/**
 	 * Alter the $post object before returning it to the endpoint
 	 *
@@ -47,7 +47,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	{
 		// go-property will come from the current property set in go_config
 		$post->terms['go-property'][] = go_config()->get_property();
-		
+
 		// go-vertical can potentially come from channel, primary_channel, and category -> child of Topics
 		if ( isset( $post->terms['channel'] ) )
 		{
@@ -56,7 +56,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$post->terms['go-vertical'][] = $channel;
 			} // END foreach
 		} // END if
-		
+
 		if ( isset( $post->terms['primary_channel'] ) )
 		{
 			foreach ( $post->terms['primary_channel'] as $primary_channel )
@@ -64,13 +64,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$post->terms['go-vertical'][] = $primary_channel;
 			} // END foreach
 		} // END if
-		
+
 		if ( isset( $post->terms['category'] ) )
 		{
 			$topics_term     = get_term_by( 'name', 'Topics', 'category' );
 			$topics_children = get_terms( array( 'category' ), array( 'child_of' => $topics_term->term_id ) );
-			$topics_children = $this->parse_terms_array( $topics_children );	
-			
+			$topics_children = $this->parse_terms_array( $topics_children );
+
 			foreach ( $post->terms['category'] as $category )
 			{
 				if ( in_array( $category, $topics_children ) )
@@ -83,19 +83,19 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				}
 			} // END foreach
 		} // END if
-		
+
 		if ( isset( $post->terms['go-vertical'] ) )
 		{
 			$post->terms['go-vertical'] = array_unique( $post->terms['go-vertical'] );
 		} // END if
-		
+
 		// go-type is the fun one, it will come a variety of sources
 		if ( 'go-datamodule' == $post->post_type )
 		{
 			$post->terms['go-type'][] = 'Chart';
 		} // END if
-		elseif ( 
-			0 == strncmp( 'go-report', $post->post_type, 9 ) 
+		elseif (
+			0 == strncmp( 'go-report', $post->post_type, 9 )
 			|| isset( $is_report )
 		)
 		{
@@ -103,7 +103,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		} // END elseif
 		elseif ( function_exists( 'go_waterfall_options' ) ) // or maybe go_config()->dir != '_pro' at some point?
 		{
-			if ( 
+			if (
 				'video' == go_waterfall_options()->get_type( $post_id )
 				|| ( isset( $post->terms['go_syn_media'] ) && in_array( 'video', $post->terms['go_syn_media'] ) )
 			)
@@ -114,31 +114,31 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$post->terms['go-type'][] = 'Podcast';
 			} // END elseif
-			elseif ( 
+			elseif (
 				'gigaom' == go_waterfall_options()->get_type( $post_id )
-				|| 'paidcontent' == go_waterfall_options()->get_type( $post_id )	
+				|| 'paidcontent' == go_waterfall_options()->get_type( $post_id )
 			)
 			{
 				$post->terms['go-type'][] = 'News';
 			} // END elseif
 		} // END elseif
-		
+
 		// Default go-type value in case it doesn't get set by something above? Maybe?
-		if ( ! isset( $post->terms['go-type'] ) ) 
+		if ( ! isset( $post->terms['go-type'] ) )
 		{
 			$post->terms['go-type'][] = 'Content';
 		} // END else
-		
+
 		return $post;
 	} // END post_filter
-	
+
 	/**
 	 * Return a simplified array of terms
 	 */
 	public function parse_terms_array( $terms )
 	{
 		$parsed_terms = array();
-		
+
 		if ( is_array( $terms ) )
 		{
 			foreach ( $terms as $term )
@@ -146,7 +146,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$parsed_terms[] = $term->name;
 			} // END foreach
 		} // END if
-		
+
 		return $parsed_terms;
 	} // END parse_terms_array
 } // END GO_XPost_Filter_Search

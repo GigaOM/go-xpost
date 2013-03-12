@@ -22,14 +22,14 @@ class GO_XPost
 
 		add_action( 'edit_post', array( $this, 'edit_post' ) );
 		// hook to the receive push to remove the edit_post action
-		add_action( 'go_xpost_receive_push', array( $this, 'receive_push' ) );
+		add_action( 'go_xpost_receive_ping', array( $this, 'receive_ping' ) );
 
 		// hook the utility functions in GO_XPost_Utilities to admin ajax requests
 		add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
 		add_action( 'wp_ajax_nopriv_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
 
-		add_action( 'wp_ajax_go_xpost_push', array( go_xpost_util(), 'receive_push' ));
-		add_action( 'wp_ajax_nopriv_go_xpost_push', array( go_xpost_util(), 'receive_push' ) );
+		add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
+		add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 
 		// Filter comment counts for crossposted content.
 		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
@@ -66,7 +66,7 @@ class GO_XPost
 	}//end edit_post
 
 	/**
-	 * Helper function for edit_post, loops over filters and calls Go_XPost_Utilities::push()
+	 * Helper function for edit_post, loops over filters and calls Go_XPost_Utilities::ping()
 	 *
 	 * @param $post_id int wordpress $post_id to edit
 	 */
@@ -96,17 +96,17 @@ class GO_XPost
 					)
 				);
 
-				go_xpost_util()->push( $filter->endpoint, $post_id, $this->secret, $filter_name );
+				go_xpost_util()->ping( $filter->endpoint, $post_id, $this->secret, $filter_name );
 			}// end if
 		} // END foreach
 	} // END process_post
 
 	/**
-	 * Remove the edit_post action when receiving a post
+	 * Remove the edit_post action when receiving a ping
 	 *
 	 * @param $post WP_Post object
 	 */
-	public function receive_push( $post )
+	public function receive_ping( $post )
 	{
 		// Remove edit_post action so we don't trigger an accidental crosspost
 		remove_action( 'edit_post', array( $this, 'edit_post' ) );
