@@ -1,8 +1,5 @@
 <?php
 
-/**
- * this class can never be directly instantiated, use one of it's children
- */
 class GO_XPost
 {
 	public $filters = array();
