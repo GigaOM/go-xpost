@@ -20,15 +20,4 @@ class GO_XPost_Filter_Firehose extends GO_XPost_Filter
 	{
 		return TRUE;
 	}// end should_send_post
-
-	/**
-	 * Alter the $post object before returning it to the endpoint
-	 *
-	 * @param  object $post
-	 * @return $post WP_Post
-	 */
-	public function post_filter( $post )
-	{
-		return $post;
-	}// end post_filter
 }// end GO_XPost_Filter_Firehose
