@@ -37,45 +37,46 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	} // END should_send_post
 
 	/**
-	 * Alter the $post object before returning it to the endpoint
+	 * Alter the $xpost object before returning it to the endpoint
+	 * Note: $xpost is NOT a WP_Post object, but it contains one in $xpost->post
 	 *
-	 * @param  object $post
+	 * @param  object $xpost
 	 * @param  int $post_id
-	 * @return $post WP_Post
+	 * @return custom object containing WP_Post
 	 */
-	public function post_filter( $post, $post_id )
+	public function post_filter( $xpost, $post_id )
 	{
 		// go-property will come from the current property set in go_config
-		$post->terms['go-property'][] = go_config()->get_property();
+		$xpost->terms['go-property'][] = go_config()->get_property();
 
 		// go-vertical can potentially come from channel, primary_channel, and category -> child of Topics
-		if ( isset( $post->terms['channel'] ) )
+		if ( isset( $xpost->terms['channel'] ) )
 		{
-			foreach ( $post->terms['channel'] as $channel )
+			foreach ( $xpost->terms['channel'] as $channel )
 			{
-				$post->terms['go-vertical'][] = $channel;
+				$xpost->terms['go-vertical'][] = $channel;
 			} // END foreach
 		} // END if
 
-		if ( isset( $post->terms['primary_channel'] ) )
+		if ( isset( $xpost->terms['primary_channel'] ) )
 		{
-			foreach ( $post->terms['primary_channel'] as $primary_channel )
+			foreach ( $xpost->terms['primary_channel'] as $primary_channel )
 			{
-				$post->terms['go-vertical'][] = $primary_channel;
+				$xpost->terms['go-vertical'][] = $primary_channel;
 			} // END foreach
 		} // END if
 
-		if ( isset( $post->terms['category'] ) )
+		if ( isset( $xpost->terms['category'] ) )
 		{
 			$topics_term     = get_term_by( 'name', 'Topics', 'category' );
 			$topics_children = get_terms( array( 'category' ), array( 'child_of' => $topics_term->term_id ) );
 			$topics_children = $this->parse_terms_array( $topics_children );
 
-			foreach ( $post->terms['category'] as $category )
+			foreach ( $xpost->terms['category'] as $category )
 			{
 				if ( in_array( $category, $topics_children ) )
 				{
-					$post->terms['go-vertical'][] = $category;
+					$xpost->terms['go-vertical'][] = $category;
 				} // END if
 				elseif ( 'Briefings' == $category )
 				{
@@ -84,52 +85,56 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			} // END foreach
 		} // END if
 
-		if ( isset( $post->terms['go-vertical'] ) )
+		if ( isset( $xpost->terms['go-vertical'] ) )
 		{
-			$post->terms['go-vertical'] = array_unique( $post->terms['go-vertical'] );
+			$xpost->terms['go-vertical'] = array_unique( $xpost->terms['go-vertical'] );
 		} // END if
 
 		// go-type is the fun one, it will come a variety of sources
-		if ( 'go-datamodule' == $post->post_type )
+		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
-			$post->terms['go-type'][] = 'Chart';
+			$xpost->terms['go-type'][] = 'Chart';
 		} // END if
 		elseif (
-			0 == strncmp( 'go-report', $post->post_type, 9 )
+			0 == strncmp( 'go-report', $xpost->post->post_type, 9 )
 			|| isset( $is_report )
 		)
 		{
-			$post->terms['go-type'][] = 'Report';
+			$xpost->terms['go-type'][] = 'Report';
 		} // END elseif
+		elseif ( 'go_shortpost' == $xpost->post->post_type )
+		{
+			$xpost->post->post_type = 'post';
+		}// end elseif
 		elseif ( function_exists( 'go_waterfall_options' ) ) // or maybe go_config()->dir != '_pro' at some point?
 		{
 			if (
 				'video' == go_waterfall_options()->get_type( $post_id )
-				|| ( isset( $post->terms['go_syn_media'] ) && in_array( 'video', $post->terms['go_syn_media'] ) )
+				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'video', $xpost->terms['go_syn_media'] ) )
 			)
 			{
-				$post->terms['go-type'][] = 'Video';
+				$xpost->terms['go-type'][] = 'Video';
 			} // END elseif
-			elseif ( 'podcast' == go_waterfall_options()->get_type( $post_id ) )
+			elseif ( 'podcast' == go_waterfall_options()->get_type( $xpost_id ) )
 			{
-				$post->terms['go-type'][] = 'Podcast';
+				$xpost->terms['go-type'][] = 'Podcast';
 			} // END elseif
 			elseif (
-				'gigaom' == go_waterfall_options()->get_type( $post_id )
+				'gigaom' == go_waterfall_options()->get_type( $xpost_id )
 				|| 'paidcontent' == go_waterfall_options()->get_type( $post_id )
 			)
 			{
-				$post->terms['go-type'][] = 'News';
+				$xpost->terms['go-type'][] = 'News';
 			} // END elseif
 		} // END elseif
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
-		if ( ! isset( $post->terms['go-type'] ) )
+		if ( ! isset( $xpost->terms['go-type'] ) )
 		{
-			$post->terms['go-type'][] = 'Content';
+			$xpost->terms['go-type'][] = 'Content';
 		} // END else
 
-		return $post;
+		return $xpost;
 	} // END post_filter
 
 	/**
