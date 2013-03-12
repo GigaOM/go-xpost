@@ -1,8 +1,5 @@
 <?php
 
-/**
- * this class can never be directly instantiated, use one of it's children
- */
 class GO_XPost
 {
 	public $filters = array();
@@ -56,12 +53,6 @@ class GO_XPost
 			return;
 		}//end if
 
-		// don't attempt to crosspost a crosspost
-		if ( go_xpost_redirect()->is_xpost( $post_id ) )
-		{
-			return;
-		}//end if
-
 		$this->process_post( $post_id );
 	}//end edit_post
 
@@ -77,6 +68,12 @@ class GO_XPost
 		{
 			return;
 		}// end if
+
+		// don't attempt to crosspost a crosspost
+		if ( go_xpost_redirect()->is_xpost( $post_id ) )
+		{
+			return;
+		}//end if
 
 		// Loop through filters and push to them if appropriate
 		foreach ( $this->filters as $filter_name => $filter )
