@@ -58,7 +58,7 @@ class GO_XPost_Utilities
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ) )
 		{
-			return $this->error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: '. $post_id .')', $this->post_log_data($r->post) );
+			return $this->error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: '. $post_id .')', $post_id );
 		}//end if
 
 		// get the post
