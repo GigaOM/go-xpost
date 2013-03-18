@@ -211,13 +211,11 @@ class GO_XPost_Utilities
 			'post_date_gmt' => $post->post->post_date_gmt,
 		);
 
-		$log_data[ go_xpost_redirect()->meta_key ] = $post->meta[ go_xpost_redirect()->meta_key ];
-
 		foreach ( $post->meta as $key => $value )
 		{
-			if (strncmp('_go_channel_time', $key, 16) == 0)
+			if (strncmp( '_go_channel_time', $key, 16 ) == 0 )
 			{
-				$log_data[$key] = $value;
+				$log_data[ $key ] = $value;
 			}//end if
 		}//end foreach
 
