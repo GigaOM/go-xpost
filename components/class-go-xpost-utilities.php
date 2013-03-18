@@ -213,7 +213,7 @@ class GO_XPost_Utilities
 
 		foreach ( $post->meta as $key => $value )
 		{
-			if (strncmp( '_go_channel_time', $key, 16 ) == 0 )
+			if ( strncmp( '_go_channel_time', $key, 16 ) == 0 )
 			{
 				$log_data[ $key ] = $value;
 			}//end if
