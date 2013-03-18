@@ -47,16 +47,26 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		}
 
 		// replace the excerpt with the shorter gomcom excerpt
-		if ( ! empty( $xpost->meta['gomcom_ingestion_excerpt'] ))
+		if ( ! empty( $xpost->meta['gomcom_ingestion_excerpt'] ) )
 		{
 			$xpost->post->post_excerpt = $xpost->meta['gomcom_ingestion_excerpt'];
 		}
 
 		// replace the title with the gomcom title
-		if ( ! empty( $xpost->meta['gomcom_ingestion_headline'] ))
+		if ( ! empty( $xpost->meta['gomcom_ingestion_headline'] ) )
 		{
 			$xpost->post->post_title = $xpost->meta['gomcom_ingestion_headline'];
 		}
+				
+		if ( $marketing_title = go_reports()->get_post_custom( $post_id, 'marketing-title' ) )
+		{
+			$xpost->post->post_title = $marketing_title;
+		} // END if
+		
+		if ( $teaser = go_reports()->get_post_custom( $post_id, 'teaser' ) )
+		{
+			$xpost->post->post_excerpt = $teaser;
+		} // END if
 
 		// unset unused meta
 		unset( $xpost->meta['document_full_id'] );
