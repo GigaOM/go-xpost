@@ -147,7 +147,7 @@ class GO_XPost_Utilities
 		// this is compatible with the http://wordpress.org/extend/plugins/multiple-post-thumbnails/ plugin available on VIP
 		foreach ( (array) $r->meta as $mkey => $mval )
 		{
-			if ( ( strpos( $mkey, '_thumbnail_id' ) !== FALSE ) && ( $attachment = $this->get_attachment( $mval ) ) )
+			if ( ( strpos( $mkey, '_thumbnail_id' ) !== FALSE ) && ( $attachment = $this->get_attachment( $mval ) ) && ! is_wp_error( $attachment ) )
 			{
 				$r->$mkey = $attachment;
 			}//end if
