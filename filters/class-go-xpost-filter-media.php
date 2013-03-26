@@ -21,7 +21,7 @@ class GO_XPost_Filter_Media extends GO_XPost_Filter
 		}// end if
 
 		// Get the post channels
-		$channels = wp_get_object_terms( $post_id, 'channel', array( 'fields' => 'slugs' ) );
+		$channels = wp_list_pluck( get_the_terms( $post_id, 'channel' ), 'slug' );
 
 		// Check for media in the list of channels
 		if ( is_array( $channels ) && in_array( 'media', $channels ) )
@@ -32,4 +32,4 @@ class GO_XPost_Filter_Media extends GO_XPost_Filter
 
 		return FALSE;
 	} // END should_send_post
-} // END GO_XPost_Filter_Media
+}// END GO_XPost_Filter_Media
