@@ -277,7 +277,7 @@ class GO_XPost_Admin
 				),
 			),
 			'orderby' => 'ID',
-			'order' => 'ASC',
+			'order' => 'DESC',
 			'posts_per_page' => $limit,
 		);
 		$query = new WP_Query( $args );

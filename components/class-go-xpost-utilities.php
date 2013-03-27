@@ -163,7 +163,7 @@ class GO_XPost_Utilities
 		$r->meta[ go_xpost_redirect()->meta_key ] = $r->origin->permalink;
 
 		// Record comment count to a meta value so we can filter it on the receiving end
-		$r->mega['go_xpost_comment_count'] = $r->post->comment_count;
+		$r->meta['go_xpost_comment_count'] = $r->post->comment_count;
 
 		// unset the meta that we don't want to attempt to copy
 		unset( $r->meta['_edit_lock'] );
@@ -676,8 +676,14 @@ class GO_XPost_Utilities
 	 */
 	public function get_author( $author )
 	{
+		if ( ! is_object( $author ) )
+		{
+			// default to admin when the data is screwy
+			return 1;
+		}// end if
+
 		// Check if author exists, allow it to be hooked if not
-		if ( ! $post_author = get_user_by( 'email', $author->data->user_email ) )
+		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
 			// in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
 			return apply_filters( 'go_xpost_unknown_author', $author->ID, $author );
