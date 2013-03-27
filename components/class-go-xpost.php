@@ -12,21 +12,21 @@ class GO_XPost
 		{
 			require __DIR__ . '/class-go-xpost-admin.php';
 			go_xpost_admin();
+
+			$this->load_filters();
+			$this->secret = $this->get_secret();
+
+			add_action( 'edit_post', array( $this, 'edit_post' ) );
+			// hook to the receive push to remove the edit_post action
+			add_action( 'go_xpost_receive_ping', array( $this, 'receive_ping' ) );
+
+			// hook the utility functions in GO_XPost_Utilities to admin ajax requests
+			add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
+			add_action( 'wp_ajax_nopriv_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
+
+			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
+			add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 		}// end if
-
-		$this->load_filters();
-		$this->secret = $this->get_secret();
-
-		add_action( 'edit_post', array( $this, 'edit_post' ) );
-		// hook to the receive push to remove the edit_post action
-		add_action( 'go_xpost_receive_ping', array( $this, 'receive_ping' ) );
-
-		// hook the utility functions in GO_XPost_Utilities to admin ajax requests
-		add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
-		add_action( 'wp_ajax_nopriv_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
-
-		add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
-		add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 
 		// Filter comment counts for crossposted content.
 		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
@@ -81,7 +81,7 @@ class GO_XPost
 			if ( empty( $filter->endpoint ) )
 			{
 				continue;
-			}
+			}// end if
 
 			if ( $filter->should_send_post( $post_id ) )
 			{
@@ -166,7 +166,7 @@ class GO_XPost
 			include_once dirname( __DIR__ ) . '/filters/class-go-xpost-filter-' . $filter . '.php';
 			$classname = 'GO_XPost_Filter_' . ucfirst( $filter );
 			$this->filters[$filter] = new $classname;
-		}
+		}// end if
 	} // END load_filter
 
 	/**

@@ -676,6 +676,12 @@ class GO_XPost_Utilities
 	 */
 	public function get_author( $author )
 	{
+		if ( ! is_object( $author ) )
+		{
+			// default to admin when the data is screwy
+			return 1;
+		}// end if
+
 		// Check if author exists, allow it to be hooked if not
 		if ( ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
