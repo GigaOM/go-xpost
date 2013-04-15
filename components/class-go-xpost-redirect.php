@@ -195,7 +195,7 @@ class GO_XPost_Redirect
 		if ( $wp_query->is_singular && $redirect = $this->get_post_meta( $wp_query->queried_object->ID ) )
 		{
 			// prevent infinite redirect and delete the wacky meta key
-			if ( $redirect == 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] )
+			if ( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] == $redirect )
 			{
 				$this->set_redirect( $wp_query->queried_object->ID, '', TRUE );
 				return;
@@ -231,7 +231,7 @@ class GO_XPost_Redirect
 	public function update_post_meta( $post_id, $redirect )
 	{
 		// do not allow the redirect to be set to match the permalink
-		if ( $redirect == get_permalink( $post_id ) )
+		if ( get_permalink( $post_id ) == $redirect )
 		{
 			return;
 		}// end if
