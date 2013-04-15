@@ -83,6 +83,18 @@ class GO_XPost
 				continue;
 			}// end if
 
+			// if the configured endpoint hostname matches the site_url, we should not xpost to there
+			if ( parse_url( $filter->endpoint, PHP_URL_HOST ) === parse_url( site_url(), PHP_URL_HOST ) )
+			{
+				// log that we have a bad endpoint configured
+				apply_filters( 'go_slog', 'go-xpost-bad-endpoint', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': Bad endpoint!',
+					array(
+						'post_id'   => $post_id,
+					)
+				);
+				return;
+			}// end if
+
 			if ( $filter->should_send_post( $post_id ) )
 			{
 				// log that we are xposting
@@ -121,7 +133,7 @@ class GO_XPost
 				'filter'   => '',
 				'endpoint' => '',
 				'secret' => '',
-			)
+			),
 		);
 
 		return get_option( $this->slug . '-settings', $default );
