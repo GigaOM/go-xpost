@@ -9,21 +9,16 @@ class GO_XPost_Admin
 
 	public function __construct()
 	{
-		add_action( 'init', array( $this, 'init' ) );
-		add_action( 'admin_init', array( $this, 'update_settings' ) );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'wp_ajax_go_xpost_update_settings', array( $this, 'update_settings' ) );
-
 		add_action( 'wp_ajax_go_xpost_batch', array( $this, 'batch' ) );
 	}// end __construct
 
-	public function init()
+	public function admin_init()
 	{
-		if ( is_admin() )
-		{
-			wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
-			wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
-		}
+		wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
+		wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
 
 		// taxonomy for keeping track of xpost imports
 		register_taxonomy(
@@ -34,7 +29,9 @@ class GO_XPost_Admin
 				'public' => false,
 			)
 		);
-	} // END init
+
+		$this->update_settings();
+	} // END admin_init
 
 	public function admin_menu()
 	{
