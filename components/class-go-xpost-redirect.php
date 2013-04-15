@@ -3,7 +3,7 @@
 class GO_XPost_Redirect
 {
 	public $meta_key = 'go_xpost_redirect';
-	
+
 	public function __construct()
 	{
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
@@ -15,11 +15,11 @@ class GO_XPost_Redirect
 	 */
 	public function admin_init()
 	{
-		if( current_user_can( 'edit_others_posts' ) || current_user_can( 'edit_others_pages' ) )
+		if ( current_user_can( 'edit_others_posts' ) || current_user_can( 'edit_others_pages' ) )
 		{
 			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'post', 'advanced', 'high' );
 			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'page', 'advanced', 'high' );
-			
+
 			add_action( 'save_post', array( $this, 'save_post' ) );
 			add_action( 'go_xpost_set_redirect', array( $this, 'set_redirect' ), 10, 3 );
 			add_filter( 'display_post_states', array( $this, 'display_post_states' ) );
@@ -63,7 +63,7 @@ class GO_XPost_Redirect
 		$post_id = ( $post_id ) ? (int) $post_id : get_the_ID();
 		return (bool) $this->get_post_meta( $post_id );
 	} // END is_xpost
-	
+
 	/**
 	 * Filter go_xpost_is_xpost and return TRUE/FALSE
 	 */
@@ -73,7 +73,7 @@ class GO_XPost_Redirect
 		{
 			return TRUE;
 		} // END if
-		
+
 		return $is_xpost;
 	} // END go_xpost_is_xpost
 
@@ -83,7 +83,7 @@ class GO_XPost_Redirect
 	public function meta_box()
 	{
 		global $post;
-		
+
 		$redirect = $this->get_post_meta( $post->ID );
 		$checked  = ( $redirect ) ? TRUE : FALSE;
 		?>
@@ -92,7 +92,7 @@ class GO_XPost_Redirect
 		</p>
 		<p class="target_url">
 			<label for="<?php echo $this->meta_key; ?>"><strong>Target URL</strong></label><br />
-			<input type="text" name="<?php echo $this->meta_key; ?>" id="<?php echo $this->meta_key; ?>" value="<?php echo $redirect; ?>" placeholder="http://path/to/original/post/" class="widefat" />
+			<input type="text" name="<?php echo $this->meta_key; ?>" id="<?php echo $this->meta_key; ?>" value="<?php echo esc_url( $redirect ); ?>" placeholder="http://path/to/original/post/" class="widefat" />
 		</p>
 		<?php
 		echo '<input type="hidden" name="' . $this->meta_key . '_nonce" id="' . $this->meta_key . '_nonce" value="' . wp_create_nonce( __FILE__ ) . '" />';
@@ -118,12 +118,12 @@ class GO_XPost_Redirect
 		}// end if
 
 		// check post type matches what you intend
-		// We're using go-manual-cross for a bunch of post types, but we're actually only putting the metabox to edit this value on post.
+		// We're using xpost-redirect for a bunch of post types, but we're actually only putting the metabox to edit this value on post.
 		$whitelisted_post_types = array(
-			'post', 
-			'page'
+			'post',
+			'page',
 		);
-		
+
 		if ( ! isset( $post->post_type ) || ! in_array( $post->post_type, $whitelisted_post_types ) )
 		{
 			return;
@@ -136,7 +136,7 @@ class GO_XPost_Redirect
 		}// end if
 
 		// Check the nonce
-		if ( ! isset( $_POST[$this->meta_key . '_nonce'] ) || ! wp_verify_nonce( $_POST[$this->meta_key . '_nonce'], __FILE__ ) )
+		if ( ! isset( $_POST[ $this->meta_key . '_nonce' ] ) || ! wp_verify_nonce( $_POST[ $this->meta_key . '_nonce' ], __FILE__ ) )
 		{
 			return $post_id;
 		}// end if
@@ -147,8 +147,8 @@ class GO_XPost_Redirect
 			return;
 		}// end if
 
-		$force_delete = ( ! isset( $_POST[$this->meta_key . '_x'] ) ) ? TRUE : FALSE;
-		$this->set_redirect( $post_id, $_POST[$this->meta_key], $force_delete );
+		$force_delete = isset( $_POST[ $this->meta_key . '_x' ] ) ? FALSE : TRUE;
+		$this->set_redirect( $post_id, $_POST[ $this->meta_key ], $force_delete );
 
 		return $post_id;
 	}//end save_post
@@ -165,7 +165,7 @@ class GO_XPost_Redirect
 		{
 			return $redirect;
 		}//end if
-		
+
 		return $permalink;
 	}//end post_link
 
@@ -194,6 +194,13 @@ class GO_XPost_Redirect
 
 		if ( $wp_query->is_singular && $redirect = $this->get_post_meta( $wp_query->queried_object->ID ) )
 		{
+			// prevent infinite redirect and delete the wacky meta key
+			if ( $redirect == 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] )
+			{
+				$this->set_redirect( $wp_query->queried_object->ID, '', TRUE );
+				return;
+			}// end if
+
 			wp_redirect( $redirect, '301' );
 			exit;
 		}//end if
@@ -223,6 +230,12 @@ class GO_XPost_Redirect
 	 */
 	public function update_post_meta( $post_id, $redirect )
 	{
+		// do not allow the redirect to be set to match the permalink
+		if ( $redirect == get_permalink( $post_id ) )
+		{
+			return;
+		}// end if
+
 		update_post_meta( $post_id, $this->meta_key, $redirect );
 	} // END update_post_meta
 
@@ -232,12 +245,12 @@ class GO_XPost_Redirect
 	 * @param $post_id int Post ID
 	 */
 	public function get_post_meta( $post_id )
-	{		
+	{
 		$redirect = get_post_meta( $post_id, $this->meta_key, TRUE );
-		
+
 		return apply_filters( 'go_xpost_redirect_meta', $redirect, $post_id );
 	} // END get_post_meta
-} // END GO_XPost_Redirect
+}// END class
 
 function go_xpost_redirect()
 {
