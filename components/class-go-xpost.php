@@ -75,6 +75,9 @@ class GO_XPost
 			return;
 		}//end if
 
+		$site_url_host = parse_url( site_url(), PHP_URL_HOST );
+		$home_url_host = parse_url( home_url(), PHP_URL_HOST );
+
 		// Loop through filters and push to them if appropriate
 		foreach ( $this->filters as $filter_name => $filter )
 		{
@@ -84,7 +87,8 @@ class GO_XPost
 			}// end if
 
 			// if the configured endpoint hostname matches the site_url, we should not xpost to there
-			if ( parse_url( $filter->endpoint, PHP_URL_HOST ) === parse_url( site_url(), PHP_URL_HOST ) )
+			$filter_host = parse_url( $filter->endpoint, PHP_URL_HOST );
+			if ( $filter_host === $site_url_host || $filter_host === $home_url_host )
 			{
 				// log that we have a bad endpoint configured
 				apply_filters( 'go_slog', 'go-xpost-bad-endpoint', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': Bad endpoint!',
