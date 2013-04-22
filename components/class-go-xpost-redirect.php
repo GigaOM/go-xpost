@@ -8,6 +8,7 @@ class GO_XPost_Redirect
 	{
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'init', array( $this, 'init' ) );
+		add_filter( 'go_xpost_is_xpost', array( $this, 'go_xpost_is_xpost' ), 10, 2 );
 	}//end __construct
 
 	/**
@@ -23,7 +24,6 @@ class GO_XPost_Redirect
 			add_action( 'save_post', array( $this, 'save_post' ) );
 			add_action( 'go_xpost_set_redirect', array( $this, 'set_redirect' ), 10, 3 );
 			add_filter( 'display_post_states', array( $this, 'display_post_states' ) );
-			add_filter( 'go_xpost_is_xpost', array( $this, 'go_xpost_is_xpost' ), 10, 2 );
 		}//end if
 	}//end admin_init
 
