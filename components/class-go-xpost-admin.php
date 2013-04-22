@@ -47,6 +47,7 @@ class GO_XPost_Admin
 
 		$settings = go_xpost()->get_settings();
 		$secret   = go_xpost()->get_secret();
+		$method   = go_xpost()->get_request_method();
 
 		$filters  = $this->_get_filters();
 
@@ -116,6 +117,12 @@ class GO_XPost_Admin
 					<em>Secret that is shared between all of the sites being xPosted to/from.</em>
 				</div>
 
+				<div class="<?php echo $this->slug; ?>-method">
+					<label for="<?php echo $this->slug; ?>-method"><strong>Request Method</strong></label><br />
+					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php if ( 'GET' == $method || !$method ) { echo 'checked'; } ?>/> GET<br />
+					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php if ( 'POST' == $method ) { echo 'checked'; } ?>/> POST<br />
+				</div>
+
 				<p class="submit">
 					<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
 					<input type="hidden" name="<?php echo $this->slug; ?>-setting-numbers" class="<?php echo $this->slug; ?>-setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
@@ -166,6 +173,7 @@ class GO_XPost_Admin
 
 		update_option( $this->slug . '-settings', $compiled_settings );
 		update_option( $this->slug . '-secret', $_POST[ $this->slug . '-secret' ] );
+		update_option( $this->slug . '-method', $_POST[ $this->slug . '-method' ] );
 		$_POST['updated'] = TRUE;
 	} // END update_settings
 
@@ -281,7 +289,7 @@ class GO_XPost_Admin
 
 		return $query->posts;
 	}// end get_events_by_type
-}//end GO_XPost_Admin
+}//end class
 
 function go_xpost_admin()
 {

@@ -256,10 +256,18 @@ class GO_XPost_Utilities
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array, $secret );
 
-		$endpoint_get = $this->build_get_url( $endpoint, $query_array );
+		if ( 'GET' == go_xpost()->get_request_method() )
+		{
+			$endpoint_get = $this->build_get_url( $endpoint, $query_array );
 
-		// send the ping
-		$return = wp_remote_get( $endpoint_get, array( 'timeout' => 20 ) );
+			// send the ping
+			$return = wp_remote_get( $endpoint_get, array( 'timeout' => 20 ) );
+		} // end if
+		else
+		{
+			// send the ping
+			$return = wp_remote_request( $endpoint, array( 'timeout' => 20, 'method' => 'POST', 'body' => $query_array ) );
+		}// end else
 
 		// save an activity log for this execution instance
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
@@ -313,10 +321,20 @@ class GO_XPost_Utilities
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->secret );
 
-		$endpoint_get = $this->build_get_url( urldecode( $ping_array['source'] ), $query_array );
+		if ( 'GET' == go_xpost()->get_request_method() )
+		{
+			$endpoint_get = $this->build_get_url( urldecode( $ping_array['source'] ), $query_array );
 
-		// fetch and decode the post
-		$pull_return = wp_remote_get( $endpoint_get );
+			// fetch and decode the post
+			$pull_return = wp_remote_get( $endpoint_get );
+		}
+		else
+		{
+			$endpoint_url = urldecode( $ping_array['source'] );
+
+			// fetch and decode the post
+			$pull_return = wp_remote_request( $endpoint_url, array( 'method' => 'POST', 'body' => $query_array ) );
+		} // end else
 
 		// confirm we got a response
 		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
