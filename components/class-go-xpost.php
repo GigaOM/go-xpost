@@ -154,6 +154,21 @@ class GO_XPost
 	} // END get_secret
 
 	/**
+	 * Get the request method (GET or POST) for this site
+	 *
+	 * @return  Mixed values for the option. If option does not exist, return boolean FALSE.
+	 */
+	public function get_request_method()
+	{
+		$method = get_option( $this->slug . '-method' );
+		if ( ! $method )
+		{
+			$method = 'GET';
+		}// end if
+		return $method;
+	} // END get_request_method
+
+	/**
 	 * Load the filters as defined in settings, will instantiate objects for each
 	 */
 	private function load_filters()
