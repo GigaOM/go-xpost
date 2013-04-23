@@ -427,6 +427,8 @@ class GO_XPost_Utilities
 		// and
 		// http://core.svn.wordpress.org/tags/2.9.2/wp-admin/import/wordpress.php
 
+		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'post_id' => $post->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+
 		// create a location for this file
 		$file = wp_upload_bits( basename( $post->file->url ), null, '', $post->post->post_date );
 
@@ -589,6 +591,8 @@ class GO_XPost_Utilities
 		{
 			return $this->error( 'go-xpost-failed-save', 'Failed to save post (GUID: ' . $post->post->guid . ')', $this->post_log_data( $post ) );
 		}//end if
+
+		apply_filters( 'go_slog', 'go-xpost-meta', 'Xpost meta fields', array_keys( $post->meta ) );
 
 		// set the post meta as received for the post
 		foreach ( (array) $post->meta as $meta_key => $meta_values )
