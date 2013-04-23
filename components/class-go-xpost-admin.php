@@ -25,8 +25,9 @@ class GO_XPost_Admin
 			$this->batch_taxonomy,
 			'post',
 			array(
-				'label' => __( 'Batch Names' ),
-				'public' => false,
+				'label'   => __( 'Batch Names' ),
+				'public'  => FALSE,
+				'rewrite' => FALSE,
 			)
 		);
 
