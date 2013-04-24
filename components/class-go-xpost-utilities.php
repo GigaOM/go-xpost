@@ -22,7 +22,7 @@ class GO_XPost_Utilities
 		// buffer all upcoming output
 		@ob_start();
 
-		print TRUE;
+		echo TRUE;
 		// get the size of the output
 		$size = ob_get_length();
 
@@ -273,7 +273,7 @@ class GO_XPost_Utilities
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
 
 		// log and return success
-		apply_filters( 'go_slog', 'go-xpost-send-ping', $endpoint . ' ' . $post_id, $post_id );
+		apply_filters( 'go_slog', 'go-xpost-send-ping', $endpoint . ' ' . $post_id, array( 'post_id' => $post_id, 'response' => $return['response'] ) );
 
 		return;
 	}//end ping
@@ -283,7 +283,7 @@ class GO_XPost_Utilities
 	 */
 	public function receive_ping()
 	{
-		if ( empty( $_GET['source'] ) )
+		if ( empty( $_REQUEST['source'] ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-ping', 'Forbidden or missing parameters', $_GET, 403 );
 		}//end if
@@ -292,7 +292,7 @@ class GO_XPost_Utilities
 		$this->end_http_connection();
 
 		// validate the signature of the sending site
-		$ping_array = $_GET;
+		$ping_array = $_REQUEST;
 
 		// curl and HTTPS self-signed certificates do not play nice together
 		$ping_array['source'] = ( defined( 'GO_DEV' ) && GO_DEV ) ? preg_replace( '/^https/', 'http', $ping_array['source'] ) : $ping_array['source'];
@@ -315,8 +315,8 @@ class GO_XPost_Utilities
 		// build and sign the request var array
 		$query_array = array(
 			'action'  => 'go_xpost_pull',
-			'post_id' => (int) $_GET['post_id'],
-			'filter'  => $_GET['filter'],
+			'post_id' => (int) $_REQUEST['post_id'],
+			'filter'  => $_REQUEST['filter'],
 		);
 
 		$query_array['signature'] = $this->build_identity_hash( $query_array, go_xpost()->secret );
@@ -339,7 +339,7 @@ class GO_XPost_Utilities
 		// confirm we got a response
 		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be retrieved (source: ' . $_GET['source'] . ')', $query_array );
+			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be retrieved (source: ' . $_REQUEST['source'] . ')', $query_array );
 			die;
 		}// end if
 
@@ -348,7 +348,7 @@ class GO_XPost_Utilities
 		// confirm we got a good result
 		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post was not a valid object after unserializing (source: ' . $_GET['source'] . ')', $query_array );
+			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post was not a valid object after unserializing (source: ' . $_REQUEST['source'] . ')', $query_array );
 			die;
 		}// end if
 
@@ -650,14 +650,14 @@ class GO_XPost_Utilities
 		if ( ! is_user_logged_in() )
 		{
 			// validate the signature of the sending site
-			$ping_array = $_GET;
+			$ping_array = $_REQUEST;
 			$signature  = $ping_array['signature'];
 			unset( $ping_array['signature'] );
 
 			// die if the signature doesn't match
 			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 			{
-				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_GET, 401 );
+				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_REQUEST, 401 );
 			}//end if
 		}//end if
 		else // allow logged in users to make unsigned requests for easier debugging
@@ -672,7 +672,7 @@ class GO_XPost_Utilities
 		}//end if
 
 		// Load the filter we got passed
-		$filter = go_xpost()->filters[ $_GET['filter'] ];
+		$filter = go_xpost()->filters[ $_REQUEST['filter'] ];
 
 		// we're good, get the post, filter it, and then echo it out
 		$post = $filter->post_filter( $this->get_post( $ping_array['post_id'] ), $ping_array['post_id'] );
