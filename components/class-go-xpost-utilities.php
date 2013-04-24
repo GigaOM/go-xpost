@@ -269,6 +269,11 @@ class GO_XPost_Utilities
 			$return = wp_remote_request( $endpoint, array( 'timeout' => 20, 'method' => 'POST', 'body' => $query_array ) );
 		}// end else
 
+		if ( is_wp_error( $return ) )
+		{
+			return $this->error( 'go-xpost-ping-error', 'Ping failed', array( 'source' => $source, 'endpoint' => $endpoint, 'messages' => $return->get_error_messages() ) );
+		}// end if
+
 		// save an activity log for this execution instance
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
 
@@ -285,7 +290,7 @@ class GO_XPost_Utilities
 	{
 		if ( empty( $_REQUEST['source'] ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-ping', 'Forbidden or missing parameters', $_GET, 403 );
+			$this->error_and_die( 'go-xpost-invalid-ping', 'Forbidden or missing parameters', $_REQUEST, 403 );
 		}//end if
 
 		// Tell the pinger that we don't need them anymore
@@ -348,7 +353,13 @@ class GO_XPost_Utilities
 		// confirm we got a good result
 		if ( is_wp_error( $post ) || ! isset( $post->post->guid ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post was not a valid object after unserializing (source: ' . $_REQUEST['source'] . ')', $query_array );
+			$more_data = array( 'query_array' => $query_array );
+			if ( is_wp_error( $post ) )
+			{
+				$more_data['error_messages'] = $post->get_error_messages();
+			}// end if
+
+			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post was not a valid object after unserializing (source: ' . $_REQUEST['source'] . ')', $more_data );
 			die;
 		}// end if
 
