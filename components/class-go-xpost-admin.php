@@ -136,6 +136,7 @@ class GO_XPost_Admin
 			<form method="get" action="admin-ajax.php">
 				<label for="batch_name">Batch Name: </label><input type="text" name="batch_name" /><br/>
 				<label for="post_types">Post types: </label><input type="text" name="post_types" /> <em>(comma separated)</em><br/>
+				<label for="num">Number posts per batch: </label><input type="text" name="num" placeholder="10" /><br/>
 				<input type="submit" class="button button-primary" value="Process" />
 				<input type="hidden" name="action" value="go_xpost_batch" />
 			</form>
@@ -227,7 +228,8 @@ class GO_XPost_Admin
 	{
 		$batch_name = sanitize_key( $_GET['batch_name'] );
 		$post_types = sanitize_text_field( $_GET['post_types'] );
-		$posts = $this->get_posts_to_batch( $batch_name, $post_types );
+		$num = isset( $_GET['num'] ) ? absint( $_GET['num'] ) : 10;
+		$posts = $this->get_posts_to_batch( $batch_name, $post_types, $num );
 
 		foreach ( $posts as $post )
 		{
