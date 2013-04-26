@@ -243,10 +243,18 @@ class GO_XPost_Admin
 			}// end if
 		}// end foreach
 
+		$args = array(
+			'action' => 'go_xpost_batch',
+			'batch_name' => $batch_name,
+			'post_types' => $post_types,
+			'page' => absint( $_GET['page'] ) + 1,
+			'num' => $num,
+		);
+
 		?>
 		<script>
 			var reloader = window.setTimeout(function(){
-				window.location = "?action=go_xpost_batch&batch_name=<?php echo $batch_name?>&post_types=<?php echo $post_types;?>&page=<?php echo $_GET['page']+1;?>";
+				window.location = "?<?php echo http_build_query( $args ); ?>";
 			}, 5000);
 		</script>
 		<br/><br/>
@@ -291,7 +299,7 @@ class GO_XPost_Admin
 		$query = new WP_Query( $args );
 
 		return $query->posts;
-	}// end get_events_by_type
+	}// end get_posts_to_batch
 }//end class
 
 function go_xpost_admin()
