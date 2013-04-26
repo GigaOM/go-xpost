@@ -246,7 +246,7 @@ class GO_XPost_Admin
 		?>
 		<script>
 			var reloader = window.setTimeout(function(){
-				window.location = "?action=go_xpost_batch&batch_name=<?php echo $batch_name?>&post_types=<?php echo $post_types;?>&page=<?php echo $_GET['page']+1;?>&num=<?php echo $num; ?>";
+				window.location = "?action=go_xpost_batch&batch_name=<?php echo $batch_name?>&post_types=<?php echo $post_types;?>&page=<?php echo absint( $_GET['page'] ) + 1;?>&num=<?php echo $num; ?>";
 			}, 5000);
 		</script>
 		<br/><br/>
