@@ -14,11 +14,13 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 	 */
 	public function should_send_post( $post_id )
 	{
+		// to actually get reports, we should check (in pseudocode):
+		// post_type=go-report || ( post_type=post && array_intersect( $post_category_slugs , $report_category_slugs )
 		$valid_post_types = array(
-			'go_shortpost',
+			// 'go_shortpost', // analyst blog posts DISABLED for now, as that would be a change from previous behavior
 			'go-report',
 		);
-		
+
 		if ( in_array( get_post( $post_id )->post_type, $valid_post_types ) )
 		{
 			return TRUE;
@@ -49,12 +51,19 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		// replace the excerpt with the shorter gomcom excerpt
 		if ( ! empty( $xpost->meta['gomcom_ingestion_excerpt'] ) )
 		{
+			// this is the older postmeta prior to the creation of the new report post type
 			$xpost->post->post_excerpt = $xpost->meta['gomcom_ingestion_excerpt'];
 		}
+
+		if ( $teaser = go_reports()->get_post_custom( $post_id, 'teaser' ) )
+		{
+			$xpost->post->post_excerpt = $teaser;
+		} // END if
 
 		// replace the title with the gomcom title
 		if ( ! empty( $xpost->meta['gomcom_ingestion_headline'] ) )
 		{
+			// this is the older postmeta prior to the creation of the new report post type
 			$xpost->post->post_title = $xpost->meta['gomcom_ingestion_headline'];
 		}
 				
@@ -63,10 +72,6 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 			$xpost->post->post_title = $marketing_title;
 		} // END if
 		
-		if ( $teaser = go_reports()->get_post_custom( $post_id, 'teaser' ) )
-		{
-			$xpost->post->post_excerpt = $teaser;
-		} // END if
 
 		// unset unused meta
 		unset( $xpost->meta['document_full_id'] );
