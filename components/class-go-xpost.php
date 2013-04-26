@@ -192,11 +192,15 @@ class GO_XPost
 	 */
 	public function load_filter( $filter )
 	{
-		if ( ! isset( $this->filters[$filter] ) )
+		if ( ! isset( $this->filters[ $filter ] ) )
 		{
 			include_once dirname( __DIR__ ) . '/filters/class-go-xpost-filter-' . $filter . '.php';
 			$classname = 'GO_XPost_Filter_' . ucfirst( $filter );
-			$this->filters[$filter] = new $classname;
+
+			if ( class_exists( $classname ) )
+			{
+				$this->filters[ $filter ] = new $classname;
+			}//end if
 		}// end if
 	} // END load_filter
 
