@@ -14,19 +14,19 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 	 */
 	public function should_send_post( $post_id )
 	{
-		// to actually get reports, we should check (in pseudocode):
+		// to actually get all reports, we should check (in pseudocode):
 		// post_type=go-report || ( post_type=post && array_intersect( $post_category_slugs , $report_category_slugs )
 		$valid_post_types = array(
 			// 'go_shortpost', // analyst blog posts DISABLED for now, as that would be a change from previous behavior
 			'go-report',
 		);
 
-		if ( in_array( get_post( $post_id )->post_type, $valid_post_types ) )
+		if ( ! in_array( get_post( $post_id )->post_type, $valid_post_types ) )
 		{
-			return TRUE;
+			return FALSE;
 		} // END if
 
-		return FALSE;
+		return TRUE;
 	} // END should_send_post
 	
 	/**
