@@ -438,7 +438,7 @@ class GO_XPost_Utilities
 		// and
 		// http://core.svn.wordpress.org/tags/2.9.2/wp-admin/import/wordpress.php
 
-		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'post_id' => $post->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
 
 		// create a location for this file
 		$file = wp_upload_bits( basename( $post->file->url ), null, '', $post->post->post_date );
