@@ -134,6 +134,15 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			$xpost->terms['go-type'][] = 'Content';
 		} // END else
 
+		// search does not need the thumbnails
+		foreach( $xpost->meta as $meta_key => $meta_values )
+		{
+			if ( strpos( $meta_key, '_thumbnail_id' ) !== FALSE )
+			{
+				unset( $xpost->meta[ $meta_key ] );
+			}// end if
+		}// end foreach
+
 		return $xpost;
 	} // END post_filter
 
