@@ -300,7 +300,7 @@ class GO_XPost_Utilities
 		$ping_array = $_REQUEST;
 
 		// default to a sleep of 3 seconds but allow for an override
-		$ping_array['sleep'] = isset( $ping_array['sleep'] ) ? $ping_array['sleep'] : 3;
+		$ping_array['sleep'] = isset( $ping_array['sleep'] ) ? absint( $ping_array['sleep'] ) : 3;
 
 		// curl and HTTPS self-signed certificates do not play nice together
 		$ping_array['source'] = ( defined( 'GO_DEV' ) && GO_DEV ) ? preg_replace( '/^https/', 'http', $ping_array['source'] ) : $ping_array['source'];
