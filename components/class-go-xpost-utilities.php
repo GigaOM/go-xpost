@@ -299,6 +299,9 @@ class GO_XPost_Utilities
 		// validate the signature of the sending site
 		$ping_array = $_REQUEST;
 
+		// default to a sleep of 3 seconds but allow for an override
+		$ping_array['sleep'] = isset( $ping_array['sleep'] ) ? absint( $ping_array['sleep'] ) : 3;
+
 		// curl and HTTPS self-signed certificates do not play nice together
 		$ping_array['source'] = ( defined( 'GO_DEV' ) && GO_DEV ) ? preg_replace( '/^https/', 'http', $ping_array['source'] ) : $ping_array['source'];
 
@@ -315,7 +318,10 @@ class GO_XPost_Utilities
 		apply_filters( 'go_slog', 'go-xpost-received-ping', urldecode( $ping_array['source'] ) . ' ' . $ping_array['post_id'], $ping_array );
 
 		// OK, we're good to go, but let's wait a moment for everything to settle on the other side
-		sleep( 3 );
+		if ( $ping_array['sleep'] )
+		{
+			sleep( $ping_array['sleep'] );
+		}//end if
 
 		// build and sign the request var array
 		$query_array = array(
