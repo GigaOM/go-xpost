@@ -577,15 +577,22 @@ class GO_XPost_Utilities
 
 		$post->post->post_author = $this->get_author( $post->author );
 
-		// update the post dates based on the local gmt offset
-		$post->post->post_date     = $this->utc_to_local( $post->post->post_date_gmt );
-		$post->post->modified_date = $this->utc_to_local( $post->post->modified_date_gmt );
+		// update the post dates based on the local gmt offset, where possible
+		if ( $post->post->post_date_gmt != '0000-00-00 00:00:00' )
+		{
+			$post->post->post_date = $this->utc_to_local( $post->post->post_date_gmt );
+		}// end if
+
+		if ( $post->post->modified_date_gmt != '0000-00-00 00:00:00' )
+		{
+			$post->post->modified_date = $this->utc_to_local( $post->post->modified_date_gmt );
+		}// end if
 
 		// check if the post exists
 		// insert or update as appropriate
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
 		{
-			$post_id = wp_insert_post( (array) $post->post );
+			$post_id = wp_insert_post( (array) $post->post, true );
 			$action  = 'Inserted';
 		}//end if
 		else // the post exists, so update it
@@ -593,7 +600,7 @@ class GO_XPost_Utilities
 			// don't track revisions for this update
 			remove_post_type_support( $post->post->post_type, 'revisions' );
 			$post->post->ID = $post_id;
-			$post_id = wp_insert_post( (array) $post->post );
+			$post_id = wp_insert_post( (array) $post->post, true );
 			$action = 'Updated';
 		}//end else
 
@@ -719,7 +726,7 @@ class GO_XPost_Utilities
 		// Check if author exists, allow it to be hooked if not
 		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
-			// in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
+			// @TODO: this needs to be fixed: in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
 			return apply_filters( 'go_xpost_unknown_author', $author->ID, $author );
 		}//end if
 
