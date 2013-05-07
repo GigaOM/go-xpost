@@ -578,12 +578,12 @@ class GO_XPost_Utilities
 		$post->post->post_author = $this->get_author( $post->author );
 
 		// update the post dates based on the local gmt offset, where possible
-		if ( $post->post->post_date_gmt != '0000-00-00 00:00:00' )
+		if ( '0000-00-00 00:00:00' != $post->post->post_date_gmt )
 		{
 			$post->post->post_date = $this->utc_to_local( $post->post->post_date_gmt );
 		}// end if
 
-		if ( $post->post->modified_date_gmt != '0000-00-00 00:00:00' )
+		if ( '0000-00-00 00:00:00' != $post->post->modified_date_gmt )
 		{
 			$post->post->modified_date = $this->utc_to_local( $post->post->modified_date_gmt );
 		}// end if
