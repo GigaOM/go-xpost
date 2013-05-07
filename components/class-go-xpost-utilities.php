@@ -581,6 +581,12 @@ class GO_XPost_Utilities
 		$post->post->post_date     = $this->utc_to_local( $post->post->post_date_gmt );
 		$post->post->modified_date = $this->utc_to_local( $post->post->modified_date_gmt );
 
+		// if the post_date is old, we do not want to do subscriber notifications when receiving the xpost
+		if ( strtotime( 'today - 8 hours' ) > strtotime( $post->post->post_date ) )
+		{
+			define( 'WP_IMPORTING', TRUE );
+		}// end if
+
 		// check if the post exists
 		// insert or update as appropriate
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
