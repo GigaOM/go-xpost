@@ -731,6 +731,7 @@ class GO_XPost_Utilities
 		}//end if
 
 		// ID could be different so lets replace it with the local one
+		// @TODO: Pro currently has a lot of email address duplication in user accounts.  This may cause surprising effects here. (see Om and Ingram)
 		return $post_author->ID;
 	}// end get_author
 
