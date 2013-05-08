@@ -583,9 +583,16 @@ class GO_XPost_Utilities
 
 		$post->post->post_author = $this->get_author( $post->author );
 
-		// update the post dates based on the local gmt offset
-		$post->post->post_date     = $this->utc_to_local( $post->post->post_date_gmt );
-		$post->post->modified_date = $this->utc_to_local( $post->post->modified_date_gmt );
+		// update the post dates based on the local gmt offset, where possible
+		if ( '0000-00-00 00:00:00' != $post->post->post_date_gmt )
+		{
+			$post->post->post_date = $this->utc_to_local( $post->post->post_date_gmt );
+		}// end if
+
+		if ( '0000-00-00 00:00:00' != $post->post->modified_date_gmt )
+		{
+			$post->post->modified_date = $this->utc_to_local( $post->post->modified_date_gmt );
+		}// end if
 
 		// if the post_date is old, we do not want to do subscriber notifications when receiving the xpost
 		if ( strtotime( 'today - 8 hours' ) > strtotime( $post->post->post_date ) )
@@ -597,7 +604,7 @@ class GO_XPost_Utilities
 		// insert or update as appropriate
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
 		{
-			$post_id = wp_insert_post( (array) $post->post );
+			$post_id = wp_insert_post( (array) $post->post, true );
 			$action  = 'Inserted';
 		}//end if
 		else // the post exists, so update it
@@ -605,7 +612,7 @@ class GO_XPost_Utilities
 			// don't track revisions for this update
 			remove_post_type_support( $post->post->post_type, 'revisions' );
 			$post->post->ID = $post_id;
-			$post_id = wp_insert_post( (array) $post->post );
+			$post_id = wp_insert_post( (array) $post->post, true );
 			$action = 'Updated';
 		}//end else
 
@@ -731,11 +738,12 @@ class GO_XPost_Utilities
 		// Check if author exists, allow it to be hooked if not
 		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
-			// in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
-			return apply_filters( 'go_xpost_unknown_author', $author->ID, $author );
+			// @TODO: this needs to be fixed: in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
+			return apply_filters( 'go_xpost_unknown_author', 0, $author );
 		}//end if
 
 		// ID could be different so lets replace it with the local one
+		// @TODO: Pro currently has a lot of email address duplication in user accounts.  This may cause surprising effects here. (see Om and Ingram)
 		return $post_author->ID;
 	}// end get_author
 
