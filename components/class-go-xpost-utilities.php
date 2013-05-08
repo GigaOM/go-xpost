@@ -604,6 +604,12 @@ class GO_XPost_Utilities
 		// insert or update as appropriate
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
 		{
+			// don't insert draft posts that are new
+			if ( 'draft' == $post->post->post_status )
+			{
+				return '';
+			}// end if
+
 			$post_id = wp_insert_post( (array) $post->post, true );
 			$action  = 'Inserted';
 		}//end if
