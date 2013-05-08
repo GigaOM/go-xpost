@@ -727,7 +727,7 @@ class GO_XPost_Utilities
 		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
 			// @TODO: this needs to be fixed: in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
-			return apply_filters( 'go_xpost_unknown_author', $author->ID, $author );
+			return apply_filters( 'go_xpost_unknown_author', 0, $author );
 		}//end if
 
 		// ID could be different so lets replace it with the local one
