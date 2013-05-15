@@ -132,7 +132,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			} // END elseif
 
 			// multi-page posts on GO/pC are also reports
-			if ( preg_match( '/--nextpage--/', $xpost->post->post_content )
+			if ( preg_match( '/--nextpage--/', $xpost->post->post_content ) )
 			{
 				$xpost->terms['go-type'][] = 'Report';
 			} // END if
