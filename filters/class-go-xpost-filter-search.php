@@ -100,9 +100,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		} // END if
 
 		// go-type is the fun one, it will come a variety of sources
+		$xpost->terms['go-type'] = array();
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
 			$xpost->terms['go-type'][] = 'Chart';
+			$xpost->post->post_type = 'post';
 		} // END if
 		elseif (
 			0 == strncmp( 'go-report', $xpost->post->post_type, 9 )
@@ -110,9 +112,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		)
 		{
 			$xpost->terms['go-type'][] = 'Report';
+			$xpost->post->post_type = 'post';
 		} // END elseif
 		elseif ( 'go_shortpost' == $xpost->post->post_type )
 		{
+			$xpost->terms['go-type'][] = 'News';
 			$xpost->post->post_type = 'post';
 		}// end elseif
 		elseif ( function_exists( 'go_waterfall_options' ) ) // or maybe go_config()->dir != '_pro' at some point?
@@ -135,12 +139,18 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$xpost->terms['go-type'][] = 'News';
 			} // END elseif
+
+			// multi-page posts on GO/pC are also reports
+			if ( preg_match( '/--nextpage--/', $xpost->post->post_content ) )
+			{
+				$xpost->terms['go-type'][] = 'Report';
+			} // END if
 		} // END elseif
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
-		if ( ! isset( $xpost->terms['go-type'] ) )
+		if ( ! count( $xpost->terms['go-type'] ) )
 		{
-			$xpost->terms['go-type'][] = 'Content';
+			$xpost->terms['go-type'][] = 'News';
 		} // END else
 
 		// search does not need the thumbnails
@@ -151,6 +161,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				unset( $xpost->meta[ $meta_key ] );
 			}// end if
 		}// end foreach
+
+		// coerce everything to be a post, because it's easier
+		$xpost->post->post_type = 'post';
 
 		return $xpost;
 	} // END post_filter
