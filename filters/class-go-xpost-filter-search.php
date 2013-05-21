@@ -49,7 +49,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// go-property will come from the current property set in go_config
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
-		// go-vertical can potentially come from channel, primary_channel, and category -> child of Topics
+		// go-vertical can potentially come from vertical, channel, primary_channel, and category -> child of Topics
 		if ( isset( $xpost->terms['channel'] ) )
 		{
 			foreach ( $xpost->terms['channel'] as $channel )
@@ -83,6 +83,15 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$is_report = TRUE;
 				}
 			} // END foreach
+		} // END if
+
+		if ( $xpost->terms['vertical'] )
+		{
+			foreach ( $xpost->terms['vertical'] as $vertical )
+			{
+				$xpost->terms['go-vertical'][] = $vertical;
+			} // END foreach
+			
 		} // END if
 
 		if ( isset( $xpost->terms['go-vertical'] ) )
