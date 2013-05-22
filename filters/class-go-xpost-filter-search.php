@@ -49,12 +49,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// go-property will come from the current property set in go_config
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
-		// go-vertical can potentially come from vertical, channel, primary_channel, and category -> child of Topics
+		// vertical can potentially come from vertical, channel, primary_channel, and category -> child of Topics
 		if ( isset( $xpost->terms['channel'] ) )
 		{
 			foreach ( $xpost->terms['channel'] as $channel )
 			{
-				$xpost->terms['go-vertical'][] = $channel;
+				$xpost->terms['vertical'][] = $channel;
 			} // END foreach
 		} // END if
 
@@ -62,10 +62,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			foreach ( $xpost->terms['primary_channel'] as $primary_channel )
 			{
-				$xpost->terms['go-vertical'][] = $primary_channel;
+				$xpost->terms['vertical'][] = $primary_channel;
 			} // END foreach
 		} // END if
-
+		
+		// This will need to be refactored to only worry about if something is in the Briefings category once we switch topics to verticals
 		if ( isset( $xpost->terms['category'] ) )
 		{
 			$topics_term     = get_term_by( 'name', 'Topics', 'category' );
@@ -76,7 +77,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				if ( in_array( $category, $topics_children ) )
 				{
-					$xpost->terms['go-vertical'][] = $category;
+					$xpost->terms['vertical'][] = $category;
 				} // END if
 				elseif ( 'Briefings' == $category )
 				{
@@ -85,18 +86,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			} // END foreach
 		} // END if
 
-		if ( $xpost->terms['vertical'] )
+		if ( isset( $xpost->terms['vertical'] ) )
 		{
-			foreach ( $xpost->terms['vertical'] as $vertical )
-			{
-				$xpost->terms['go-vertical'][] = $vertical;
-			} // END foreach
-			
-		} // END if
-
-		if ( isset( $xpost->terms['go-vertical'] ) )
-		{
-			$xpost->terms['go-vertical'] = array_unique( $xpost->terms['go-vertical'] );
+			$xpost->terms['vertical'] = array_unique( $xpost->terms['vertical'] );
 		} // END if
 
 		// go-type is the fun one, it will come a variety of sources
