@@ -32,6 +32,20 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			return FALSE;
 		} // END if
+		
+		$invalid_categories = array(
+			'links',
+		);
+		
+		$categories = wp_get_object_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
+
+		foreach ( $categories as $category )
+		{
+			if ( in_array( $category, $invalid_categories ) )
+			{
+				return FALSE;
+			} // END if
+		} // END foreach
 
 		return TRUE;
 	} // END should_send_post
