@@ -34,7 +34,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		} // END if
 		
 		$invalid_categories = array(
-			'links',
+			'links', // We don't want currated links from pro going into search
 		);
 		
 		$categories = wp_get_object_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
