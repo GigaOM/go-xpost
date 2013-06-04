@@ -237,6 +237,12 @@ class GO_XPost_Redirect
 		}// end if
 
 		update_post_meta( $post_id, $this->meta_key, $redirect );
+		
+		// If there's old redirect post_meta we should get rid of it now that we've saved the new version
+		if ( get_post_meta( $post_id, 'go_mancross_redirect', TRUE ) )
+		{
+			delete_post_meta( $post_id, 'go_mancross_redirect' );
+		} // END if
 	} // END update_post_meta
 
 	/**
