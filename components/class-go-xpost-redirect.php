@@ -236,7 +236,19 @@ class GO_XPost_Redirect
 			return;
 		}// end if
 
-		update_post_meta( $post_id, $this->meta_key, $redirect );
+		// Check for duplicates
+		$post_meta = get_post_meta( $post_id, $this->meta_key );
+
+		// If duplicate meta values exist clear them out
+		if ( is_array( $post_meta ) )
+		{
+			delete_post_meta( $post_id, $this->meta_key );
+			update_post_meta( $post_id, $this->meta_key, $redirect );
+		} // END if
+		else 
+		{
+			update_post_meta( $post_id, $this->meta_key, $redirect );
+		} // END else
 	} // END update_post_meta
 
 	/**
