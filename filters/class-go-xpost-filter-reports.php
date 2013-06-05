@@ -90,6 +90,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 
 		// reports get an extra taxonomy term
 		$xpost->terms['go_syn_media'][] = 'report';
+		$xpost->terms['channel'][] = 'pro';
 		$xpost->terms['primary_channel'][] = 'pro';
 
 		// merge all the terms into the post_tags
