@@ -134,9 +134,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$xpost->terms['go-type'][] = 'Video';
 			} // END elseif
-			elseif ( 'audio' == go_waterfall_options()->get_type( $post_id ) )
+			elseif ( 
+				'audio' == go_waterfall_options()->get_type( $post_id )
+				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'podcast', $xpost->terms['go_syn_media'] ) )
+			)
 			{
-				$xpost->terms['go-type'][] = 'Podcast';
+				$xpost->terms['go-type'][] = 'Audio';
 			} // END elseif
 			elseif (
 				'gigaom' == go_waterfall_options()->get_type( $post_id )
