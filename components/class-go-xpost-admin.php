@@ -226,6 +226,11 @@ class GO_XPost_Admin
 	 */
 	public function batch()
 	{
+		if ( ! current_user_can( 'manage_options' ) )
+		{
+			return;
+		}// end if
+		
 		$batch_name = sanitize_key( $_GET['batch_name'] );
 		$post_types = sanitize_text_field( $_GET['post_types'] );
 		$num = isset( $_GET['num'] ) ? absint( $_GET['num'] ) : 10;
