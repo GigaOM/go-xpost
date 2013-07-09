@@ -12,21 +12,21 @@ class GO_XPost
 		{
 			require __DIR__ . '/class-go-xpost-admin.php';
 			go_xpost_admin();
+
+			$this->load_filters();
+			$this->secret = $this->get_secret();
+
+			add_action( 'edit_post', array( $this, 'edit_post' ) );
+			// hook to the receive push to remove the edit_post action
+			add_action( 'go_xpost_receive_ping', array( $this, 'receive_ping' ) );
+
+			// hook the utility functions in GO_XPost_Utilities to admin ajax requests
+			add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
+			add_action( 'wp_ajax_nopriv_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
+
+			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
+			add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 		}// end if
-
-		$this->load_filters();
-		$this->secret = $this->get_secret();
-
-		add_action( 'edit_post', array( $this, 'edit_post' ) );
-		// hook to the receive push to remove the edit_post action
-		add_action( 'go_xpost_receive_ping', array( $this, 'receive_ping' ) );
-
-		// hook the utility functions in GO_XPost_Utilities to admin ajax requests
-		add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
-		add_action( 'wp_ajax_nopriv_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
-
-		add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
-		add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 
 		// Filter comment counts for crossposted content.
 		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
@@ -75,13 +75,29 @@ class GO_XPost
 			return;
 		}//end if
 
+		$site_url_host = parse_url( site_url(), PHP_URL_HOST );
+		$home_url_host = parse_url( home_url(), PHP_URL_HOST );
+
 		// Loop through filters and push to them if appropriate
 		foreach ( $this->filters as $filter_name => $filter )
 		{
 			if ( empty( $filter->endpoint ) )
 			{
 				continue;
-			}
+			}// end if
+
+			// if the configured endpoint hostname matches the site_url, we should not xpost to there
+			$filter_host = parse_url( $filter->endpoint, PHP_URL_HOST );
+			if ( $filter_host === $site_url_host || $filter_host === $home_url_host )
+			{
+				// log that we have a bad endpoint configured
+				apply_filters( 'go_slog', 'go-xpost-bad-endpoint', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': Bad endpoint!',
+					array(
+						'post_id'   => $post_id,
+					)
+				);
+				return;
+			}// end if
 
 			if ( $filter->should_send_post( $post_id ) )
 			{
@@ -121,7 +137,7 @@ class GO_XPost
 				'filter'   => '',
 				'endpoint' => '',
 				'secret' => '',
-			)
+			),
 		);
 
 		return get_option( $this->slug . '-settings', $default );
@@ -136,6 +152,21 @@ class GO_XPost
 	{
 		return get_option( $this->slug . '-secret' );
 	} // END get_secret
+
+	/**
+	 * Get the request method (GET or POST) for this site
+	 *
+	 * @return  Mixed values for the option. If option does not exist, return boolean FALSE.
+	 */
+	public function get_request_method()
+	{
+		$method = get_option( $this->slug . '-method' );
+		if ( ! $method )
+		{
+			$method = 'GET';
+		}// end if
+		return $method;
+	} // END get_request_method
 
 	/**
 	 * Load the filters as defined in settings, will instantiate objects for each
@@ -161,12 +192,16 @@ class GO_XPost
 	 */
 	public function load_filter( $filter )
 	{
-		if ( ! isset( $this->filters[$filter] ) )
+		if ( ! isset( $this->filters[ $filter ] ) )
 		{
 			include_once dirname( __DIR__ ) . '/filters/class-go-xpost-filter-' . $filter . '.php';
 			$classname = 'GO_XPost_Filter_' . ucfirst( $filter );
-			$this->filters[$filter] = new $classname;
-		}
+
+			if ( class_exists( $classname ) )
+			{
+				$this->filters[ $filter ] = new $classname;
+			}//end if
+		}// end if
 	} // END load_filter
 
 	/**

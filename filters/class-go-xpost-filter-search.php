@@ -32,6 +32,20 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			return FALSE;
 		} // END if
+		
+		$invalid_categories = array(
+			'links', // We don't want currated links from pro going into search
+		);
+		
+		$categories = wp_get_object_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
+
+		foreach ( $categories as $category )
+		{
+			if ( in_array( $category, $invalid_categories ) )
+			{
+				return FALSE;
+			} // END if
+		} // END foreach
 
 		return TRUE;
 	} // END should_send_post
@@ -46,15 +60,21 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function post_filter( $xpost, $post_id )
 	{
+		global $post;
+
+		// Make sure we've got $post global set to our xpost so anything that relies on it can use it
+		$post = $xpost->post;
+		$post->ID = $post_id;
+		
 		// go-property will come from the current property set in go_config
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
-		// go-vertical can potentially come from channel, primary_channel, and category -> child of Topics
+		// vertical can potentially come from vertical, channel, primary_channel, and category -> child of Topics
 		if ( isset( $xpost->terms['channel'] ) )
 		{
 			foreach ( $xpost->terms['channel'] as $channel )
 			{
-				$xpost->terms['go-vertical'][] = $channel;
+				$xpost->terms['vertical'][] = $channel;
 			} // END foreach
 		} // END if
 
@@ -62,10 +82,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			foreach ( $xpost->terms['primary_channel'] as $primary_channel )
 			{
-				$xpost->terms['go-vertical'][] = $primary_channel;
+				$xpost->terms['vertical'][] = $primary_channel;
 			} // END foreach
 		} // END if
-
+		
+		// This will need to be refactored to only worry about if something is in the Briefings category once we switch topics to verticals
 		if ( isset( $xpost->terms['category'] ) )
 		{
 			$topics_term     = get_term_by( 'name', 'Topics', 'category' );
@@ -76,7 +97,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				if ( in_array( $category, $topics_children ) )
 				{
-					$xpost->terms['go-vertical'][] = $category;
+					$xpost->terms['vertical'][] = $category;
 				} // END if
 				elseif ( 'Briefings' == $category )
 				{
@@ -85,12 +106,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			} // END foreach
 		} // END if
 
-		if ( isset( $xpost->terms['go-vertical'] ) )
+		if ( isset( $xpost->terms['vertical'] ) )
 		{
-			$xpost->terms['go-vertical'] = array_unique( $xpost->terms['go-vertical'] );
+			$xpost->terms['vertical'] = array_unique( $xpost->terms['vertical'] );
 		} // END if
 
 		// go-type is the fun one, it will come a variety of sources
+		$xpost->terms['go-type'] = array();
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
 			$xpost->terms['go-type'][] = 'Chart';
@@ -99,12 +121,28 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			0 == strncmp( 'go-report', $xpost->post->post_type, 9 )
 			|| isset( $is_report )
 		)
-		{
+		{	
+			if ( 'inherit' == $xpost->post->post_status )
+			{
+				$parent_report = go_reports()->get_current_report();
+				$xpost->post->post_status = $parent_report->post_status;
+			} // END if
+			elseif ( 'go-report' == $xpost->post->post_type )
+			{
+				// If this is a report parent post we need to make sure the children get updated too
+				$report_children = go_reports()->get_report_children();
+
+				foreach ( $report_children as $report_child )
+				{					
+					go_xpost()->process_post( $report_child->ID );
+				} // END foreach
+			} // END elseif
+			
 			$xpost->terms['go-type'][] = 'Report';
 		} // END elseif
 		elseif ( 'go_shortpost' == $xpost->post->post_type )
 		{
-			$xpost->post->post_type = 'post';
+			$xpost->terms['go-type'][] = 'News';
 		}// end elseif
 		elseif ( function_exists( 'go_waterfall_options' ) ) // or maybe go_config()->dir != '_pro' at some point?
 		{
@@ -115,9 +153,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$xpost->terms['go-type'][] = 'Video';
 			} // END elseif
-			elseif ( 'podcast' == go_waterfall_options()->get_type( $post_id ) )
+			elseif ( 
+				'audio' == go_waterfall_options()->get_type( $post_id )
+				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'podcast', $xpost->terms['go_syn_media'] ) )
+			)
 			{
-				$xpost->terms['go-type'][] = 'Podcast';
+				$xpost->terms['go-type'][] = 'Audio';
 			} // END elseif
 			elseif (
 				'gigaom' == go_waterfall_options()->get_type( $post_id )
@@ -126,13 +167,31 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$xpost->terms['go-type'][] = 'News';
 			} // END elseif
+
+			// multi-page posts on GO/pC are also reports
+			if ( preg_match( '/--nextpage--/', $xpost->post->post_content ) )
+			{
+				$xpost->terms['go-type'][] = 'Report';
+			} // END if
 		} // END elseif
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
-		if ( ! isset( $xpost->terms['go-type'] ) )
+		if ( ! count( $xpost->terms['go-type'] ) )
 		{
-			$xpost->terms['go-type'][] = 'Content';
+			$xpost->terms['go-type'][] = 'News';
 		} // END else
+
+		// search does not need the thumbnails
+		foreach( $xpost->meta as $meta_key => $meta_values )
+		{
+			if ( strpos( $meta_key, '_thumbnail_id' ) !== FALSE )
+			{
+				unset( $xpost->meta[ $meta_key ] );
+			}// end if
+		}// end foreach
+
+		// coerce everything to be a post, because it's easier
+		$xpost->post->post_type = 'post';
 
 		return $xpost;
 	} // END post_filter

@@ -9,32 +9,30 @@ class GO_XPost_Admin
 
 	public function __construct()
 	{
-		add_action( 'init', array( $this, 'init' ) );
-		add_action( 'admin_init', array( $this, 'update_settings' ) );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'wp_ajax_go_xpost_update_settings', array( $this, 'update_settings' ) );
-
 		add_action( 'wp_ajax_go_xpost_batch', array( $this, 'batch' ) );
 	}// end __construct
 
-	public function init()
+	public function admin_init()
 	{
-		if ( is_admin() )
-		{
-			wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
-			wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
-		}
+		wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
+		wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
 
 		// taxonomy for keeping track of xpost imports
 		register_taxonomy(
 			$this->batch_taxonomy,
 			'post',
 			array(
-				'label' => __( 'Batch Names' ),
-				'public' => false,
+				'label'   => __( 'Batch Names' ),
+				'public'  => FALSE,
+				'rewrite' => FALSE,
 			)
 		);
-	} // END init
+
+		$this->update_settings();
+	} // END admin_init
 
 	public function admin_menu()
 	{
@@ -50,6 +48,7 @@ class GO_XPost_Admin
 
 		$settings = go_xpost()->get_settings();
 		$secret   = go_xpost()->get_secret();
+		$method   = go_xpost()->get_request_method();
 
 		$filters  = $this->_get_filters();
 
@@ -119,6 +118,12 @@ class GO_XPost_Admin
 					<em>Secret that is shared between all of the sites being xPosted to/from.</em>
 				</div>
 
+				<div class="<?php echo $this->slug; ?>-method">
+					<label for="<?php echo $this->slug; ?>-method"><strong>Request Method</strong></label><br />
+					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php if ( 'GET' == $method || !$method ) { echo 'checked'; } ?>/> GET<br />
+					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php if ( 'POST' == $method ) { echo 'checked'; } ?>/> POST<br />
+				</div>
+
 				<p class="submit">
 					<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
 					<input type="hidden" name="<?php echo $this->slug; ?>-setting-numbers" class="<?php echo $this->slug; ?>-setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
@@ -131,6 +136,7 @@ class GO_XPost_Admin
 			<form method="get" action="admin-ajax.php">
 				<label for="batch_name">Batch Name: </label><input type="text" name="batch_name" /><br/>
 				<label for="post_types">Post types: </label><input type="text" name="post_types" /> <em>(comma separated)</em><br/>
+				<label for="num">Number posts per batch: </label><input type="text" name="num" placeholder="10" /><br/>
 				<input type="submit" class="button button-primary" value="Process" />
 				<input type="hidden" name="action" value="go_xpost_batch" />
 			</form>
@@ -169,6 +175,7 @@ class GO_XPost_Admin
 
 		update_option( $this->slug . '-settings', $compiled_settings );
 		update_option( $this->slug . '-secret', $_POST[ $this->slug . '-secret' ] );
+		update_option( $this->slug . '-method', $_POST[ $this->slug . '-method' ] );
 		$_POST['updated'] = TRUE;
 	} // END update_settings
 
@@ -219,9 +226,15 @@ class GO_XPost_Admin
 	 */
 	public function batch()
 	{
+		if ( ! current_user_can( 'manage_options' ) )
+		{
+			return;
+		}// end if
+		
 		$batch_name = sanitize_key( $_GET['batch_name'] );
 		$post_types = sanitize_text_field( $_GET['post_types'] );
-		$posts = $this->get_posts_to_batch( $batch_name, $post_types );
+		$num = isset( $_GET['num'] ) ? absint( $_GET['num'] ) : 10;
+		$posts = $this->get_posts_to_batch( $batch_name, $post_types, $num );
 
 		foreach ( $posts as $post )
 		{
@@ -235,10 +248,18 @@ class GO_XPost_Admin
 			}// end if
 		}// end foreach
 
+		$args = array(
+			'action' => 'go_xpost_batch',
+			'batch_name' => $batch_name,
+			'post_types' => $post_types,
+			'page' => absint( $_GET['page'] ) + 1,
+			'num' => $num,
+		);
+
 		?>
 		<script>
 			var reloader = window.setTimeout(function(){
-				window.location = "?action=go_xpost_batch&batch_name=<?php echo $batch_name?>&post_types=<?php echo $post_types;?>&page=<?php echo $_GET['page']+1;?>";
+				window.location = "?<?php echo http_build_query( $args ); ?>";
 			}, 5000);
 		</script>
 		<br/><br/>
@@ -277,14 +298,14 @@ class GO_XPost_Admin
 				),
 			),
 			'orderby' => 'ID',
-			'order' => 'ASC',
+			'order' => 'DESC',
 			'posts_per_page' => $limit,
 		);
 		$query = new WP_Query( $args );
 
 		return $query->posts;
-	}// end get_events_by_type
-}//end GO_XPost_Admin
+	}// end get_posts_to_batch
+}//end class
 
 function go_xpost_admin()
 {
