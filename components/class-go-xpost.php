@@ -30,6 +30,8 @@ class GO_XPost
 
 		// Filter comment counts for crossposted content.
 		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
+		// hook this action to update crossposted comment count
+		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
 	}//end __construct
 
 	/**
