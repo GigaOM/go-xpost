@@ -60,6 +60,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function post_filter( $xpost, $post_id )
 	{
+		global $post;
+
+		// Make sure we've got $post global set to our xpost so anything that relies on it can use it
+		$post = $xpost->post;
+		$post->ID = $post_id;
+		
 		// go-property will come from the current property set in go_config
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
@@ -110,20 +116,33 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
 			$xpost->terms['go-type'][] = 'Chart';
-			$xpost->post->post_type = 'post';
 		} // END if
 		elseif (
 			0 == strncmp( 'go-report', $xpost->post->post_type, 9 )
 			|| isset( $is_report )
 		)
-		{
+		{	
+			if ( 'inherit' == $xpost->post->post_status )
+			{
+				$parent_report = go_reports()->get_current_report();
+				$xpost->post->post_status = $parent_report->post_status;
+			} // END if
+			elseif ( 'go-report' == $xpost->post->post_type )
+			{
+				// If this is a report parent post we need to make sure the children get updated too
+				$report_children = go_reports()->get_report_children();
+
+				foreach ( $report_children as $report_child )
+				{					
+					go_xpost()->process_post( $report_child->ID );
+				} // END foreach
+			} // END elseif
+			
 			$xpost->terms['go-type'][] = 'Report';
-			$xpost->post->post_type = 'post';
 		} // END elseif
 		elseif ( 'go_shortpost' == $xpost->post->post_type )
 		{
 			$xpost->terms['go-type'][] = 'News';
-			$xpost->post->post_type = 'post';
 		}// end elseif
 		elseif ( function_exists( 'go_waterfall_options' ) ) // or maybe go_config()->dir != '_pro' at some point?
 		{
