@@ -660,12 +660,9 @@ class GO_XPost_Utilities
 			}//end switch
 		}//end foreach
 
-		// update the comment_count from the post meta by way of our
-		// update_comment_count callback invoked by wp_update_comment_count
-		if ( ! wp_update_comment_count( $post_id ) )
-		{
-			apply_filters( 'go_slog', 'go-xpost-save-post', 'wp_date_comment_count failed! ' . $action . ' (ID: '. $post_id . ', GUID: ' . $post->post->guid . ')', $this->post_log_data( $post ) );
-		}
+		// update the comment_count from the post meta because
+		// wp_insert_post() does not update that field
+		$this->update_comment_count( $post_id, 0, 0 );
 
 		// set the taxonomy terms as received for the post
 		foreach ( (array) $post->terms as $tax => $terms )
@@ -690,7 +687,8 @@ class GO_XPost_Utilities
 		if ( $xpost_comment_count = get_post_meta( $post_id, 'go_xpost_comment_count', TRUE ) )
 	 	{
 			global $wpdb;
-			$wpdb->update( $wpdb->posts, array('comment_count' => $xpost_comment_count), array('ID' => $post_id) );
+			$wpdb->update( $wpdb->posts, array( 'comment_count' => $xpost_comment_count), array( 'ID' => $post_id ) );
+			clean_post_cache( $post_id );
 	 	}
 	}//END update_comment_count
 
