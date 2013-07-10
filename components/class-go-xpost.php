@@ -2,21 +2,38 @@
 
 class GO_XPost
 {
+	public $admin = FALSE;     // the admin object
 	public $filters = array();
 	public $slug    = 'go-xpost';
 	public $secret;
 
 	public function __construct()
 	{
+		add_action( 'edit_post', array( $this, 'edit_post' ) );
+
 		if ( is_admin() )
 		{
+			$this->admin();
+		}
+
+		// Filter comment counts for crossposted content.
+		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
+
+		// hook this action to update crossposted comment count after WP sets that
+		// number, else the xpost'ed comment count will always get overwritten by WP
+		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
+	}//end __construct
+
+	public function admin()
+	{
+		if ( ! $this->admin )
+		{
 			require __DIR__ . '/class-go-xpost-admin.php';
-			go_xpost_admin();
+			$this->admin = go_xpost_admin();
 
 			$this->load_filters();
 			$this->secret = $this->get_secret();
 
-			add_action( 'edit_post', array( $this, 'edit_post' ) );
 			// hook to the receive push to remove the edit_post action
 			add_action( 'go_xpost_receive_ping', array( $this, 'receive_ping' ) );
 
@@ -26,13 +43,10 @@ class GO_XPost
 
 			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
 			add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
-		}// end if
+		}
 
-		// Filter comment counts for crossposted content.
-		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
-		// hook this action to update crossposted comment count
-		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
-	}//end __construct
+		return $this->admin;
+	}//END admin
 
 	/**
 	 * hook to the edit_post action, possibly ping other sites with the change
@@ -54,6 +68,10 @@ class GO_XPost
 		{
 			return;
 		}//end if
+
+		// make sure we have an admin object which handles the admin ajax
+		// calls involved in xposting btw the source and endpoint blogs
+		$this->admin();
 
 		$this->process_post( $post_id );
 	}//end edit_post
