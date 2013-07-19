@@ -49,6 +49,7 @@ class GO_XPost_Redirect
 	{
 		add_filter( 'post_link', array( $this, 'post_link' ), 11, 2 );
 		add_filter( 'post_type_link', array( $this, 'post_link' ), 11, 2 );
+		add_filter( 'page_link', array( $this, 'post_link' ), 11, 2 );
 		add_filter( 'template_redirect', array( $this, 'template_redirect' ), 1 );
 		add_filter( 'sitemap_skip_post', array( $this, 'sitemap_skip_post' ) );
 	}//end init
