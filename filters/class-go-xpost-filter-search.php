@@ -34,7 +34,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		} // END if
 		
 		$invalid_categories = array(
-			'links', // We don't want currated links from pro going into search
+			'links',          // We don't want currated links from pro going into search
+			'poll-summaries', // Same for poll summaries
 		);
 		
 		$categories = wp_get_object_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
@@ -168,10 +169,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$xpost->terms['go-type'][] = 'News';
 			} // END elseif
 
-			// multi-page posts on GO/pC are also reports
-			if ( preg_match( '/--nextpage--/', $xpost->post->post_content ) )
+			// multi-page posts with 3 OR MORE pages on GO/pC are also reports
+			if ( preg_match_all( '/--nextpage--/', $xpost->post->post_content, $matches ) )
 			{
-				$xpost->terms['go-type'][] = 'Report';
+				if ( 2 <= count( $matches ) )
+				{
+					$xpost->terms['go-type'][] = 'Report';
+				} // END if
 			} // END if
 		} // END elseif
 
