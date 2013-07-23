@@ -104,7 +104,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			foreach ( $xpost->terms['category'] as $category )
 			{
 				if ( 
-					'Research Briefings' == $category
+					'Briefings' == $category
+					|| 'Research Briefings' == $category
 					|| 'Research Notes' == $category
 					|| 'Long Views' == $category
 				)
