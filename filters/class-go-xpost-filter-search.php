@@ -67,7 +67,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$post = $xpost->post;
 		$post->ID = $post_id;
 		
-		// Will set this later to Premium if appropriate
+		// Will set this later to Subscription if appropriate
 		$availability = 'Free';
 		
 		// go-property will come from the current property set in go_config
@@ -127,17 +127,17 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				)
 				{
 					$xpost->terms['go-type'][] = 'Report';
-					$availability = 'Premium';
+					$availability = 'Subscription';
 				}
 				elseif ( 'Sector Roadmaps' == $category )
 				{
 					$xpost->terms['go-type'][] = 'Sector Roadmap';
-					$availability = 'Premium';
+					$availability = 'Subscription';
 				} // END elseif
 				elseif ( 'Quarterly Wrap Ups' == $category )
 				{
 					$xpost->terms['go-type'][] = 'Quarterly Wrap Up';
-					$availability = 'Premium';
+					$availability = 'Subscription';
 				} // END elseif
 			} // END foreach
 			
@@ -177,7 +177,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$xpost->terms['go-type'][] = 'Report';
 			} // END if
 			
-			$availability = 'Premium';
+			$availability = 'Subscription';
 		} // END elseif
 		elseif ( 'go_shortpost' == $xpost->post->post_type )
 		{
