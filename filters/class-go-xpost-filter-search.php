@@ -94,6 +94,22 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			$xpost->terms['vertical'] = array_unique( $xpost->terms['vertical'] );
 		} // END if
+		
+		// This can be deleted once category to vertical stuff has launched
+		if ( isset( $xpost->terms['category'] ) )
+		{
+			$topics_term     = get_term_by( 'name', 'Topics', 'category' );
+			$topics_children = get_terms( array( 'category' ), array( 'child_of' => $topics_term->term_id ) );
+			$topics_children = $this->parse_terms_array( $topics_children );
+
+			foreach ( $xpost->terms['category'] as $category )
+			{
+				if ( in_array( $category, $topics_children ) )
+				{
+					$xpost->terms['vertical'][] = $category;
+				} // END if
+			} // END foreach
+		} // END if
 
 		// go-type is the fun one, it will come a variety of sources
 		$xpost->terms['go-type'] = array();
