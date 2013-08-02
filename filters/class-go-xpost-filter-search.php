@@ -240,6 +240,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		// Force all post types to be a post for search
 		$xpost->post->post_type = 'post';
+		
+		// Unset the ID value since setting it for the $post global resets it in the $xpost->post object
+		unset( $xpost->post->ID );
 
 		return $xpost;
 	} // END post_filter
