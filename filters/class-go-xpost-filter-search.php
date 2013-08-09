@@ -144,7 +144,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			// If none of the above were triggered we've got a Blog Post
 			if ( empty( $xpost->terms['go-type'] ) )
 			{
-				$xpost->terms['go-type'] = 'Blog Post';
+				$xpost->terms['go-type'][] = 'Blog Post';
 			} // END if
 		} // END if
 		
