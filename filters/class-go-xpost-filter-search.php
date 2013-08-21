@@ -32,12 +32,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			return FALSE;
 		} // END if
-		
+
 		$invalid_categories = array(
 			'links',          // We don't want currated links from pro going into search
 			'poll-summaries', // Same for poll summaries
 		);
-		
+
 		$categories = wp_get_object_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
 
 		foreach ( $categories as $category )
@@ -66,10 +66,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// Make sure we've got $post global set to our xpost so anything that relies on it can use it
 		$post = $xpost->post;
 		$post->ID = $post_id;
-		
+
 		// Will set this later to Subscription if appropriate
 		$availability = 'Free';
-		
+
 		// go-property will come from the current property set in go_config
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
@@ -94,7 +94,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			$xpost->terms['vertical'] = array_unique( $xpost->terms['vertical'] );
 		} // END if
-		
+
 		// This can be deleted once category to vertical stuff has launched
 		if ( isset( $xpost->terms['category'] ) )
 		{
@@ -119,7 +119,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			foreach ( $xpost->terms['category'] as $category )
 			{
-				if ( 
+				if (
 					'Briefings' == $category
 					|| 'Research Briefings' == $category
 					|| 'Research Notes' == $category
@@ -140,43 +140,51 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$availability = 'Subscription';
 				} // END elseif
 			} // END foreach
-			
+
 			// If none of the above were triggered we've got a Blog Post
 			if ( empty( $xpost->terms['go-type'] ) )
 			{
 				$xpost->terms['go-type'][] = 'Blog Post';
 			} // END if
 		} // END if
-		
+
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
 			$xpost->terms['go-type'][] = 'Chart';
 		} // END if
 		elseif ( 0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) )
-		{	
-			// If this is a section we need to set it's status based on the parent
-			if ( 'inherit' == $xpost->post->post_status )
-			{
-				$parent_report = go_reports()->get_current_report();
-				$xpost->post->post_status = $parent_report->post_status;
-			} // END if
-			elseif ( 'go-report' == $xpost->post->post_type )
+		{
+			// this is a report front page
+			if ( 'go-report' == $xpost->post->post_type )
 			{
 				// If this is a report parent post we need to make sure the children get updated too
 				$report_children = go_reports()->get_report_children();
 
+				// TODO: this is especially harsh when doing bulk xposting, we should maybe find a way to improve that
 				foreach ( $report_children as $report_child )
-				{					
+				{
 					go_xpost()->process_post( $report_child->ID );
 				} // END foreach
+			} // END if
+
+			// this is a report section
+			elseif ( 'inherit' == $xpost->post->post_status )
+			{
+				// set the status based on the top-level parent
+				$parent_report = go_reports()->get_current_report();
+				$xpost->post->post_status = $parent_report->post_status;
+
+				// remove the parent ID and object
+				$xpost->post->post_parent = 0;
+				unset( $xpost->parent );
 			} // END elseif
-			
-			// At some point it may be necessary to tweak how these next 6 lines work if the report plugin ever get's used elsewhere
+
+			// At some point it may be necessary to tweak how these next 6 lines work if the report plugin ever gets used elsewhere
 			if ( ! in_array( 'Report', $xpost->terms['go-type'] ) )
 			{
 				$xpost->terms['go-type'][] = 'Report';
 			} // END if
-			
+
 			$availability = 'Subscription';
 		} // END elseif
 		elseif ( 'go_shortpost' == $xpost->post->post_type )
@@ -192,7 +200,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$xpost->terms['go-type'][] = 'Video';
 			} // END elseif
-			elseif ( 
+			elseif (
 				'audio' == go_waterfall_options()->get_type( $post_id )
 				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'podcast', $xpost->terms['go_syn_media'] ) )
 			)
@@ -240,7 +248,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		// Force all post types to be a post for search
 		$xpost->post->post_type = 'post';
-		
+
 		// Unset the ID value since setting it for the $post global resets it in the $xpost->post object
 		unset( $xpost->post->ID );
 
