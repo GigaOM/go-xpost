@@ -114,8 +114,15 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// go-type is the fun one, it will come a variety of sources
 		$xpost->terms['go-type'] = array();
 
-		// This will determine the go-type value for Pro posts
-		if ( isset( $xpost->terms['category'] ) )
+		// This will determine the go-type value for Pro reports and shortposts
+		// it's specific to those post types to avoid messing with charts or webinars
+		if (
+			isset( $xpost->terms['category'] ) &&
+			(
+				0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) ||
+				'go_shortpost' == $xpost->post->post_type
+			)
+		)
 		{
 			foreach ( $xpost->terms['category'] as $category )
 			{
@@ -150,7 +157,23 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
+			// exclude charts that aren't on Research
+			if ( 'Research' != go_config()->get_property() )
+			{
+				$xpost = (object) array();
+				return $xpost;
+			}
+
+			// set the type and availability
 			$xpost->terms['go-type'][] = 'Chart';
+			$availability = 'Subscription';
+
+			// remove the parent ID and object
+			$xpost->post->post_parent = 0;
+			unset( $xpost->parent );
+
+			// remove the datamodule meta, as it's unused on Search.GO
+			unset( $xpost->meta['data_set_v2'] );
 		} // END if
 		elseif ( 0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) )
 		{
@@ -172,11 +195,28 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				// set the status based on the top-level parent
 				$parent_report = go_reports()->get_current_report();
-				$xpost->post->post_status = $parent_report->post_status;
+				$xpost->post->post_status   = $parent_report->post_status;
+
+				// set the publish times based on the top-level parent, rounding down to the nearest hour
+				//
+				// this string replace feels hackish, but it's less expensive than turning the string to a timestamp
+				// and dealing with the rist of timezone conversions
+				$xpost->post->post_date     = substr( $parent_report->post_date, 0, 12 ) . '0:00:00';
+				$xpost->post->post_date_gmt = substr( $parent_report->post_date_gmt, 0, 12 ) . '0:00:00';
 
 				// remove the parent ID and object
 				$xpost->post->post_parent = 0;
 				unset( $xpost->parent );
+
+				// exclude report subsections that are about the author or about gigaom research
+				if (
+					0 === stripos( $xpost->post->post_title, 'about ' ) && // match "About GigaOM Pro" and "About Keren Elazari"
+					5 < $xpost->post->menu_order // exclude early sections, which might begin with "about" for other reasons
+				)
+				{
+					$xpost = (object) array();
+					return $xpost;
+				}
 			} // END elseif
 
 			// At some point it may be necessary to tweak how these next 6 lines work if the report plugin ever gets used elsewhere
