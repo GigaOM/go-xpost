@@ -14,11 +14,15 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function should_send_post( $post_id )
 	{
+		$post = get_post( $post_id );
+
+		// exclude sponsor posts (does not apply to underwritten reports)
 		if ( apply_filters( 'go_sponsor_posts_is_sponsor_post', FALSE, $post_id ) )
 		{
 			return FALSE;
 		} // END if
 
+		// check for valid post types
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
@@ -28,25 +32,54 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			'post',
 		);
 
-		if ( ! in_array( get_post( $post_id )->post_type, $valid_post_types ) )
+		if ( ! in_array( $post->post_type, $valid_post_types ) )
 		{
 			return FALSE;
 		} // END if
 
-		$invalid_categories = array(
-			'links',          // We don't want currated links from pro going into search
-			'poll-summaries', // Same for poll summaries
-		);
-
-		$categories = wp_get_object_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
-
-		foreach ( $categories as $category )
+		// only include charts from the research property
+		if (
+			'go-datamodule' == $post->post_type &&
+			'research' != go_config()->get_property_slug()
+		)
 		{
-			if ( in_array( $category, $invalid_categories ) )
+			return FALSE;
+		} // END if
+
+		// exclude report subsections that are about the author or about gigaom research
+		if (
+			'go-report-section' == $post->post_type &&
+			'research' == go_config()->get_property_slug()
+		)
+		{
+			if (
+				0 === stripos( $post->post_title, 'about ' ) && // match "About GigaOM Pro" and "About Keren Elazari"
+				5 < $post->menu_order // exclude early sections, which might begin with "about" for other reasons
+			)
 			{
-				return FALSE;
-			} // END if
-		} // END foreach
+				$xpost = (object) array();
+				return $xpost;
+			}
+		} // END if
+
+		// exclude some categories from Pro
+		if ( 'research' != go_config()->get_property_slug() )
+		{
+			$invalid_categories = array(
+				'links',          // We don't want currated links from pro going into search
+				'poll-summaries', // Same for poll summaries
+			);
+
+			$categories = wp_get_object_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
+
+			foreach ( $categories as $category )
+			{
+				if ( in_array( $category, $invalid_categories ) )
+				{
+					return FALSE;
+				} // END if
+			} // END foreach
+		}
 
 		return TRUE;
 	} // END should_send_post
@@ -157,13 +190,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
-			// exclude charts that aren't on Research
-			if ( 'Research' != go_config()->get_property() )
-			{
-				$xpost = (object) array();
-				return $xpost;
-			}
-
 			// set the type and availability
 			$xpost->terms['go-type'][] = 'Chart';
 			$availability = 'Subscription';
@@ -175,6 +201,20 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			// remove the datamodule meta, as it's unused on Search.GO
 			unset( $xpost->meta['data_set_v2'] );
 		} // END if
+		elseif ( 'go_webinar' == $xpost->post->post_type )
+		{
+			// set the type
+			$xpost->terms['go-type'][] = 'Webinar';
+
+			// set future scheduled webinars to be published so they can appear in search
+			if ( 'future' == $xpost->post->post_status )
+			{
+				$xpost->post->post_status = 'publish';
+			}
+
+			// remove the go_webinar meta, as it's unused on Search.GO
+			unset( $xpost->meta['go_webinar'] );
+		} // END elseif
 		elseif ( 0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) )
 		{
 			// this is a report front page
@@ -200,23 +240,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// set the publish times based on the top-level parent, rounding down to the nearest hour
 				//
 				// this string replace feels hackish, but it's less expensive than turning the string to a timestamp
-				// and dealing with the rist of timezone conversions
+				// and dealing with the risk of timezone conversions
 				$xpost->post->post_date     = substr( $parent_report->post_date, 0, 12 ) . '0:00:00';
 				$xpost->post->post_date_gmt = substr( $parent_report->post_date_gmt, 0, 12 ) . '0:00:00';
 
 				// remove the parent ID and object
 				$xpost->post->post_parent = 0;
 				unset( $xpost->parent );
-
-				// exclude report subsections that are about the author or about gigaom research
-				if (
-					0 === stripos( $xpost->post->post_title, 'about ' ) && // match "About GigaOM Pro" and "About Keren Elazari"
-					5 < $xpost->post->menu_order // exclude early sections, which might begin with "about" for other reasons
-				)
-				{
-					$xpost = (object) array();
-					return $xpost;
-				}
 			} // END elseif
 
 			// At some point it may be necessary to tweak how these next 6 lines work if the report plugin ever gets used elsewhere
