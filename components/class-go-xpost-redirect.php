@@ -162,6 +162,12 @@ class GO_XPost_Redirect
 	 */
 	public function post_link( $permalink, $post )
 	{
+		// something in Pro/Research is calling this filter wrong (could be BuddyPress?)
+		if ( ! is_object( $post ) )
+		{
+			return $permalink;
+		}// end if
+
 		if ( $redirect = $this->get_post_meta( $post->ID ) )
 		{
 			return $redirect;
