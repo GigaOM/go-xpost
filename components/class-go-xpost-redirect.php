@@ -49,6 +49,7 @@ class GO_XPost_Redirect
 	{
 		add_filter( 'post_link', array( $this, 'post_link' ), 11, 2 );
 		add_filter( 'post_type_link', array( $this, 'post_link' ), 11, 2 );
+		add_filter( 'page_link', array( $this, 'post_link' ), 11, 2 );
 		add_filter( 'template_redirect', array( $this, 'template_redirect' ), 1 );
 		add_filter( 'sitemap_skip_post', array( $this, 'sitemap_skip_post' ) );
 	}//end init
@@ -161,6 +162,12 @@ class GO_XPost_Redirect
 	 */
 	public function post_link( $permalink, $post )
 	{
+		// something in Pro/Research is calling this filter wrong (could be BuddyPress?)
+		if ( ! is_object( $post ) )
+		{
+			return $permalink;
+		}// end if
+
 		if ( $redirect = $this->get_post_meta( $post->ID ) )
 		{
 			return $redirect;
@@ -190,14 +197,13 @@ class GO_XPost_Redirect
 	 */
 	public function template_redirect()
 	{
-		global $wp_query;
-
-		if ( $wp_query->is_singular && $redirect = $this->get_post_meta( $wp_query->queried_object->ID ) )
+		$post_id = get_queried_object_id();
+		if ( is_singular() && $redirect = $this->get_post_meta( $post_id ) )
 		{
 			// prevent infinite redirect and delete the wacky meta key
 			if ( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] == $redirect )
 			{
-				$this->set_redirect( $wp_query->queried_object->ID, '', TRUE );
+				$this->set_redirect( $post_id, '', TRUE );
 				return;
 			}// end if
 
@@ -245,7 +251,7 @@ class GO_XPost_Redirect
 			delete_post_meta( $post_id, $this->meta_key );
 			update_post_meta( $post_id, $this->meta_key, $redirect );
 		} // END if
-		else 
+		else
 		{
 			update_post_meta( $post_id, $this->meta_key, $redirect );
 		} // END else

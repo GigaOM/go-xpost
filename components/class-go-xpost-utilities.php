@@ -12,17 +12,25 @@ class GO_XPost_Utilities
 	/**
 	 * Ends the HTTP connection cleanly
 	 */
-	private function end_http_connection()
+	private function end_http_connection( $content = FALSE )
 	{
 		// suppressing errors from output buffering because this is precautionary, and will throw a notice in many cases.
 		@ob_end_clean();
 		header('Connection: close');
-		header("Content-Encoding: none\r\n");
+		FALSE == $content ? header("Content-Encoding: none\r\n") : header("Content-Encoding: utf-8\r\n");
 
 		// buffer all upcoming output
 		@ob_start();
 
-		echo TRUE;
+		if ( $content == FALSE )
+		{
+			echo TRUE;
+		} // END if
+		else
+		{
+			echo $content;
+		} // END else
+
 		// get the size of the output
 		$size = ob_get_length();
 
@@ -732,12 +740,15 @@ class GO_XPost_Utilities
 
 		if ( isset( $ping_array['output'] ) && 'prettyprint' == $ping_array['output'] )
 		{
-			echo '<pre>' . print_r( $post, TRUE ) . '</pre>';
+			$post = '<pre>' . print_r( $post, TRUE ) . '</pre>';
 		}//end if
 		else
 		{
-			echo serialize( $post );
+			$post = serialize( $post );
 		}//end else
+
+		// Ending the connection while passing just the post content to prevent go_slog filter from causing issues
+		$this->end_http_connection( $post );
 
 		apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] . ' ' . $ping_array['post_id'], $ping_array );
 
