@@ -57,8 +57,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				5 < $post->menu_order // exclude early sections, which might begin with "about" for other reasons
 			)
 			{
-				$xpost = (object) array();
-				return $xpost;
+				return FALSE;
 			}
 		} // END if
 
@@ -243,6 +242,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// and dealing with the risk of timezone conversions
 				$xpost->post->post_date     = substr( $parent_report->post_date, 0, 12 ) . '0:00:00';
 				$xpost->post->post_date_gmt = substr( $parent_report->post_date_gmt, 0, 12 ) . '0:00:00';
+
+				// add the parent report's title as a prefix to the section title as in parent: child
+				$xpost->post->post_title = trim( $parent_report->post_title ) . ': ' . trim( $xpost->post->post_title );
 
 				// remove the parent ID and object
 				$xpost->post->post_parent = 0;
