@@ -27,7 +27,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			'go_shortpost',
 			'go-report',
 			'go-report-section',
-			'go-datamodule',
+			//'go-datamodule', // temporarily removed, per https://github.com/GigaOM/legacy-pro/issues/1098#issuecomment-23899882
 			'go_webinar',
 			'post',
 		);
