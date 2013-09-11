@@ -114,20 +114,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			$xpost->post->post_excerpt = trim( wp_trim_words( $xpost->post->post_content, 31, '' ), '.' ) . '&hellip;';
 		}
 
-		// special handling for excerpts on link posts
-		// this only runs on GO/pC for now
-		if ( class_exists( 'GO_Theme_Post' ) )
-		{
-			$go_post = new GO_Theme_Post( $post );
-			if ( $go_post->is_type( 'link' ) )
-			{
-				$content = preg_replace( $go_post->link_pattern, '', $content, 1 );
-				$xpost->post->post_excerpt = trim( wp_trim_words( $content, 31, '' ), '.' ) . '&hellip;';
-			}
-
-			unset( $go_post );
-		}
-
 		// Will change this to Subscription later if appropriate
 		$availability = 'Free';
 
@@ -240,6 +226,15 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		}// end elseif
 		if ( in_array( go_config()->get_property_slug(), array( 'gigaom', 'paidcontent' ) ) )
 		{
+			// special handling for excerpts on link posts
+			$go_post = new GO_Theme_Post( $post );
+			if ( $go_post->is_type( 'link' ) )
+			{
+				$content = preg_replace( $go_post->link_pattern, '', $content, 1 );
+				$xpost->post->post_excerpt = trim( wp_trim_words( $content, 31, '' ), '.' ) . '&hellip;';
+			}
+			unset( $go_post );
+
 			// GigaOM and paidContent channels are transformed into verticals
 			// Pro has a channels taxonomy, but it includes a lot of accidental noise and isn't used
 			if ( isset( $xpost->terms['channel'] ) )
