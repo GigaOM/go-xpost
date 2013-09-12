@@ -26,7 +26,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
-			'go-report-section',
+			// 'go-report-section', // temporarily disabled, need to come up with a better plan
 			//'go-datamodule', // temporarily removed, per https://github.com/GigaOM/legacy-pro/issues/1098#issuecomment-23899882
 			'go_webinar',
 			'post',
@@ -197,7 +197,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// TODO: this is especially harsh when doing bulk xposting, we should maybe find a way to improve that
 				foreach ( $report_children as $report_child )
 				{
-					go_xpost()->process_post( $report_child->ID );
+					// insert the child content into the parent
+					// @TODO: this should be temporary, as it doesn't support the finding of sections as we'd hoped for
+					$xpost->post->post_content .= "\n\n" . $report_child->post_title . "\n" . $report_child->post_content;
+
+					// @TODO: this is commented out because we need to spend more time designing how to display the results
+					// and because it's causing the xpost pull to time out
+					//go_xpost()->process_post( $report_child->ID );
 				} // END foreach
 			} // END if
 
