@@ -96,6 +96,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function post_filter( $xpost, $post_id )
 	{
+		// for easier QA
+		$xpost->should_send_post = $this->should_send_post( $post_id );
+
+		// this is dangerous, note how we have to unset the post ID at the end
 		global $post;
 
 		// Make sure we've got $post global set to our xpost so anything that relies on it can use it
