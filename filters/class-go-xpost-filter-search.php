@@ -310,7 +310,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		}// end foreach
 
 		// Set content availability
-		$xpost->terms['go-type'][] = $availability;
+		$xpost->terms['go-availability'][] = $availability;
 
 		// Remove any post_format if it exists
 		unset( $xpost->terms['post_format'] );
