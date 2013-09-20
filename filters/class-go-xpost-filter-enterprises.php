@@ -14,12 +14,12 @@ class GO_XPost_Filter_Enterprises extends GO_XPost_Filter
 	{
 		$post = get_post( $post_id );
 
-		// We only want condor-enterprise posts
-		if ( 'condor-enterprise' != $post->post_type )
+		// We only want go-enterprise posts
+		if ( 'go-enterprise' != $post->post_type )
 		{
 			return FALSE;
 		} // END if
-		
+
 		return TRUE;
 	} // END should_send_post
 } // END GO_XPost_Filter_Enterprises
