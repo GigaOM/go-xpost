@@ -240,7 +240,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			$go_post = new GO_Theme_Post( $post );
 			if ( $go_post->is_type( 'link' ) )
 			{
-				$content = preg_replace( $go_post->link_pattern, '', $content, 1 );
+				$content = preg_replace( $go_post->link_pattern, '', $xpost->post->post_content, 1 );
 				$xpost->post->post_excerpt = trim( wp_trim_words( $content, 31, '' ), '.' ) . '&hellip;';
 			}
 			unset( $go_post );
