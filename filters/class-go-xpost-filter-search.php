@@ -26,8 +26,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
-			// 'go-report-section', // temporarily disabled, need to come up with a better plan
-			//'go-datamodule', // temporarily removed, per https://github.com/GigaOM/legacy-pro/issues/1098#issuecomment-23899882
+			//'go-report-section', // temporarily disabled, need to come up with a better plan
+			//'go-datamodule',     // temporarily removed, per https://github.com/GigaOM/legacy-pro/issues/1098#issuecomment-23899882
 			'go_webinar',
 			'post',
 		);
@@ -124,7 +124,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// go-property will come from the current property set in go_config
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
-		// go-type is the fun one, it will come a variety of sources
+		// go-type is the fun one, it will come a variety of sources AND is used different in Research
+		if ( 'research' == go_config()->get_property_slug() && isset( $xpost->terms['go-type'] ) )
+		{
+			$xpost->terms['go-type-research'] = $this->clean_research_go_type( $xpost->terms['go-type'] );
+		} // END if
+		
 		$xpost->terms['go-type'] = array();
 
 		if ( 'go-datamodule' == $xpost->post->post_type )
@@ -206,7 +211,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					//go_xpost()->process_post( $report_child->ID );
 				} // END foreach
 			} // END if
-
 			// this is a report section
 			elseif ( 'inherit' == $xpost->post->post_status )
 			{
@@ -234,6 +238,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			$xpost->terms['go-type'][] = 'Blog Post';
 		}// end elseif
+		
 		if ( in_array( go_config()->get_property_slug(), array( 'gigaom', 'paidcontent' ) ) )
 		{
 			// special handling for excerpts on link posts
@@ -293,6 +298,39 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				} // END if
 			} // END if
 		} // END elseif
+		
+		// Updated handling of posts and reports for Research
+		if ( 'research' == go_config()->get_property_slug() )
+		{			
+			if ( 'post' == $xpost->post->post_type && ! in_array( 'Blog Post', $xpost->terms['go-type'] ) )
+			{
+				$xpost->terms['go-type'][] = 'Blog Post';
+			} // END if
+			// Reports from Research use the go-type taxonomy for the report type
+			elseif ( 'go-report' == $xpost->post->post_type && 0 < count( $xpost->terms['go-type-research'] ) )
+			{
+				// Overwrite any existing go-type values with the research ones
+				$xpost->terms['go-type'] = array();
+				$xpost->terms['go-type'] = $xpost->terms['go-type-research'];
+			} // END if
+			elseif ( 'go-report-section' == $xpost->post->post_type )
+			{
+				if ( $report = go_reports()->get_current_report() )
+				{
+					$go_type_research_terms = $this->clean_research_go_type( wp_get_object_terms( $report->ID, 'go-type', array( 'fields' => 'names' ) ) );
+					
+					if ( 0 < count( $go_type_research_terms ) )
+					{
+						// Overwrite any existing go-type values with the research ones for the parent report
+						$xpost->terms['go-type'] = array();
+						$xpost->terms['go-type'] = $go_type_research_terms;
+					} // END if
+				} // END if
+			} // END elseif
+			
+			// Remove go-type-research since we don't need it anymore
+			unset( $xpost->terms['go-type-research'] );
+		} // END if
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
@@ -327,4 +365,17 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		return $xpost;
 	} // END post_filter
 
+	/**
+	 * Cleans up research version of go-type taxonomy terms for use in search
+	 */
+	public function clean_research_go_type( array $terms )
+	{
+		// Remove Feature term since we don't care about it in this case
+		if ( FALSE !== $key = array_search( 'Feature', $terms ) )
+		{
+			unset( $terms[ $key ] );
+		} // END if
+		
+		return $terms;
+	} // END clean_research_go_type
 } // END GO_XPost_Filter_Search
