@@ -146,67 +146,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			// remove the datamodule meta, as it's unused on Search.GO
 			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
 		} // END if
-
-		if ( in_array( go_config()->get_property_slug(), array( 'gigaom', 'paidcontent' ) ) )
-		{
-			// special handling for excerpts on link posts
-			$go_post = new GO_Theme_Post( $post );
-			if ( $go_post->is_type( 'link' ) )
-			{
-				$content = preg_replace( $go_post->link_pattern, '', $xpost->post->post_content, 1 );
-				$xpost->post->post_excerpt = trim( wp_trim_words( $content, 31, '' ), '.' ) . '&hellip;';
-			}
-			unset( $go_post );
-
-			// GigaOM and paidContent channels are transformed into verticals
-			// Pro has a channels taxonomy, but it includes a lot of accidental noise and isn't used
-			if ( isset( $xpost->terms['channel'] ) )
-			{
-				foreach ( $xpost->terms['channel'] as $channel )
-				{
-					$xpost->terms['vertical'][] = ucwords( $channel );
-				} // END foreach
-			} // END if
-
-			if ( isset( $xpost->terms['primary_channel'] ) )
-			{
-				foreach ( $xpost->terms['primary_channel'] as $primary_channel )
-				{
-					$xpost->terms['vertical'][] = ucwords( $primary_channel );
-				} // END foreach
-			} // END if
-
-			// get the post content type
-			// frustratingly, we have to look in multiple places for this
-			if (
-				'video' == go_waterfall_options()->get_type( $post_id )
-				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'video', $xpost->terms['go_syn_media'] ) )
-			)
-			{
-				$xpost->terms['go-type'][] = 'Video';
-			} // END elseif
-			elseif (
-				'audio' == go_waterfall_options()->get_type( $post_id )
-				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'podcast', $xpost->terms['go_syn_media'] ) )
-			)
-			{
-				$xpost->terms['go-type'][] = 'Audio';
-			} // END elseif
-			else
-			{
-				$xpost->terms['go-type'][] = 'Blog Post';
-			} // END elseif
-
-			// multi-page posts with 3 OR MORE pages on GO/pC are also reports
-			if ( preg_match_all( '/--nextpage--/', $xpost->post->post_content, $matches ) )
-			{
-				if ( 2 <= count( $matches ) )
-				{
-					$xpost->terms['go-type'][] = 'Report';
-				} // END if
-			} // END if
-		} // END elseif
-
+		
 		// Updated handling of posts and reports for Research
 		if ( 'research' == go_config()->get_property_slug() )
 		{			
@@ -351,6 +291,66 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$xpost->terms['go-type'][] = 'Blog Post';
 			}// end elseif
 		} // END if
+
+		if ( in_array( go_config()->get_property_slug(), array( 'gigaom', 'paidcontent' ) ) )
+		{
+			// special handling for excerpts on link posts
+			$go_post = new GO_Theme_Post( $post );
+			if ( $go_post->is_type( 'link' ) )
+			{
+				$content = preg_replace( $go_post->link_pattern, '', $xpost->post->post_content, 1 );
+				$xpost->post->post_excerpt = trim( wp_trim_words( $content, 31, '' ), '.' ) . '&hellip;';
+			}
+			unset( $go_post );
+
+			// GigaOM and paidContent channels are transformed into verticals
+			// Pro has a channels taxonomy, but it includes a lot of accidental noise and isn't used
+			if ( isset( $xpost->terms['channel'] ) )
+			{
+				foreach ( $xpost->terms['channel'] as $channel )
+				{
+					$xpost->terms['vertical'][] = ucwords( $channel );
+				} // END foreach
+			} // END if
+
+			if ( isset( $xpost->terms['primary_channel'] ) )
+			{
+				foreach ( $xpost->terms['primary_channel'] as $primary_channel )
+				{
+					$xpost->terms['vertical'][] = ucwords( $primary_channel );
+				} // END foreach
+			} // END if
+
+			// get the post content type
+			// frustratingly, we have to look in multiple places for this
+			if (
+				'video' == go_waterfall_options()->get_type( $post_id )
+				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'video', $xpost->terms['go_syn_media'] ) )
+			)
+			{
+				$xpost->terms['go-type'][] = 'Video';
+			} // END elseif
+			elseif (
+				'audio' == go_waterfall_options()->get_type( $post_id )
+				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'podcast', $xpost->terms['go_syn_media'] ) )
+			)
+			{
+				$xpost->terms['go-type'][] = 'Audio';
+			} // END elseif
+			else
+			{
+				$xpost->terms['go-type'][] = 'Blog Post';
+			} // END elseif
+
+			// multi-page posts with 3 OR MORE pages on GO/pC are also reports
+			if ( preg_match_all( '/--nextpage--/', $xpost->post->post_content, $matches ) )
+			{
+				if ( 2 <= count( $matches ) )
+				{
+					$xpost->terms['go-type'][] = 'Report';
+				} // END if
+			} // END if
+		} // END elseif
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
