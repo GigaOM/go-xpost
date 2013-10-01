@@ -125,40 +125,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
 		// go-type is the fun one, it will come a variety of sources AND is used differently in Research
+		$xpost->terms['go-type'] = array();
+		
 		if ( 'research' == go_config()->get_property_slug() )
 		{
-			if ( isset( $xpost->terms['go-type'] ) )
-			{
-				// This gets used later for Reports and maybe other stuff going forward
-				$go_type_research_terms = $this->clean_go_type_research_terms( $xpost->terms['go-type'] );
-			} // END if
-			
 			// TODO: Remove go_shortpost when we launch Research
 			if ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
-			{
-				$xpost->terms['go-type'][] = 'Blog Post';
-			} // END if
-			// Reports from Research use the go-type taxonomy for the report type
-			elseif ( 'go-report' == $xpost->post->post_type && isset( $go_type_research_terms ) )
-			{
-				$xpost->terms['go-type'] = $go_type_research_terms;
-			} // END if
-			elseif ( 'go-report-section' == $xpost->post->post_type )
-			{				
-				if ( $report = go_reports()->get_current_report() )
-				{
-					$go_type_research_terms = $this->clean_go_type_research_terms( wp_get_object_terms( $report->ID, 'go-type', array( 'fields' => 'names' ) ) );
-
-					if ( 0 < count( $go_type_research_terms ) )
-					{
-						// Overwrite any existing go-type values with the research ones for the parent report
-						$xpost->terms['go-type'] = array();
-						$xpost->terms['go-type'] = $go_type_research_terms;
-					} // END if
-				} // END if
-			} // END elseif
-
-			if ( 'post' == $xpost->post->post_type )
 			{
 				$xpost->terms['go-type'][] = 'Blog Post';
 			} // END if
@@ -205,11 +177,16 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
 				{
-					$xpost->terms['go-type'] = $go_type_research_terms;
+					$go_type_research_terms = $this->clean_go_type_research_terms( wp_get_object_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) );
+				
+					if ( 0 < count( $go_type_research_terms ) )
+					{
+						$xpost->terms['go-type'] = $go_type_research_terms;
+					} // END if
 				} // END if
 				elseif ( 'go-report-section' == $xpost->post->post_type )
 				{
-					// Since this is a section we need to use the parent report's values
+					// Report sections need to get their go-type value from the parent report
 					if ( $report = go_reports()->get_current_report() )
 					{
 						$go_type_research_terms = $this->clean_go_type_research_terms( wp_get_object_terms( $report->ID, 'go-type', array( 'fields' => 'names' ) ) );
@@ -330,12 +307,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				} // END if
 			} // END if
 		} // END elseif
-		
-		// If the property based cases above didn't create go-type we create it here
-		if ( ! isset( $xpost->terms['go-type'] )  )
-		{
-			$xpost->terms['go-type'] = array();
-		} // END if
 
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
