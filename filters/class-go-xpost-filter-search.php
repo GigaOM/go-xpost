@@ -133,7 +133,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$go_type_research_terms = $this->clean_go_type_research_terms( $xpost->terms['go-type'] );
 			} // END if
 			
-			if ( 'post' == $xpost->post->post_type )
+			// TODO: Remove go_shortpost when we launch Research
+			if ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
 			{
 				$xpost->terms['go-type'][] = 'Blog Post';
 			} // END if
@@ -268,11 +269,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					unset( $xpost->parent );
 				} // END elseif
 			} // END elseif
-			// TODO: Remove this when we launch Research
-			elseif ( 'go_shortpost' == $xpost->post->post_type )
-			{
-				$xpost->terms['go-type'][] = 'Blog Post';
-			}// end elseif
 		} // END if
 
 		if ( in_array( go_config()->get_property_slug(), array( 'gigaom', 'paidcontent' ) ) )
