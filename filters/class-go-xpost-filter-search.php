@@ -125,31 +125,14 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
 		// go-type is the fun one, it will come a variety of sources AND is used differently in Research
-		if ( 'research' == go_config()->get_property_slug() && isset( $xpost->terms['go-type'] ) )
-		{			
-			// This gets used later for Reports and maybe other stuff going forward
-			$go_type_research_terms = $this->clean_go_type_research_terms( $xpost->terms['go-type'] );
-		} // END if
-
-		$xpost->terms['go-type'] = array();
-
-		if ( 'go-datamodule' == $xpost->post->post_type )
-		{
-			// set the type and availability
-			$xpost->terms['go-type'][] = 'Chart';
-			$availability = 'Subscription';
-
-			// remove the parent ID and object
-			$xpost->post->post_parent = 0;
-			unset( $xpost->parent );
-
-			// remove the datamodule meta, as it's unused on Search.GO
-			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
-		} // END if
-		
-		// Updated handling of posts and reports for Research
 		if ( 'research' == go_config()->get_property_slug() )
-		{			
+		{
+			if ( isset( $xpost->terms['go-type'] ) )
+			{
+				// This gets used later for Reports and maybe other stuff going forward
+				$go_type_research_terms = $this->clean_go_type_research_terms( $xpost->terms['go-type'] );
+			} // END if
+			
 			if ( 'post' == $xpost->post->post_type )
 			{
 				$xpost->terms['go-type'][] = 'Blog Post';
@@ -351,6 +334,26 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				} // END if
 			} // END if
 		} // END elseif
+		
+		// If the property based cases above didn't create go-type we create it here
+		if ( ! isset( $xpost->terms['go-type'] )  )
+		{
+			$xpost->terms['go-type'] = array();
+		} // END if
+
+		if ( 'go-datamodule' == $xpost->post->post_type )
+		{
+			// set the type and availability
+			$xpost->terms['go-type'][] = 'Chart';
+			$availability = 'Subscription';
+
+			// remove the parent ID and object
+			$xpost->post->post_parent = 0;
+			unset( $xpost->parent );
+
+			// remove the datamodule meta, as it's unused on Search.GO
+			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
+		} // END if
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
