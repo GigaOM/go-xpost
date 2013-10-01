@@ -26,8 +26,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
-			//'go-report-section', // temporarily disabled, need to come up with a better plan
-			//'go-datamodule',     // temporarily removed, per https://github.com/GigaOM/legacy-pro/issues/1098#issuecomment-23899882
+			// 'go-report-section', // temporarily disabled, need to come up with a better plan
+			//'go-datamodule', // temporarily removed, per https://github.com/Gigaom/legacy-pro/issues/1098#issuecomment-23899882
 			'go_webinar',
 			'post',
 		);
@@ -53,7 +53,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		)
 		{
 			if (
-				0 === stripos( $post->post_title, 'about gigaom' ) || // match "About GigaOM..."
+				0 === stripos( $post->post_title, 'about gigaom' ) || // match "About Gigaom..."
 				(
 					0 === stripos( $post->post_title, 'about ' ) && // match "About Keren Elazari"
 					5 < $post->menu_order // exclude early sections, which might begin with "about" for other reasons
@@ -239,7 +239,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			}
 			unset( $go_post );
 
-			// GigaOM and paidContent channels are transformed into verticals
+			// Gigaom and paidContent channels are transformed into verticals
 			// Pro has a channels taxonomy, but it includes a lot of accidental noise and isn't used
 			if ( isset( $xpost->terms['channel'] ) )
 			{
