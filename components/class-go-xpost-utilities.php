@@ -276,7 +276,7 @@ class GO_XPost_Utilities
 			// send the ping
 			$return = wp_remote_request( $endpoint, array( 'timeout' => 20, 'method' => 'POST', 'body' => $query_array ) );
 		}// end else
-		print_r($return['body']); exit();
+
 		if ( is_wp_error( $return ) )
 		{
 			return $this->error( 'go-xpost-ping-error', 'Ping failed', array( 'source' => $source, 'endpoint' => $endpoint, 'messages' => $return->get_error_messages() ) );
@@ -302,7 +302,7 @@ class GO_XPost_Utilities
 		}//end if
 
 		// Tell the pinger that we don't need them anymore
-		//$this->end_http_connection();
+		$this->end_http_connection();
 
 		// validate the signature of the sending site
 		$ping_array = $_REQUEST;
@@ -351,7 +351,7 @@ class GO_XPost_Utilities
 			// fetch and decode the post
 			$pull_return = wp_remote_request( $endpoint_url, array( 'method' => 'POST', 'body' => $query_array ) );
 		} // end else
-		print_r($pull_return['body']); exit();
+
 		// confirm we got a response
 		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
 		{
