@@ -26,8 +26,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
-			// 'go-report-section', // temporarily disabled, need to come up with a better plan
-			//'go-datamodule', // temporarily removed, per https://github.com/GigaOM/legacy-pro/issues/1098#issuecomment-23899882
+			//'go-report-section', // temporarily disabled, need to come up with a better plan
+			//'go-datamodule',     // temporarily removed, per https://github.com/GigaOM/legacy-pro/issues/1098#issuecomment-23899882
 			'go_webinar',
 			'post',
 		);
@@ -124,116 +124,110 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// go-property will come from the current property set in go_config
 		$xpost->terms['go-property'][] = go_config()->get_property();
 
-		// go-type is the fun one, it will come a variety of sources
+		// go-type is the fun one, it will come a variety of sources AND is used differently in Research
 		$xpost->terms['go-type'] = array();
 
-		if ( 'go-datamodule' == $xpost->post->post_type )
+		if ( 'research' == go_config()->get_property_slug() )
 		{
-			// set the type and availability
-			$xpost->terms['go-type'][] = 'Chart';
-			$availability = 'Subscription';
-
-			// remove the parent ID and object
-			$xpost->post->post_parent = 0;
-			unset( $xpost->parent );
-
-			// remove the datamodule meta, as it's unused on Search.GO
-			unset( $xpost->meta['data_set_v2'] );
-		} // END if
-		elseif ( 'go_webinar' == $xpost->post->post_type )
-		{
-			// set the type
-			$xpost->terms['go-type'][] = 'Webinar';
-
-			// set future scheduled webinars to be published so they can appear in search
-			if ( 'future' == $xpost->post->post_status )
+			if ( 'go_webinar' == $xpost->post->post_type )
 			{
-				$xpost->post->post_status = 'publish';
-			}
+				// set the type
+				$xpost->terms['go-type'][] = 'Webinar';
 
-			// remove the go_webinar meta, as it's unused on Search.GO
-			unset( $xpost->meta['go_webinar'] );
-		} // END elseif
-		elseif ( 0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) )
-		{
-			// set the availability up top
-			// we may need to recnosider this if we use the report plugin on Gigaom or other non-subscriber sites
-			$availability = 'Subscription';
-
-			// @TODO: this will need to be refactored for R.go and the new taxonomy
-			// Sector Roadmaps and Quarterly Wrap Ups are special
-			if ( isset( $xpost->terms['category'] ) )
-			{
-				foreach ( $xpost->terms['category'] as $category )
+				// set future scheduled webinars to be published so they can appear in search
+				if ( 'future' == $xpost->post->post_status )
 				{
-					switch ( strtolower( $category ) )
+					$xpost->post->post_status = 'publish';
+				}
+
+				// remove the go_webinar meta, as it's unused on Search.GO
+				unset( $xpost->meta['go_webinar'] );
+			} // END if
+			elseif ( 0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) )
+			{
+				// set the availability up top
+				// we may need to recnosider this if we use the report plugin on Gigaom or other non-subscriber sites
+				$availability = 'Subscription';
+
+				// TODO: Remove this when we launch Research
+				// Sector Roadmaps and Quarterly Wrap Ups are special
+				if ( isset( $xpost->terms['category'] ) )
+				{
+					foreach ( $xpost->terms['category'] as $category )
 					{
-						case 'sector roadmaps':
-							$xpost->terms['go-type'][] = 'Sector Roadmap';
-							break;
-						case 'quarterly wrap ups':
-						case 'quarterly wrap-ups':
-							$xpost->terms['go-type'][] = 'Quarterly Wrap-Up';
-							break;
+						switch ( strtolower( $category ) )
+						{
+							case 'sector roadmaps':
+								$xpost->terms['go-type'][] = 'Sector Roadmap';
+								break;
+							case 'quarterly wrap ups':
+							case 'quarterly wrap-ups':
+								$xpost->terms['go-type'][] = 'Quarterly Wrap-Up';
+								break;
 
-					} // END switch
-				} // END foreach
-			} // END if
+						} // END switch
+					} // END foreach
+				} // END if
 
-			// Catch other types of reports, including, but not limited to:
-			// briefings, research briefings, research notes, long views
-			// at some point it may be necessary to tweak this if the report plugin ever gets used elsewhere
-			if ( ! count( $xpost->terms['go-type'] ) )
-			{
-				$xpost->terms['go-type'][] = 'Report';
-			}
-
-			// this is a report front page
-			if ( 'go-report' == $xpost->post->post_type )
-			{
-				// If this is a report parent post we need to make sure the children get updated too
-				$report_children = go_reports()->get_report_children();
-
-				// TODO: this is especially harsh when doing bulk xposting, we should maybe find a way to improve that
-				foreach ( $report_children as $report_child )
+				// Set go-type value for go-report and go-report-section types
+				if ( 'go-report' == $xpost->post->post_type )
 				{
-					// insert the child content into the parent
-					// @TODO: this should be temporary, as it doesn't support the finding of sections as we'd hoped for
-					$xpost->post->post_content .= "\n\n" . $report_child->post_title . "\n" . $report_child->post_content;
+					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) );
+					
+					// If this is a report parent post we need to make sure the children get updated too
+					$report_children = go_reports()->get_report_children();
 
-					// @TODO: this is commented out because we need to spend more time designing how to display the results
-					// and because it's causing the xpost pull to time out
-					//go_xpost()->process_post( $report_child->ID );
-				} // END foreach
-			} // END if
+					// TODO: this is especially harsh when doing bulk xposting, we should maybe find a way to improve that
+					foreach ( $report_children as $report_child )
+					{
+						// insert the child content into the parent
+						// @TODO: this should be temporary, as it doesn't support the finding of sections as we'd hoped for
+						$xpost->post->post_content .= "\n\n" . $report_child->post_title . "\n" . $report_child->post_content;
 
-			// this is a report section
-			elseif ( 'inherit' == $xpost->post->post_status )
-			{
-				// set the status based on the top-level parent
-				$parent_report = go_reports()->get_current_report();
-				$xpost->post->post_status   = $parent_report->post_status;
+						// @TODO: this is commented out because we need to spend more time designing how to display the results
+						// and because it's causing the xpost pull to time out
+						//go_xpost()->process_post( $report_child->ID );
+					} // END foreach
+				} // END if
+				elseif ( 'go-report-section' == $xpost->post->post_type )
+				{
+					// set the status based on the top-level parent
+					$parent_report = go_reports()->get_current_report();
+					$xpost->post->post_status = $parent_report->post_status;
+					
+					// Report sections need to get their go-type value from the parent report
+					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) ) );
 
-				// set the publish times based on the top-level parent, rounding down to the nearest hour
-				//
-				// this string replace feels hackish, but it's less expensive than turning the string to a timestamp
-				// and dealing with the risk of timezone conversions
-				$xpost->post->post_date     = substr( $parent_report->post_date, 0, 12 ) . '0:00:00';
-				$xpost->post->post_date_gmt = substr( $parent_report->post_date_gmt, 0, 12 ) . '0:00:00';
+					// set the publish times based on the top-level parent, rounding down to the nearest hour
+					//
+					// this string replace feels hackish, but it's less expensive than turning the string to a timestamp
+					// and dealing with the risk of timezone conversions
+					$xpost->post->post_date     = substr( $parent_report->post_date, 0, 12 ) . '0:00:00';
+					$xpost->post->post_date_gmt = substr( $parent_report->post_date_gmt, 0, 12 ) . '0:00:00';
 
-				// add the parent report's title as a prefix to the section title as in parent: child
-				$xpost->post->post_title = trim( $parent_report->post_title ) . ': ' . trim( $xpost->post->post_title );
+					// add the parent report's title as a prefix to the section title as in parent: child
+					$xpost->post->post_title = trim( $parent_report->post_title ) . ': ' . trim( $xpost->post->post_title );
 
-				// remove the parent ID and object
-				$xpost->post->post_parent = 0;
-				unset( $xpost->parent );
+					// remove the parent ID and object
+					$xpost->post->post_parent = 0;
+					unset( $xpost->parent );
+				} // END elseif
+
+				// TODO: Remove this when we launch Research
+				// Catch other types of reports, including, but not limited to:
+				// briefings, research briefings, research notes, long views
+				if ( ! count( $xpost->terms['go-type'] ) )
+				{
+					$xpost->terms['go-type'][] = 'Report';
+				}
 			} // END elseif
+			// TODO: Remove go_shortpost when we launch Research
+			elseif ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
+			{
+				$xpost->terms['go-type'][] = 'Blog Post';
+			} // END elseif
+		} // END if
 
-		} // END elseif
-		elseif ( 'go_shortpost' == $xpost->post->post_type )
-		{
-			$xpost->terms['go-type'][] = 'Blog Post';
-		}// end elseif
 		if ( in_array( go_config()->get_property_slug(), array( 'gigaom', 'paidcontent' ) ) )
 		{
 			// special handling for excerpts on link posts
@@ -294,6 +288,20 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			} // END if
 		} // END elseif
 
+		if ( 'go-datamodule' == $xpost->post->post_type )
+		{
+			// set the type and availability
+			$xpost->terms['go-type'][] = 'Chart';
+			$availability = 'Subscription';
+
+			// remove the parent ID and object
+			$xpost->post->post_parent = 0;
+			unset( $xpost->parent );
+
+			// remove the datamodule meta, as it's unused on Search.GO
+			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
+		} // END if
+
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
 		{
@@ -327,4 +335,23 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		return $xpost;
 	} // END post_filter
 
+	/**
+	 * Cleans up research version of go-type taxonomy terms for use in search
+	 */
+	public function clean_go_type_research_terms( array $terms )
+	{
+		$new_terms = array();
+		
+		foreach ( $terms as $term )
+		{
+			if ( ! isset( $term->name ) || 'Feature' == $term->name )
+			{
+				continue;
+			} // END if
+			
+			$new_terms[] = $term->name;
+		} // END foreach
+
+		return $new_terms;
+	} // END clean_go_type_research_terms
 } // END GO_XPost_Filter_Search
