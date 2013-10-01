@@ -2,7 +2,7 @@
 
 class GO_XPost_Admin
 {
-	public $name       = 'GigaOM xPost';
+	public $name       = 'Gigaom xPost';
 	public $short_name = 'GO xPost';
 	public $slug       = 'go-xpost';
 	private $batch_taxonomy = 'go-xpost-batch';

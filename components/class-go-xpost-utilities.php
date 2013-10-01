@@ -174,7 +174,7 @@ class GO_XPost_Utilities
 		unset( $r->meta['_edit_lock'] );
 		unset( $r->meta['_edit_last'] );
 
-		// @TODO: these are GigaOM-specific meta keys, perhaps we should remove these in the go_xpost_post_filter?
+		// @TODO: these are Gigaom-specific meta keys, perhaps we should remove these in the go_xpost_post_filter?
 		unset( $r->meta['_go_comment_cache'] );
 		unset( $r->meta['_go_comment_cache_full'] );
 		unset( $r->meta['go_oc_settings'] );
