@@ -126,7 +126,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		// go-type is the fun one, it will come a variety of sources AND is used differently in Research
 		$xpost->terms['go-type'] = array();
-		
+
 		if ( 'research' == go_config()->get_property_slug() )
 		{
 			// TODO: Remove go_shortpost when we launch Research
@@ -178,7 +178,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				if ( 'go-report' == $xpost->post->post_type )
 				{
 					$go_type_research_terms = $this->clean_go_type_research_terms( wp_get_object_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) );
-				
+
 					if ( 0 < count( $go_type_research_terms ) )
 					{
 						$xpost->terms['go-type'] = $go_type_research_terms;
