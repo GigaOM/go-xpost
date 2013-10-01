@@ -129,12 +129,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		if ( 'research' == go_config()->get_property_slug() )
 		{
-			// TODO: Remove go_shortpost when we launch Research
-			if ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
-			{
-				$xpost->terms['go-type'][] = 'Blog Post';
-			} // END if
-			elseif ( 'go_webinar' == $xpost->post->post_type )
+			if ( 'go_webinar' == $xpost->post->post_type )
 			{
 				// set the type
 				$xpost->terms['go-type'][] = 'Webinar';
@@ -147,7 +142,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				// remove the go_webinar meta, as it's unused on Search.GO
 				unset( $xpost->meta['go_webinar'] );
-			} // END elseif
+			} // END if
 			elseif ( 0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) )
 			{
 				// set the availability up top
@@ -177,38 +172,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
 				{
-					$go_type_research_terms = $this->clean_go_type_research_terms( wp_get_object_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) );
-
-					if ( 0 < count( $go_type_research_terms ) )
-					{
-						$xpost->terms['go-type'] = $go_type_research_terms;
-					} // END if
-				} // END if
-				elseif ( 'go-report-section' == $xpost->post->post_type )
-				{
-					// Report sections need to get their go-type value from the parent report
-					if ( $report = go_reports()->get_current_report() )
-					{
-						$go_type_research_terms = $this->clean_go_type_research_terms( wp_get_object_terms( $report->ID, 'go-type', array( 'fields' => 'names' ) ) );
-
-						if ( 0 < count( $go_type_research_terms ) )
-						{
-							$xpost->terms['go-type'] = $go_type_research_terms;
-						} // END if
-					} // END if
-				} // END elseif
-
-				// TODO: Remove this when we launch Research
-				// Catch other types of reports, including, but not limited to:
-				// briefings, research briefings, research notes, long views
-				if ( ! count( $xpost->terms['go-type'] ) )
-				{
-					$xpost->terms['go-type'][] = 'Report';
-				}
-
-				// this is a report front page
-				if ( 'go-report' == $xpost->post->post_type )
-				{
+					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) );
+					
 					// If this is a report parent post we need to make sure the children get updated too
 					$report_children = go_reports()->get_report_children();
 
@@ -224,12 +189,14 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 						//go_xpost()->process_post( $report_child->ID );
 					} // END foreach
 				} // END if
-				// this is a report section
-				elseif ( 'inherit' == $xpost->post->post_status )
+				elseif ( 'go-report-section' == $xpost->post->post_type )
 				{
 					// set the status based on the top-level parent
 					$parent_report = go_reports()->get_current_report();
-					$xpost->post->post_status   = $parent_report->post_status;
+					$xpost->post->post_status = $parent_report->post_status;
+					
+					// Report sections need to get their go-type value from the parent report
+					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) ) );
 
 					// set the publish times based on the top-level parent, rounding down to the nearest hour
 					//
@@ -245,6 +212,19 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->post->post_parent = 0;
 					unset( $xpost->parent );
 				} // END elseif
+
+				// TODO: Remove this when we launch Research
+				// Catch other types of reports, including, but not limited to:
+				// briefings, research briefings, research notes, long views
+				if ( ! count( $xpost->terms['go-type'] ) )
+				{
+					$xpost->terms['go-type'][] = 'Report';
+				}
+			} // END elseif
+			// TODO: Remove go_shortpost when we launch Research
+			elseif ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
+			{
+				$xpost->terms['go-type'][] = 'Blog Post';
 			} // END elseif
 		} // END if
 
@@ -360,12 +340,18 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function clean_go_type_research_terms( array $terms )
 	{
-		// Remove Feature term since we don't care about it in this case
-		if ( FALSE !== $key = array_search( 'Feature', $terms ) )
+		$new_terms = array();
+		
+		foreach ( $terms as $term )
 		{
-			unset( $terms[ $key ] );
-		} // END if
+			if ( ! isset( $term->name ) || 'Feature' == $term->name )
+			{
+				continue;
+			} // END if
+			
+			$new_terms[] = $term->name;
+		} // END foreach
 
-		return $terms;
+		return $new_terms;
 	} // END clean_go_type_research_terms
 } // END GO_XPost_Filter_Search
