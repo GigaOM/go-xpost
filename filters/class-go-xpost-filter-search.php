@@ -127,7 +127,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// go-type is the fun one, it will come a variety of sources AND is used differently in Research
 		if ( 'research' == go_config()->get_property_slug() && isset( $xpost->terms['go-type'] ) )
 		{			
-			// This gest used later for Reports and maybe other stuff going forward
+			// This gets used later for Reports and maybe other stuff going forward
 			$go_type_research_terms = $this->clean_go_type_research_terms( $xpost->terms['go-type'] );
 		} // END if
 
