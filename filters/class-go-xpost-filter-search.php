@@ -81,7 +81,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					return FALSE;
 				} // END if
 			} // END foreach
-		}
+		}//end if
 
 		return TRUE;
 	} // END should_send_post
@@ -173,7 +173,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				if ( 'go-report' == $xpost->post->post_type )
 				{
 					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) );
-					
+
 					// If this is a report parent post we need to make sure the children get updated too
 					$report_children = go_reports()->get_report_children();
 
@@ -194,7 +194,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					// set the status based on the top-level parent
 					$parent_report = go_reports()->get_current_report();
 					$xpost->post->post_status = $parent_report->post_status;
-					
+
 					// Report sections need to get their go-type value from the parent report
 					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) ) );
 
@@ -286,7 +286,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->terms['go-type'][] = 'Report';
 				} // END if
 			} // END if
-		} // END elseif
+		} // END if
 
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
@@ -341,17 +341,17 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	public function clean_go_type_research_terms( array $terms )
 	{
 		$new_terms = array();
-		
+
 		foreach ( $terms as $term )
 		{
 			if ( ! isset( $term->name ) || 'Feature' == $term->name )
 			{
 				continue;
 			} // END if
-			
+
 			$new_terms[] = $term->name;
 		} // END foreach
 
 		return $new_terms;
 	} // END clean_go_type_research_terms
-} // END GO_XPost_Filter_Search
+}// END GO_XPost_Filter_Search
