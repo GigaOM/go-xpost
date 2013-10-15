@@ -119,6 +119,8 @@ class GO_XPost_Utilities
 			return $this->error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: ' . $post_id . ')', $r->post );
 		}//end if
 
+		//Should fix the 'Creating default object from empty value' error
+		$r->post = new StdClass;
 		// get the post
 		$r->post = clone get_post( $post_id );
 
@@ -158,6 +160,8 @@ class GO_XPost_Utilities
 			}//end if
 		}//end foreach
 
+		//Should fix the 'Creating default object from empty value' error
+		$r->author = new StdClass;
 		// Get author data
 		$r->author = get_userdata( $r->post->post_author );
 
