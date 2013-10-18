@@ -26,8 +26,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$valid_post_types = array(
 			'go_shortpost',
 			'go-report',
-			// 'go-report-section', // temporarily disabled, need to come up with a better plan
-			//'go-datamodule', // temporarily removed, per https://github.com/Gigaom/legacy-pro/issues/1098#issuecomment-23899882
+			//'go-report-section', // temporarily disabled, need to come up with a better plan
+			'go-datamodule',
 			'go_webinar',
 			'post',
 		);
