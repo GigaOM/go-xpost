@@ -122,7 +122,7 @@ class GO_XPost_Utilities
 		//Should fix the 'Creating default object from empty value' error
 		if ( ! $r )
 		{
-			$r = new StdClass;
+			$r = new stdClass;
 		}
 		// get the post
 		$r->post = clone get_post( $post_id );
@@ -166,7 +166,7 @@ class GO_XPost_Utilities
 		//Should fix the 'Creating default object from empty value' error
 		if ( ! $r )
 		{
-			$r = new StdClass;
+			$r = new stdClass;
 		}
 		// Get author data
 		$r->author = get_userdata( $r->post->post_author );
