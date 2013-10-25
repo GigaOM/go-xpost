@@ -72,7 +72,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				'poll-summaries', // Same for poll summaries
 			);
 
-			$categories = get_the_terms( $post_id, array( 'category' ), array( 'fields' => 'slugs' ) );
+			$categories = get_the_terms( $post_id, 'category', array( 'fields' => 'slugs' ) );
 
 			foreach ( $categories as $category )
 			{
