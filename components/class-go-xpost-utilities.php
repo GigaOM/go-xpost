@@ -222,7 +222,7 @@ class GO_XPost_Utilities
 	{
 		// Logging data needs to be truncated so it'll be under Simple DB's limits
 		$log_data = array(
-			'post_date' => $post->post->post_date,
+			'post_date'     => $post->post->post_date,
 			'post_date_gmt' => $post->post->post_date_gmt,
 		);
 
@@ -467,9 +467,7 @@ class GO_XPost_Utilities
 		// check and enforce limits on file types
 		if ( $file['error'] )
 		{
-			$post_log_data = $this->post_log_data( $post );
-			$post_log_data['file'] = $file;
-			return $this->error( 'go-xpost-attachment-badfiletype', 'Bad file for GUID: '. $post->post->guid, $post_log_data );
+			return $this->error( 'go-xpost-attachment-badfiletype', 'Bad file for GUID: '. $post->post->guid, array( 'post_id' => $post->post->ID, 'url' => $post->file->url, 'error' => $file['error'] ) );
 		}//end if
 
 		$file_path = $file['file'];
@@ -481,19 +479,19 @@ class GO_XPost_Utilities
 		if ( ! $headers )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-unreachable', 'Remote server did not respond for ' . $post->file->url, $this->post_log_data( $post ) );
+			return $this->error( 'go-xpost-attachment-unreachable', 'Remote server did not respond for ' . $post->file->url, array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid ) );
 		}//end if
 
 		// make sure the fetch was successful
 		if ( $headers['response'] != '200' )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), $this->post_log_data( $post ) );
+			return $this->error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid ) );
 		}//end if
 		elseif ( isset($headers['content-length']) && filesize( $file['file'] ) != $headers['content-length'] )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, $this->post_log_data( $post ) );
+			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid ) );
 		}//end elseif
 
 		// do actions for replication
