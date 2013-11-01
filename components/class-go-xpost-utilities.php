@@ -289,7 +289,7 @@ class GO_XPost_Utilities
 
 		if ( is_wp_error( $return ) )
 		{
-			return $this->error( 'go-xpost-ping-error', 'Ping failed', array( 'source' => $source, 'endpoint' => $endpoint, 'messages' => $return->get_error_messages() ) );
+			return $this->error( 'go-xpost-ping-error', 'Ping failed', array( 'post_id' => $post_id, 'guid' => get_the_guid( $post_id ), 'source' => $source, 'endpoint' => $endpoint, 'messages' => $return->get_error_messages() ) );
 		}// end if
 
 		// save an activity log for this execution instance
