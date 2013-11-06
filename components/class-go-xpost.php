@@ -22,12 +22,6 @@ class GO_XPost
 		// hook this action to update crossposted comment count after WP sets that
 		// number, else the xpost'ed comment count will always get overwritten by WP
 		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
-		
-		// If wp-cli is active load the xpost additions
-		if ( defined('WP_CLI') && WP_CLI )
-		{
-			include __DIR__ . '/class-go-xpost-wp-cli.php';
-		}
 	}//end __construct
 
 	public function admin()
