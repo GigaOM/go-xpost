@@ -87,15 +87,15 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		if ( isset( $assoc_args['source_path'] ) )
 		{
-			$source_args['path'] = '`' . $assoc_args['source_path'] . '`';
+			$source_args['path'] = $assoc_args['source_path'];
 		} // END if
 
 		// Create source string (url/path) for the source commands
-		$source_string = ' ';
+		$source_string = '';
 
 		foreach ( $source_args as $arg => $value )
 		{
-			$source_string .= '--' . $arg . '=' . $value;
+			$source_string .= ' --' . $arg . '=' . $value;
 		} // END foreach
 
 		$posts = json_decode( exec( 'wp post list --field=ID --format=json' . $source_string . $query ) );
