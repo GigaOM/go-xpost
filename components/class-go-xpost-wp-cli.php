@@ -35,83 +35,108 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			WP_CLI::error( $post->get_error_message() );
 		} // END if
 
-		echo serialize( $post );
+		fwrite( STDOUT, serialize( $post ) );
 	} // END get_post
 
 	/**
-	 * Copies posts from one site to another using Gigaom xPost methods
+	 * Gets posts from the specified site and returns a serialized array of post objects.
 	 *
 	 * ## OPTIONS
 	 *
-	 * --url=<url>
-	 * : The url of the site you want posts copied to.
-	 * --source=<url>
-	 * : The url of the site you want posts copied from.
+	 * [--url=<url>]
+	 * : The url of the site you want posts from.
 	 * [--path=<path>]
 	 * : Path to WordPress files.
-	 * [--source_path=<path>]
-	 * : Output extra info as posts are copied.
-	 * [--filter=<filter>]
-	 * : Filter to run on the post data before it's copied.
-	 * [--verbose]
-	 * : Output extra info as posts are copied.
 	 * [--query=<query>]
-	 * : Query string suitable for wp-cli post list method in quotes (i.e. --query="--post_type=post --posts_per_page=5 --offset=0").
-	 *
+	 * : Query string suitable for WP get_posts method in quotes (i.e. --query="post_type=post&posts_per_page=5&offset=0").
+	 *	
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost copy_posts --url=<url> --source=<url> --query="--post_type=post --posts_per_page=5 --offset=0"
+	 * wp go_xpost get_posts --url=<url> --query="post_type=post&posts_per_page=5&offset=0"
 	 *
-	 * @synopsis --url=<url> --source=<url> [--path=<path>] [--source_path=<path>] [--filter=<filter>] [--verbose] [--query=<query>]
+	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>]
 	 */
-	function copy_posts( $args, $assoc_args )
+	function get_posts( $args, $assoc_args )
 	{
 		// Setup arguments for source query
-		$query  = isset( $assoc_args['query'] ) ? ' ' . $assoc_args['query'] : '';
-		$filter = isset( $assoc_args['filter'] ) ? $assoc_args['filter'] : 'default';
-		$filter = dirname( __DIR__ ) . '/wp-cli-filters/' . $filter . '.php';
+		$query_args = wp_parse_args( isset( $assoc_args['query'] ) ? ' ' . $assoc_args['query'] : '' );
 
-		// Check if filter exists
-		if ( ! file_exists( $filter ) )
-		{
-			WP_CLI::error( 'Filter doesn\'t exist.' );
-		} // END if
+		$query_args['fields'] = 'ids';
 
-		if ( isset( $assoc_args['query'] ) )
-		{
-			$query = ' ' . $assoc_args['query'];
-		} // END if
-
-		$source_args = array();
-		$source_args['url'] = $assoc_args['source'];
-
-		if ( isset( $assoc_args['source_path'] ) )
-		{
-			$source_args['path'] = $assoc_args['source_path'];
-		} // END if
-
-		// Create source string (url/path) for the source commands
-		$source_string = '';
-
-		foreach ( $source_args as $arg => $value )
-		{
-			$source_string .= ' --' . $arg . '=' . $value;
-		} // END foreach
-
-		$posts = json_decode( exec( 'wp post list --field=ID --format=json' . $source_string . $query ) );
+		// Try to get posts
+		$posts = get_posts( $query_args );
 
 		if ( ! is_array( $posts ) || ! is_numeric( array_shift( $posts ) ) )
 		{
 			WP_CLI::error( 'Could not find any posts.' );
 		} // END if
 
-		$count = 0;
-		$found = count( $posts );
+		$return = array();
 
 		foreach ( $posts as $post_id )
 		{
-			// Try to get the post
-			$post = unserialize( exec( 'wp go_xpost get_post ' . $post_id . $source_string ) );
+			// Get the post
+			$post = go_xpost_util()->get_post( $post_id );
+
+			if ( is_wp_error( $post ) )
+			{
+				if ( isset( $assoc_args['verbose'] ) )
+				{
+					$return['errors'][ $post_id ][] = $post->get_error_message();
+				} // END if
+
+				continue;
+			} // END if
+
+			$return[] = $post;
+
+			// Copy sucessful
+			$count++;
+		} // END foreach
+
+		fwrite( STDOUT, serialize( $return ) );
+	} // END get_posts
+	
+	/**
+	 * Save posts to a specified site from a file containing a serialized array of xPost post objects.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--url=<url>]
+	 * : The url of the site you want save posts to.
+	 * [--path=<path>]
+	 * : Path to WordPress files.
+	 * <posts-file>
+	 * : A file with a serialized array of xPost post objects.
+	 *	
+	 * ## EXAMPLES
+	 *
+	 * wp go_xpost get_posts --url=<url> <posts-file>
+	 *
+	 * @synopsis [--url=<url>] [--path=<path>] <posts-file>
+	 */
+	function save_posts( $args, $assoc_args )
+	{
+	    // Check if file exists
+		$file = $args[0];
+		
+		if ( ! file_exists( $file ) )
+		{
+			WP_CLI::error( 'Posts file does not exist!' );
+		} // END if
+
+		$posts = unserialize( file_get_contents( $file ) ); // This is failing for some reason! BLARGH@#$%!
+		
+		if ( ! is_array( $posts ) || ! is_numeric( array_shift( $posts ) ) )
+		{
+			WP_CLI::error( 'Could not find any posts in the file.' );
+		} // END if
+		
+		print_r($posts); exit();
+		foreach ( $posts as $post_id )
+		{
+			// Get the post
+			$post = go_xpost_util()->get_post( $post_id );
 
 			if ( is_wp_error( $post ) )
 			{
@@ -122,12 +147,6 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 				continue;
 			} // END if
-
-			// Load filter
-			require $filter;
-
-			// Save the post!
-			$new_post_id = go_xpost_util()->save_post( $post );
 
 			if ( is_wp_error( $new_post_id ) )
 			{
@@ -146,7 +165,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		} // END foreach
 
 		WP_CLI::success( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
-	} // END copy_posts
+	} // END save_posts
 } // END GO_XPost_WP_CLI
 
 WP_CLI::add_command( 'go_xpost', 'GO_XPost_WP_CLI' );
