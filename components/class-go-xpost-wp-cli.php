@@ -36,6 +36,9 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		} // END if
 
 		fwrite( STDOUT, serialize( $post ) );
+		
+		// Make sure non-blocking STDIN will get this
+		fflush( STDOUT );
 	} // END get_post
 
 	/**
@@ -66,13 +69,13 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		// Try to get posts
 		$posts = get_posts( $query_args );
 
-		if ( ! is_array( $posts ) || ! is_numeric( array_shift( $posts ) ) )
+		if ( ! is_array( $posts ) || empty( $posts ) || ! is_numeric( $posts[0] ) )
 		{
 			WP_CLI::error( 'Could not find any posts.' );
 		} // END if
 
 		$return = array();
-
+		$count = 0;
 		foreach ( $posts as $post_id )
 		{
 			// Get the post
@@ -95,6 +98,9 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		} // END foreach
 
 		fwrite( STDOUT, serialize( $return ) );
+
+		// Make sure non-blocking STDIN will get this
+		fflush( STDOUT );
 	} // END get_posts
 	
 	/**
@@ -106,60 +112,91 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : The url of the site you want save posts to.
 	 * [--path=<path>]
 	 * : Path to WordPress files.
-	 * <posts-file>
+	 * [<posts-file>]
 	 * : A file with a serialized array of xPost post objects.
 	 *	
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost get_posts --url=<url> <posts-file>
+	 * wp go_xpost get_posts --url=<url> [posts-file]
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] <posts-file>
+	 * @synopsis [--url=<url>] [--path=<path>] [<posts-file>]
 	 */
 	function save_posts( $args, $assoc_args )
 	{
-	    // Check if file exists
-		$file = $args[0];
+		$file_content = '';
 		
-		if ( ! file_exists( $file ) )
+		// Are we reading from STDIN or a file arg?
+		// To test this we make reading from STDIN non-blocking since we only expect piped in content, not user input. 
+		// Then we use stream_select() to check if there's any thing to read, with a half second max timeout to give get_posts() some time to write.
+		stream_set_blocking( STDIN, 0 );
+		$rstreams = array( STDIN );
+		$wstreams = NULL;
+		$estreams = NULL;
+
+		$num_input_read = stream_select( $rstreams, $wstreams, $estreams, 0, 500000 );
+
+		if ( ( FALSE !== $num_input_read ) && ( 0 < $num_input_read ) )
 		{
-			WP_CLI::error( 'Posts file does not exist!' );
+			while ( ( $buffer = fgets( STDIN, 4096 ) ) !== FALSE )
+			{
+				$file_content .= $buffer;
+			}
+		}//END if
+
+		// If we didn't get anything from STDIN then check if we got a filename in $args
+		if ( empty( $file_content ) && ( 0 < count( $args ) ) )
+		{
+			$file = $args[0];
+
+			if ( ! file_exists( $file ) )
+			{
+				WP_CLI::error( 'Posts file does not exist!' );
+			} // END if
+
+			$file_content = file_get_contents( $file );
 		} // END if
 
-		$posts = unserialize( file_get_contents( $file ) ); // This is failing for some reason! BLARGH@#$%!
+		$posts = NULL;
 		
-		if ( ! is_array( $posts ) || ! is_numeric( array_shift( $posts ) ) )
+		if ( ! empty( $file_content ) )
+		{
+			$posts = unserialize( $file_content );
+		}
+
+		if ( ! is_array( $posts ) || empty( $posts ) )
 		{
 			WP_CLI::error( 'Could not find any posts in the file.' );
 		} // END if
-		
-		print_r($posts); exit();
-		foreach ( $posts as $post_id )
+
+		// Check to see if any errors were found in the posts data
+		if ( isset( $posts['errors'] ) && is_array( $posts['errors'] ) )
 		{
-			// Get the post
-			$post = go_xpost_util()->get_post( $post_id );
-
-			if ( is_wp_error( $post ) )
+			WP_CLI::line( 'Warning: Errors were found in the posts data.' );
+			
+			foreach ( $posts['errors'] as $error )
 			{
-				if ( isset( $assoc_args['verbose'] ) )
-				{
-					WP_CLI::line( $post->get_error_message() );
-				} // END if
+				WP_CLI::line( $error );
+			} // END foreach
+			
+			unset( $posts['errors'] );
+		} // END if
 
+		// Save the posts
+		$found = count( $posts );
+		$count = 0;
+
+		foreach ( $posts as $post )
+		{
+			$post_id = go_xpost_util()->save_post( $post );
+			
+			if ( is_wp_error( $post_id ) )
+			{
+				WP_CLI::line( 'Warning: ' . $post_id->get_error_message() );
 				continue;
 			} // END if
-
-			if ( is_wp_error( $new_post_id ) )
-			{
-				if ( isset( $assoc_args['verbose'] ) )
-				{
-					WP_CLI::line( 'Warning: ' . $new_post_id->get_error_message() );
-				} // END if
-			} // END if
-			elseif ( isset( $assoc_args['verbose'] ) )
-			{
-				WP_CLI::line( 'Copied: ' . $post_id . ' => ' . $new_post_id );
-			} // END elseif
-
+			
+			WP_CLI::line( 'Copied: ' . $post->post->guid . ' -> ' . $post_id );
+			
 			// Copy sucessful
 			$count++;
 		} // END foreach
