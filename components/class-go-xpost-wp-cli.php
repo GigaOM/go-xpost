@@ -36,7 +36,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		} // END if
 
 		fwrite( STDOUT, serialize( $post ) );
-		
+
 		// Make sure non-blocking STDIN will get this
 		fflush( STDOUT );
 	} // END get_post
@@ -52,7 +52,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : Path to WordPress files.
 	 * [--query=<query>]
 	 * : Query string suitable for WP get_posts method in quotes (i.e. --query="post_type=post&posts_per_page=5&offset=0").
-	 *	
+	 *
 	 * ## EXAMPLES
 	 *
 	 * wp go_xpost get_posts --url=<url> --query="post_type=post&posts_per_page=5&offset=0"
@@ -102,7 +102,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		// Make sure non-blocking STDIN will get this
 		fflush( STDOUT );
 	} // END get_posts
-	
+
 	/**
 	 * Save posts to a specified site from a file or STDIN containing a serialized array of xPost post objects.
 	 *
@@ -114,7 +114,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : Path to WordPress files.
 	 * [<posts-file>]
 	 * : A file with a serialized array of xPost post objects.
-	 *	
+	 *
 	 * ## EXAMPLES
 	 *
 	 * wp go_xpost save_posts --url=<url> [posts-file]
@@ -124,9 +124,9 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	function save_posts( $args, $assoc_args )
 	{
 		$file_content = '';
-		
+
 		// Are we reading from STDIN or a file arg?
-		// To test this we make reading from STDIN non-blocking since we only expect piped in content, not user input. 
+		// To test this we make reading from STDIN non-blocking since we only expect piped in content, not user input.
 		// Then we use stream_select() to check if there's any thing to read, with a half second max timeout to give get_posts() some time to write.
 		stream_set_blocking( STDIN, 0 );
 		$rstreams = array( STDIN );
@@ -157,7 +157,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		} // END if
 
 		$posts = NULL;
-		
+
 		if ( ! empty( $file_content ) )
 		{
 			$posts = unserialize( $file_content );
@@ -172,12 +172,12 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		if ( isset( $posts['errors'] ) && is_array( $posts['errors'] ) )
 		{
 			WP_CLI::line( 'Warning: Errors were found in the posts data.' );
-			
+
 			foreach ( $posts['errors'] as $error )
 			{
 				WP_CLI::line( $error );
 			} // END foreach
-			
+
 			unset( $posts['errors'] );
 		} // END if
 
@@ -188,15 +188,15 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		foreach ( $posts as $post )
 		{
 			$post_id = go_xpost_util()->save_post( $post );
-			
+
 			if ( is_wp_error( $post_id ) )
 			{
 				WP_CLI::line( 'Warning: ' . $post_id->get_error_message() );
 				continue;
 			} // END if
-			
+
 			WP_CLI::line( 'Copied: ' . $post->post->guid . ' -> ' . $post_id );
-			
+
 			// Copy sucessful
 			$count++;
 		} // END foreach
