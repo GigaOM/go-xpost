@@ -52,11 +52,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * [--source_path=<path>]
 	 * : Output extra info as posts are copied.
 	 * [--filter=<filter>]
-	 * : Path to source WordPress files (if different).
+	 * : Filter to run on the post data before it's copied.
 	 * [--verbose]
-	 * : Filter to run on the post data before it's copied
+	 * : Output extra info as posts are copied.
 	 * [--query=<query>]
-	 * : Query string suitable for wp-cli post list method in quotes (i.e. --query="--post_type=post --posts_per_page=5 --offset=0")
+	 * : Query string suitable for wp-cli post list method in quotes (i.e. --query="--post_type=post --posts_per_page=5 --offset=0").
 	 *
 	 * ## EXAMPLES
 	 *
