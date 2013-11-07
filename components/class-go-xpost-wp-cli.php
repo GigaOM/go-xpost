@@ -104,7 +104,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	} // END get_posts
 	
 	/**
-	 * Save posts to a specified site from a file containing a serialized array of xPost post objects.
+	 * Save posts to a specified site from a file or STDIN containing a serialized array of xPost post objects.
 	 *
 	 * ## OPTIONS
 	 *
@@ -117,7 +117,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *	
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost get_posts --url=<url> [posts-file]
+	 * wp go_xpost save_posts --url=<url> [posts-file]
 	 *
 	 * @synopsis [--url=<url>] [--path=<path>] [<posts-file>]
 	 */
