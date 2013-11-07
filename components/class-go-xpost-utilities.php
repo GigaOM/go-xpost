@@ -120,7 +120,7 @@ class GO_XPost_Utilities
 		}//end if
 
 		//Should fix the 'Creating default object from empty value' error
-		if ( ! $r )
+		if ( ! isset( $r ) )
 		{
 			$r = new stdClass;
 		}
@@ -164,7 +164,7 @@ class GO_XPost_Utilities
 		}//end foreach
 
 		//Should fix the 'Creating default object from empty value' error
-		if ( ! $r )
+		if ( ! isset( $r ) )
 		{
 			$r = new stdClass;
 		}
