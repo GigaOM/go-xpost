@@ -106,6 +106,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$post = $xpost->post;
 		$post->ID = $post_id;
 
+		// strip out any and all shortcodes
+		$xpost->post->post_content = preg_replace( '/(\[.*?\])/', '', $xpost->post->post_content );
+
 		// shorten the post excerpt if we have one (preserve the full excerpt in the post content, so we can still search it)
 		if ( ! empty( $xpost->post->post_excerpt ) )
 		{
