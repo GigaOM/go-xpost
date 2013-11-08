@@ -76,10 +76,19 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		$return = array();
 		$count = 0;
+		$is_attachment = isset( $query_args['post_type'] ) && ( 'attachment' == $query_args['post_type'] );
+
 		foreach ( $posts as $post_id )
 		{
 			// Get the post
-			$post = go_xpost_util()->get_post( $post_id );
+			if ( $is_attachment )
+			{
+				$post = go_xpost_util()->get_attachment( $post_id );
+			}
+			else
+			{
+				$post = go_xpost_util()->get_post( $post_id );
+			}
 
 			if ( is_wp_error( $post ) )
 			{
@@ -117,7 +126,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost save_posts --url=<url> [posts-file]
+	 * wp go_xpost save_posts --url=<url> [<posts-file>]
 	 *
 	 * @synopsis [--url=<url>] [--path=<path>] [<posts-file>]
 	 */
@@ -187,7 +196,15 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		foreach ( $posts as $post )
 		{
-			$post_id = go_xpost_util()->save_post( $post );
+			// is this an attachment post?
+			if ( 'attachment' == $post->post->post_type )
+			{
+				$post_id = go_xpost_util()->save_attachment( $post );
+			}
+			else
+			{
+				$post_id = go_xpost_util()->save_post( $post );
+			}
 
 			if ( is_wp_error( $post_id ) )
 			{
