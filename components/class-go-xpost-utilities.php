@@ -55,7 +55,7 @@ class GO_XPost_Utilities
 	 *
 	 * @return attachment $r
 	 */
-	private function get_attachment( $post_id )
+	public function get_attachment( $post_id )
 	{
 		$post_id = (int) $post_id;
 
@@ -516,10 +516,12 @@ class GO_XPost_Utilities
 				return $this->error( 'go-xpost-attachment-noparent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data( $post ) );
 			}//end if
 		}// end if
-
-		// this is also screwy.  The author object is *never* added to an attachment
-		$post->post->post_author = $this->get_author( $post->author );
 		*/
+		// this is also screwy.  The author object is *never* added to an attachment
+		if ( isset( $post->author ) )
+		{
+			$post->post->post_author = $this->get_author( $post->author );
+		}
 
 		// check if the post exists
 		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
