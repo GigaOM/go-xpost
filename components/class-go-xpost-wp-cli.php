@@ -5,6 +5,8 @@
  */
 class GO_XPost_WP_CLI extends WP_CLI_Command
 {
+	public $log_file = NULL; // log file name
+
 	/**
 	 * Returns a serialized post object using the Gigaom xPost get_post method.
 	 *
@@ -15,12 +17,14 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost get_post <id>
+	 * wp go_xpost get_post --logfile=/var/log/xpost.log <id>
 	 *
-	 * @synopsis <id>
+	 * @synopsis [--logfile=<logfile>] <id>
 	 */
 	function get_post( $args, $assoc_args )
 	{
+		$this->init_log( $assoc_args );
+
 		// Does this look like a post ID?
 		if ( ! is_numeric( $args[0] ) )
 		{
@@ -52,15 +56,19 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : Path to WordPress files.
 	 * [--query=<query>]
 	 * : Query string suitable for WP get_posts method in quotes (i.e. --query="post_type=post&posts_per_page=5&offset=0").
+	 * [--logfile=<logfile>]
+	 * : where to log our results.
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost get_posts --url=<url> --query="post_type=post&posts_per_page=5&offset=0"
+	 * wp go_xpost get_posts --url=https://pc.gigaom.com --query="post_type=post&posts_per_page=5&offset=0"
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>]
+	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] [--logfile=<logfile>]
 	 */
 	function get_posts( $args, $assoc_args )
 	{
+		$this->init_log( $assoc_args );
+
 		// Setup arguments for source query
 		$query_args = wp_parse_args( isset( $assoc_args['query'] ) ? ' ' . $assoc_args['query'] : '' );
 
@@ -121,17 +129,21 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : The url of the site you want save posts to.
 	 * [--path=<path>]
 	 * : Path to WordPress files.
+	 * [--logfile=<logfile>]
+	 * : where to log our results.
 	 * [<posts-file>]
 	 * : A file with a serialized array of xPost post objects.
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost save_posts --url=<url> [<posts-file>]
+	 * wp go_xpost save_posts --url=https://pc.gigaom.com --logfile=/var/log/xpost.log
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] [<posts-file>]
+	 * @synopsis [--url=<url>] [--path=<path>] [--logfile=<logfile>] [<posts-file>]
 	 */
 	function save_posts( $args, $assoc_args )
 	{
+		$this->init_log( $assoc_args );
+
 		$file_content = '';
 
 		// Are we reading from STDIN or a file arg?
@@ -220,6 +232,34 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		WP_CLI::success( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
 	} // END save_posts
+
+	/**
+	 * initialize log file from command arguments
+	 */
+	public function init_log( $assoc_args )
+	{
+		if ( isset( $assoc_args['logfile'] ) )
+		{
+			$this->log_file = $assoc_args['logfile'];
+		}
+
+		// make sure the log file is writable by opening it in append,
+		// write mode
+		if ( $this->log_file )
+		{
+			$handle = fopen( $this->log_file, 'a' );
+
+			if ( FALSE === $handle )
+			{
+				$this->log_file = NULL; // unable to open file to write/append
+			}
+			else
+			{
+				fclose( $handle );
+			}
+		}//END if
+	}//END init_logs
+
 } // END GO_XPost_WP_CLI
 
 WP_CLI::add_command( 'go_xpost', 'GO_XPost_WP_CLI' );
