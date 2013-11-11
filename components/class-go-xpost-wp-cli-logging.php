@@ -145,20 +145,31 @@ class GO_XPost_WP_CLI_Logging
 	 * output a log entry for a save_post triggered by the save_posts
 	 * command.
 	 *
-	 * @param $post_id int ID of the post to retrieve
-	 * @param $post object retrieved post object. this is more than a
-	 *  wp_post object and contains other metadata (post meta, terms, etc.)
-	 *  if get_post() returned an error then this would be a WP_Error object.
+	 * @param $post_id mixed ID of the post to retrieve or a WP_Error.
+	 * @param $post object retrieved post object from the source blog.
+	 *  this is more than a wp_post object and contains other metadata
+	 *  (post meta, terms, etc.)
 	 */
 	public function log_save_posts_status( $post_id, $post )
 	{
 		$log_entry = $this->get_log_entry_prefix( 'save_posts' );
 
-		if ( is_wp_error( $post ) )
+		$log_entry[] = $post->post->post_type;   // post type
+		$log_entry[] = $post->post->guid;        // guid
+		$log_entry[] = $post->origin->ID;        // source post id
+		$log_entry[] = $post->origin->permalink; // source permalink
+
+		if ( is_wp_error( $post_id ) )
 		{
+			$log_entry[] = '';  // no destination post id
+			$log_entry[] = '';  // no destination permalink
+			$log_entry[] = 'error:"' . $post_id->get_error_message() . '"';
 		}
 		else
 		{
+			$log_entry[] = $post_id; // post id
+			$log_entry[] = get_permalink( $post_id );
+			$log_entry[] = 'ok';     // save status
 		}//END else
 
 		if ( FALSE === fwrite( $this->log_handle, implode( ',', $log_entry ) . "\n" ) )
