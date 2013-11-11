@@ -191,7 +191,8 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 			if ( ! file_exists( $file ) )
 			{
-				WP_CLI::error( 'Posts file does not exist!' );
+				$this->log_general_error( 'save_posts', 'error', 'Posts file ' . $file . ' does not exist!' );
+				WP_CLI::error( 'Posts file ' . $file . ' does not exist!' );
 			} // END if
 
 			$file_content = file_get_contents( $file );
@@ -206,16 +207,19 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		if ( ! is_array( $posts ) || empty( $posts ) )
 		{
+			$this->log_general_error( 'save_posts', 'error', 'Could not find any posts in the file.' );
 			WP_CLI::error( 'Could not find any posts in the file.' );
 		} // END if
 
 		// Check to see if any errors were found in the posts data
 		if ( isset( $posts['errors'] ) && is_array( $posts['errors'] ) )
 		{
+			$this->log_general_error( 'save_posts', 'warning', 'Errors were found in the posts data.' );
 			WP_CLI::line( 'Warning: Errors were found in the posts data.' );
 
 			foreach ( $posts['errors'] as $error )
 			{
+				$this->log_general_error( 'save_posts', 'warning', 'Errors were found in the posts data.' );
 				WP_CLI::line( $error );
 			} // END foreach
 
@@ -237,6 +241,8 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			{
 				$post_id = go_xpost_util()->save_post( $post );
 			}
+
+			$this->log_save_posts_status( $post_id, $post );
 
 			if ( is_wp_error( $post_id ) )
 			{
@@ -280,6 +286,20 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	}//END init_logs
 
 	/**
+	 * log the status of a get_post command (not to be confused with the
+	 * get_posts command). deligate this to GO_XPost_WP_CLI_Logging.
+	 *
+	 * @param $post_id int ID of the post to retrieve
+	 * @param $post object retrieved post object. this is more than a
+	 *  wp_post object and contains other metadata (post meta, terms, etc.)
+	 *  if get_post() returned an error then this would be a WP_Error object.
+	 */
+	public function log_get_post_status( $post_id, $post )
+	{
+		$this->logging->log_get_post_status( $post_id, $post );
+	}//END log_get_post_status
+
+	/**
 	 * output a log entry for a get_post triggered by the get_posts
 	 * command. this is delegated to GO_XPost_WP_CLI_Logging
 	 *
@@ -295,19 +315,30 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	}//END log_get_posts_status
 
 	/**
-	 * log the status of a get_post command (not to be confused with the
-	 * get_posts command). deligate this to GO_XPost_WP_CLI_Logging.
+	 * output a log entry for a save_post triggered by the save_posts
+	 * command. this is delegated to GO_XPost_WP_CLI_Logging
 	 *
 	 * @param $post_id int ID of the post to retrieve
 	 * @param $post object retrieved post object. this is more than a
 	 *  wp_post object and contains other metadata (post meta, terms, etc.)
 	 *  if get_post() returned an error then this would be a WP_Error object.
 	 */
-	public function log_get_post_status( $post_id, $post )
+	public function log_save_posts_status( $post_id, $post )
 	{
-		$this->logging->log_get_post_status( $post_id, $post );
-	}//END log_get_post_status
+		$this->logging->log_save_posts_status( $post_id, $post );
+	}//END log_save_posts_status
 
+	/**
+	 * log an error message.
+	 *
+	 * @param $command string the wp-cli command that's logging the error
+	 * @param $level string label for the error message level (error, warning, etc.)
+	 * @param $error_message string the error message to log
+	 */
+	public function log_general_error ( $command, $level, $error_message )
+	{
+		$this->logging->log_general_error( $command, $level, $error_message );
+	}//END log_general_error
 } // END GO_XPost_WP_CLI
 
 WP_CLI::add_command( 'go_xpost', 'GO_XPost_WP_CLI' );
