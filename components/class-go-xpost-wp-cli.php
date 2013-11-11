@@ -5,7 +5,7 @@
  */
 class GO_XPost_WP_CLI extends WP_CLI_Command
 {
-	public $log_file = NULL; // log file name
+	public $logging = NULL;
 
 	/**
 	 * Returns a serialized post object using the Gigaom xPost get_post method.
@@ -19,20 +19,28 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * wp go_xpost get_post --logfile=/var/log/xpost.log <id>
 	 *
-	 * @synopsis [--logfile=<logfile>] <id>
+	 * @synopsis --logfile=<logfile> <id>
 	 */
 	function get_post( $args, $assoc_args )
 	{
 		$this->init_log( $assoc_args );
+		if ( NULL === $this->logging )
+		{
+			fwrite( STDOUT, "\nUnable to open logfile (\"" . $assoc_args['logfile'] . "\"). aborting!\n\n" );
+			return;
+		}//END if
 
 		// Does this look like a post ID?
 		if ( ! is_numeric( $args[0] ) )
 		{
+			$this->log_get_post_status( $args[0], new WP_Error( 'invalid post id', 'invalid post id (' . $args[0] . ')' ) );
 			WP_CLI::error( 'That\'s not a post ID.' );
 		} // END if
 
 		// Try to get the post
 		$post = go_xpost_util()->get_post( $args[0] );
+
+		$this->log_get_post_status( $args[0], $post );
 
 		if ( is_wp_error( $post ) )
 		{
@@ -56,18 +64,23 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : Path to WordPress files.
 	 * [--query=<query>]
 	 * : Query string suitable for WP get_posts method in quotes (i.e. --query="post_type=post&posts_per_page=5&offset=0").
-	 * [--logfile=<logfile>]
+	 * --logfile=<logfile>
 	 * : where to log our results.
 	 *
 	 * ## EXAMPLES
 	 *
 	 * wp go_xpost get_posts --url=https://pc.gigaom.com --query="post_type=post&posts_per_page=5&offset=0"
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] [--logfile=<logfile>]
+	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] --logfile=<logfile>
 	 */
 	function get_posts( $args, $assoc_args )
 	{
 		$this->init_log( $assoc_args );
+		if ( NULL === $this->logging )
+		{
+			fwrite( STDOUT, "\nUnable to open logfile (\"" . $assoc_args['logfile'] . "\"). aborting!\n\n" );
+			return;
+		}//END if
 
 		// Setup arguments for source query
 		$query_args = wp_parse_args( isset( $assoc_args['query'] ) ? ' ' . $assoc_args['query'] : '' );
@@ -97,6 +110,8 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			{
 				$post = go_xpost_util()->get_post( $post_id );
 			}
+
+			$this->log_get_posts_status( $post_id, $post, $query_args );
 
 			if ( is_wp_error( $post ) )
 			{
@@ -129,7 +144,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : The url of the site you want save posts to.
 	 * [--path=<path>]
 	 * : Path to WordPress files.
-	 * [--logfile=<logfile>]
+	 * --logfile=<logfile>
 	 * : where to log our results.
 	 * [<posts-file>]
 	 * : A file with a serialized array of xPost post objects.
@@ -138,11 +153,16 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * wp go_xpost save_posts --url=https://pc.gigaom.com --logfile=/var/log/xpost.log
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] [--logfile=<logfile>] [<posts-file>]
+	 * @synopsis [--url=<url>] [--path=<path>] --logfile=<logfile> [<posts-file>]
 	 */
 	function save_posts( $args, $assoc_args )
 	{
 		$this->init_log( $assoc_args );
+		if ( NULL === $this->logging )
+		{
+			fwrite( STDOUT, "\nUnable to open logfile (\"" . $assoc_args['logfile'] . "\"). aborting!\n\n" );
+			return;
+		}//END if
 
 		$file_content = '';
 
@@ -234,31 +254,59 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	} // END save_posts
 
 	/**
-	 * initialize log file from command arguments
+	 * initialize the logging object from command arguments
 	 */
 	public function init_log( $assoc_args )
 	{
 		if ( isset( $assoc_args['logfile'] ) )
 		{
-			$this->log_file = $assoc_args['logfile'];
+			$log_file = $assoc_args['logfile'];
+		}
+		else
+		{
+			return;
 		}
 
-		// make sure the log file is writable by opening it in append,
-		// write mode
-		if ( $this->log_file )
+		if ( ! class_exists( 'GO_XPost_WP_CLI_Logging' ) )
 		{
-			$handle = fopen( $this->log_file, 'a' );
+			include __DIR__ . '/class-go-xpost-wp-cli-logging.php';
+		}
 
-			if ( FALSE === $handle )
-			{
-				$this->log_file = NULL; // unable to open file to write/append
-			}
-			else
-			{
-				fclose( $handle );
-			}
-		}//END if
+		$this->logging = new GO_XPost_WP_CLI_Logging( $log_file );
+		if ( FALSE === $this->logging->log_handle )
+		{
+			$this->logging = NULL; // something went wrong with the log file
+		}
 	}//END init_logs
+
+	/**
+	 * output a log entry for a get_post triggered by the get_posts
+	 * command. this is delegated to GO_XPost_WP_CLI_Logging
+	 *
+	 * @param $post_id int ID of the post to retrieve
+	 * @param $post object retrieved post object. this is more than a
+	 *  wp_post object and contains other metadata (post meta, terms, etc.)
+	 *  if get_post() returned an error then this would be a WP_Error object.
+	 * @query_args wp query argument used to retrieve this post
+	 */
+	public function log_get_posts_status( $post_id, $post, $query_args )
+	{
+		$this->logging->log_get_posts_status( $post_id, $post, $query_args );
+	}//END log_get_posts_status
+
+	/**
+	 * log the status of a get_post command (not to be confused with the
+	 * get_posts command). deligate this to GO_XPost_WP_CLI_Logging.
+	 *
+	 * @param $post_id int ID of the post to retrieve
+	 * @param $post object retrieved post object. this is more than a
+	 *  wp_post object and contains other metadata (post meta, terms, etc.)
+	 *  if get_post() returned an error then this would be a WP_Error object.
+	 */
+	public function log_get_post_status( $post_id, $post )
+	{
+		$this->logging->log_get_post_status( $post_id, $post );
+	}//END log_get_post_status
 
 } // END GO_XPost_WP_CLI
 
