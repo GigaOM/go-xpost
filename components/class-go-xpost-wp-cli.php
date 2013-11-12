@@ -5,7 +5,41 @@
  */
 class GO_XPost_WP_CLI extends WP_CLI_Command
 {
-	public $csv = NULL;
+	public $csv = NULL;   // our Go_Csv logging object
+
+	// define csv logging headings for each wp-cli command type
+	public $csv_headings = array(
+		'get_post' => array(
+			'time',
+			'command',
+			'post_id',
+			'post_type',
+			'guid',
+			'permalink',
+			'status',
+		),
+		'get_posts' => array(
+			'time',
+			'command',
+			'post_id',
+			'post_type',
+			'guid',
+			'permalink',
+			'status',
+		),
+		'save_posts' =>	array(
+			'time',
+			'command',
+			'post_type',
+			'guid',
+			'parent_guid',
+			'origin_id',
+			'origin_permalink',
+			'dest_id',
+			'dest_permalink',
+			'status',
+		),
+	);
 
 	/**
 	 * Returns a serialized post object using the Gigaom xPost get_post method.
@@ -25,15 +59,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	{
 		$this->initialize_csv_log(
 			$assoc_args,
-			array(
-				'time',
-				'command',
-				'post_id',
-				'post_type',
-				'guid',
-				'permalink',
-				'status',
-			)
+			$this->csv_headings['get_post']
 		);
 
 		// Does this look like a post ID?
@@ -63,7 +89,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				)
 			);
 			WP_CLI::error( $post->get_error_message() );
-		}
+		}//END if
 		else
 		{
 			$this->csv->log(
@@ -77,7 +103,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					'status' => 'ok',
 				)
 			);
-		}
+		}//END else
 
 		fwrite( STDOUT, serialize( $post ) );
 
@@ -105,19 +131,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] --logfile=<logfile>
 	 */
-	function get_posts( $args, $assoc_args )
+	public function get_posts( $args, $assoc_args )
 	{
 		$this->initialize_csv_log(
 			$assoc_args,
-			array(
-				'time',
-				'command',
-				'post_id',
-				'post_type',
-				'guid',
-				'permalink',
-				'status',
-			)
+			$this->csv_headings['get_posts']
 		);
 
 		// Setup arguments for source query
@@ -216,22 +234,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * @synopsis [--url=<url>] [--path=<path>] --logfile=<logfile> [<posts-file>]
 	 */
-	function save_posts( $args, $assoc_args )
+	public function save_posts( $args, $assoc_args )
 	{
 		$this->initialize_csv_log(
 			$assoc_args,
-			array(
-				'time',
-				'command',
-				'post_type',
-				'guid',
-				'parent_guid',
-				'origin_id',
-				'origin_permalink',
-				'dest_id',
-				'dest_permalink',
-				'status',
-			)
+			$this->csv_headings['save_posts']
 		);
 
 		$file_content = '';
@@ -268,7 +275,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					array(
 						'time' => date( DATE_ISO8601 ),
 						'command' => 'save_posts',
-						'status', 'error:Posts file ' . $file . ' does not exist!',
+						'status' => 'error:Posts file ' . $file . ' does not exist!',
 					)
 				);
 				WP_CLI::error( 'Posts file ' . $file . ' does not exist!' );
@@ -290,7 +297,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				array(
 					'time' => date( DATE_ISO8601 ),
 					'command' => 'save_posts',
-					'status', 'error:Could not find any posts in the file ' . $file . '.',
+					'status' => 'error:Could not find any posts in the file ' . $file . '.',
 				)
 			);
 			WP_CLI::error( 'Could not find any posts in the file ' . $file . '.' );
@@ -303,7 +310,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				array(
 					'time' => date( DATE_ISO8601 ),
 					'command' => 'save_posts',
-					'status', 'warning:Errors were found in the posts data.',
+					'status' => 'warning:Errors were found in the posts data.',
 				)
 			);
 			WP_CLI::line( 'Warning: Errors were found in the posts data.' );
@@ -314,7 +321,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					array(
 						'time' => date( DATE_ISO8601 ),
 						'command' => 'save_posts',
-						'status', 'error:' . $error,
+						'status' => 'error:' . $error,
 					)
 				);
 				WP_CLI::line( $error );
@@ -436,7 +443,7 @@ class Go_Csv
 			WP_CLI::error( 'error writing to logfile' );
 		}
 		fflush( $this->output_file );
-	}//END add
+	}//END log
 
 	/**
 	 * initilaizes the column headings if this hasn't been done yet,
