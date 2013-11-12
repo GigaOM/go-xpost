@@ -197,43 +197,6 @@ class GO_XPost_Utilities
 	}//end get_post
 
 	/**
-	 * Get post comments
-	 *
-	 * @param $post_id int wordpress $post_id
-	 *
-	 * @return apply_filters: The type of return should be the same as the type of $c
-	 */
-	public function get_post_comments( $post_id )
-	{
-		$comments = get_comments( array( 'post_id' => $post_id ) );
-
-		if ( empty( $comments ) )
-		{
-			return $comments;
-		} // END if
-		
-		$c = array();
-		
-		foreach ( $comments as $key => $comment )
-		{
-			$c[ $key ]->comment = $comment;
-			
-			// Get comment meta
-			$comment_meta = get_comment_meta( $comment->comment_ID );
-			
-			if ( ! empty( $comment_meta ) )
-			{
-				$c[ $key ]->meta = $comment_meta;
-			} // END if
-			
-			// Create a hash we can use to check if this comment has been copied over before
-			$c[ $key ]->go_xpost_comment = sha1( $comment->comment_ID . get_site_url() );
-		} // END foreach
-
-		return apply_filters( 'go_xpost_comments_filter', $c );
-	} // END get_post_comments
-
-	/**
 	 * Check post exists
 	 *
 	 * @param $post wp_postobject
@@ -737,69 +700,20 @@ class GO_XPost_Utilities
 	}//end save_post
 
 	/**
-	 * Save post comments
-	 *
-	 * @param $comments array of wordpress comment objects
-	 * @param $post_id int wordpress $post_id
-	 */
-	public function save_post_comments( $comments, $post_id )
-	{
-		if ( ! is_array( $comments) || empty( $comments ) )
-		{
-			return;
-		} // END if
-		
-		foreach ( $comments as $comment )
-		{
-			if ( ! isset( $comment->comment ) )
-			{
-				continue;
-			} // END if
-			
-			// Prepare comment for insertion
-			$comment->comment->comment_post_ID = $post_id;
-			unset( $comment->comment_ID );
-			
-			// Check if comment already exists
-			if ( $comment_id = $this->comment_exists( $comment->go_xpost_comment ) )
-			{
-				$comment->comment->comment_ID = $comment_id;
-				wp_update_comment( $comment->comment );
-			} // END if
-			else 
-			{
-				$comment_id = wp_insert_comment( $comment->comment );
-			} // END else
-			
-			add_comment_meta( $comment_id, 'go_xpost_comment', $comment->go_xpost_comment );
-			
-			// Is there comment meta?
-			if ( ! isset( $comment->meta ) || ! is_array( $comment->meta ) )
-			{
-				continue;
-			} // END if
-			
-			foreach ( $comment->meta as $meta_key => $meta_value )
-			{
-				delete_comment_meta( $comment_id, $meta_key );
-				add_comment_meta( $comment_id, $meta_key, $meta_value );
-			} // END foreach
-		} // END foreach
-	} // END save_post_comments
-
-	/**
 	 * Check if comment exists
 	 *
-	 * @param $comment_id int wordpress comment ID
+	 * @param $comment_hash string go_xpost_comment sha hash
 	 *
 	 * @return $comment_id
 	 */
 	private function comment_exists( $comment_hash )
 	{
+		global $wpdb;
+		
 		$comment_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT comment_id FROM ' . $wpdb->commentmeta . " WHERE meta_key = 'go_xpost_comment' AND meta_value = %s", $comment_hash ) );
 
 		return $comment_id;
-	}//end post_exists
+	}//end comment_exists
 
 	/**
 	 * update the post comment_count based on its go_xpost_comment_count
