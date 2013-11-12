@@ -419,11 +419,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			if ( $comment_id = go_xpost_util()->comment_exists( $comment ) )
 			{
 				$comment->comment->comment_ID = $comment_id;
-				wp_update_comment( $comment->comment );
+				wp_update_comment( (array) $comment->comment );
 			} // END if
 			else
 			{
-				$comment_id = wp_insert_comment( $comment->comment );
+				$comment_id = wp_insert_comment( (array) $comment->comment );
 			} // END else
 
 			// Is there comment meta?
