@@ -6,7 +6,7 @@
 class GO_XPost_WP_CLI extends WP_CLI_Command
 {
 	public $post_guids = array();
-	
+
 	/**
 	 * Returns a serialized post object using the Gigaom xPost get_post method.
 	 *
@@ -97,7 +97,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				$return['errors'][ $post_id ][] = $post->get_error_message();
 				continue;
 			} // END if
-			
+
 			// Get post comments
 			$post->comments = go_xpost_util()->get_post_comments( $post_id );
 
@@ -221,7 +221,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		WP_CLI::success( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
 	} // END save_posts
-	
+
 	/**
 	 * Gets comments from the specified site and returns a serialized array of comment objects.
 	 *
@@ -263,23 +263,23 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			{
 				$guid = $this->post_guids[ $comment->comment_post_ID ];
 			} // END if
-			else 
+			else
 			{
 				$guid = get_post_field( 'guid', $comment->comment_post_ID, 'db' );
-				
+
 				// Save this in case any future comments are for the same post
 				$this->post_guids[ $comment->comment_post_ID ] = $guid;
 			} // END else
-			
+
 			if ( is_wp_error( $guid ) )
 			{
 				$return['errors'][ $comment->comment_ID ][] = 'Post associated with comment could not be found (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
 				continue;
 			} // END if
-			
+
 			$return[ $key ]->post_guid = $guid;
 			$return[ $key ]->comment   = $comment;
-			
+
 			// Get comment meta
 			$comment_meta = get_comment_meta( $comment->comment_ID );
 
@@ -290,7 +290,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					$return[ $key ]->meta[ $mkey ] = maybe_unserialize( $mval[0] );
 				} // END foreach
 			} // END if
-			
+
 			// Create hash for use when saving comments
 			$return[ $key ]->go_xpost_comment = sha1( $comment->comment_ID . get_site_url() );
 		} // END foreach
@@ -300,7 +300,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		// Make sure non-blocking STDIN will get this
 		fflush( STDOUT );
 	} // END get_comments
-	
+
 	/**
 	 * Save comments to a specified site from a file or STDIN containing a serialized array of xPost comment objects.
 	 *
@@ -386,29 +386,29 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		foreach ( $comments as $comment )
 		{
 			$old_comment_id = $comment->comment->comment_ID;
-			
+
 			// Does the comment's post exist?
 			$post = new stdClass;
 			$post->guid = $comment->post_guid;
-			
+
 			if ( ! $post_id = go_xpost_util()->post_exists( $post ) )
 			{
 				WP_CLI::line( 'Warning: Comment post could not be found (GUID: ' . $comment->post_guid . ')' );
 			} // END if
-			
+
 			// Check if comment already exists
 			if ( $comment_id = go_xpost_util()->comment_exists( $comment->go_xpost_comment ) )
 			{
 				$comment->comment->comment_ID = $comment_id;
 				wp_update_comment( $comment->comment );
 			} // END if
-			else 
+			else
 			{
 				$comment_id = wp_insert_comment( $comment->comment );
+
+				// Record go_xpost_comment hash so we don't duplicate this comment
+				add_comment_meta( $comment_id, 'go_xpost_comment', $comment->go_xpost_comment, TRUE );
 			} // END else
-			
-			// Record go_xpost_comment hash so we don't duplicate this comment
-			add_comment_meta( $comment_id, 'go_xpost_comment', $comment->go_xpost_comment );
 
 			// Is there comment meta?
 			if ( isset( $comment->meta ) && is_array( $comment->meta ) )
