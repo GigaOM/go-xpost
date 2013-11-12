@@ -37,6 +37,26 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			'dest_permalink',
 			'status',
 		),
+		'get_comments' => array(
+			'time',
+			'command',
+			'post_id',
+			'post_guid',
+			'comment_id',
+			'status',
+		),
+		'save_comments' => array(
+			'time',
+			'command',
+			'post_guid',
+			'origin_post_id',
+			'origin_comment_id',
+			'origin_comment_parent_id',
+			'dest_post_id',
+			'dest_comment_id',
+			'dest_comment_parent_id',
+			'status',
+		),
 	);
 	public $csv = NULL;   // our Go_Csv logging object
 
@@ -348,7 +368,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * ## OPTIONS
 	 *
 	 * [--url=<url>]
-	 * : The url of the site you want posts from.
+	 * : The url of the site you want comments from.
 	 * [--path=<path>]
 	 * : Path to WordPress files.
 	 * [--query=<query>]
@@ -362,6 +382,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 */
 	function get_comments( $args, $assoc_args )
 	{
+		$this->initialize_csv_log(
+			$assoc_args,
+			$this->csv_headings['get_comments']
+		);
+
 		// Setup arguments for source query
 		$query_args = wp_parse_args( isset( $assoc_args['query'] ) ? ' ' . $assoc_args['query'] : '' );
 
@@ -370,6 +395,13 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		if ( ! is_array( $comments ) || empty( $comments ) || ! isset( $comments[0]->comment_ID ) || ! is_numeric( $comments[0]->comment_ID ) )
 		{
+			$this->csv->log(
+				array(
+					'time' => date( DATE_ISO8601 ),
+					'command' => 'get_comments',
+					'status' => 'Could not find any comments.',
+				)
+			);
 			WP_CLI::error( 'Could not find any comments.' );
 		} // END if
 
@@ -394,6 +426,13 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			if ( ! $post )
 			{
 				$return['errors'][] = 'Could not get the post associated with the comment (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => 'get_comments',
+						'status' => 'Could not get the post associated with comment ' . $comment->comment_ID,
+					)
+				);
 				continue;
 			} // END if
 
@@ -423,6 +462,17 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					$return['errors'][] = 'Could not get the parent associated with the comment (PARENT ID: ' . $comment->comment_parent . ' Comment ID: ' . $comment->comment_ID . ')';
 				} // END else
 			}
+
+			$this->csv->log(
+				array(
+					'time' => date( DATE_ISO8601 ),
+					'command' => 'get_comments',
+					'post_id' => $post->ID,
+					'post_guid' => $post->guid,
+					'comment_id' => $comment->comment_ID,
+					'status' => 'ok',
+				)
+			);
 		} // END foreach
 
 		fwrite( STDOUT, serialize( $return ) );
@@ -437,7 +487,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * ## OPTIONS
 	 *
 	 * [--url=<url>]
-	 * : The url of the site you want save posts to.
+	 * : The url of the site you want save comments to.
 	 * [--path=<path>]
 	 * : Path to WordPress files.
 	 * [<comments-file>]
@@ -451,6 +501,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 */
 	function save_comments( $args, $assoc_args )
 	{
+		$this->initialize_csv_log(
+			$assoc_args,
+			$this->csv_headings['save_comments']
+		);
+
 		$file_content = $this->read_from_file_or_stdin( 'save_comments', $args );
 		$comments = NULL;
 		if ( ! empty( $file_content ) )
@@ -460,23 +515,37 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		if ( ! is_array( $comments ) || empty( $comments ) )
 		{
-			WP_CLI::error( 'Could not find any posts in the file.' );
+			$this->csv->log(
+				array(
+					'time' => date( DATE_ISO8601 ),
+					'command' => 'save_comments',
+					'status' => 'Could not find any comments in the input.',
+				)
+			);
+			WP_CLI::error( 'Could not find any comments in the input.' );
 		} // END if
 
-		// Check to see if any errors were found in the posts data
+		// Check to see if any errors were found in the comments data
 		if ( isset( $comments['errors'] ) && is_array( $comments['errors'] ) )
 		{
 			WP_CLI::warning( 'Errors were found in the comments data.' );
 
 			foreach ( $comments['errors'] as $error )
 			{
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => 'save_comments',
+						'status' => $error,
+					)
+				);
 				WP_CLI::warning( $error );
 			} // END foreach
 
 			unset( $comments['errors'] );
 		} // END if
 
-		// Save the posts
+		// Save the comments
 		$found = count( $comments );
 		$count = 0;
 
@@ -489,16 +558,41 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			// Does the comment's post exist?
 			if ( ! $post_id = go_xpost_util()->post_exists( $comment->post ) )
 			{
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => 'save_comments',
+						'post_guid' => $comment->post->guid,
+						'origin_post_id' => $comment->post->ID,
+						'origin_comment_id' => $old_comment_id,
+						'status' => 'Comment post not found on destination blog',
+					)
+				);
 				WP_CLI::warning( 'Comment post could not be found (GUID: ' . $comment->post->guid . ')' );
 				continue;
 			} // END if
 
+			$comment->comment->comment_post_ID = $post_id;
+
 			// Does the comment's parent exist?
-			if ( isset( $comment->parent ) && $parent_id = go_xpost_util()->comment_exists( $comment->parent ) )
+			if ( isset( $comment->parent ) && ! ( $parent_id = go_xpost_util()->comment_exists( $comment->comment->comment_parent ) ) )
 			{
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => 'save_comments',
+						'post_guid' => $comment->post->guid,
+						'origin_post_id' => $comment->post->ID,
+						'origin_comment_id' => $old_comment_id,
+						'origin_comment_parent_id' => $comment->parent->comment_ID,
+						'status' => 'Comment parent not found on destination blog',
+					)
+				);
 				WP_CLI::warning( 'Comment parent could not be found (PARENT ID: ' . $comment->parent->comment_ID . ')' );
 				continue;
 			} // END if
+
+			$comment->comment->comment_parent = $parent_id;
 
 			// Check if comment already exists
 			if ( $comment_id = go_xpost_util()->comment_exists( $comment ) )
@@ -521,6 +615,20 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				} // END foreach
 			} // END if
 
+			$this->csv->log(
+				array(
+					'time' => date( DATE_ISO8601 ),
+					'command' => 'save_comments',
+					'post_guid' => $comment->post->guid,
+					'origin_post_id' => $comment->post->ID,
+					'origin_comment_id' => $old_comment_id,
+					'origin_comment_parent_id' => $comment->parent->comment_ID,
+					'dest_post_id' => $post_id,
+					'dest_comment_id' => $comment_id,
+					'dest_comment_parent_id' => $parent_id,				
+					'status' => 'ok',
+				)
+			);
 			WP_CLI::line( 'Copied: ' . $old_comment_id . ' -> ' . $comment_id );
 
 			// Copy sucessful
