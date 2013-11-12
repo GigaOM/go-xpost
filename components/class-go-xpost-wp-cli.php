@@ -99,6 +99,9 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 				continue;
 			} // END if
+			
+			// Get post comments
+			$post->comments = go_xpost_util()->get_post_comments( $post_id );
 
 			$return[] = $post;
 
@@ -210,6 +213,12 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			{
 				WP_CLI::line( 'Warning: ' . $post_id->get_error_message() );
 				continue;
+			} // END if
+			
+			// Save comments
+			if ( isset( $post->comments ) )
+			{
+				go_xpost_util()->save_post_comments( $post->comments );
 			} // END if
 
 			WP_CLI::line( 'Copied: ' . $post->post->guid . ' -> ' . $post_id );
