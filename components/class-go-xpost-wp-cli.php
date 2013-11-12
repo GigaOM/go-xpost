@@ -243,51 +243,9 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			$this->csv_headings['save_posts']
 		);
 
-		$file_content = '';
-
-		// Are we reading from STDIN or a file arg?
-		// To test this we make reading from STDIN non-blocking since we only expect piped in content, not user input.
-		// Then we use stream_select() to check if there's any thing to read, with a half second max timeout to give get_posts() some time to write.
-		stream_set_blocking( STDIN, 0 );
-
-		$rstreams = array( STDIN );
-		$wstreams = NULL;
-		$estreams = NULL;
-		$num_input_read = stream_select( $rstreams, $wstreams, $estreams, 0, 500000 );
-
-		if ( ( FALSE !== $num_input_read ) && ( 0 < $num_input_read ) )
-		{
-			// if we have anything from STDIN, set stream to blocking again
-			// so we won't miss slow data flow from STDIN
-			stream_set_blocking( STDIN, 1 );
-			while ( ( $buffer = fgets( STDIN, 4096 ) ) !== FALSE )
-			{
-				$file_content .= $buffer;
-			}
-		}//END if
-
-		// If we didn't get anything from STDIN then check if we got a filename in $args
-		if ( empty( $file_content ) && ( 0 < count( $args ) ) )
-		{
-			$file = $args[0];
-
-			if ( ! file_exists( $file ) )
-			{
-				$this->csv->log(
-					array(
-						'time' => date( DATE_ISO8601 ),
-						'command' => 'save_posts',
-						'status' => 'error:Posts file ' . $file . ' does not exist!',
-					)
-				);
-				WP_CLI::error( 'Posts file ' . $file . ' does not exist!' );
-			} // END if
-
-			$file_content = file_get_contents( $file );
-		} // END if
+		$file_content = $this->read_from_file_or_stdin( 'save_posts', $args );
 
 		$posts = NULL;
-
 		if ( ! empty( $file_content ) )
 		{
 			$posts = unserialize( $file_content );
@@ -493,41 +451,8 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 */
 	function save_comments( $args, $assoc_args )
 	{
-		$file_content = '';
-
-		// Are we reading from STDIN or a file arg?
-		// To test this we make reading from STDIN non-blocking since we only expect piped in content, not user input.
-		// Then we use stream_select() to check if there's any thing to read, with a half second max timeout to give get_posts() some time to write.
-		stream_set_blocking( STDIN, 0 );
-		$rstreams = array( STDIN );
-		$wstreams = NULL;
-		$estreams = NULL;
-
-		$num_input_read = stream_select( $rstreams, $wstreams, $estreams, 0, 500000 );
-
-		if ( ( FALSE !== $num_input_read ) && ( 0 < $num_input_read ) )
-		{
-			while ( ( $buffer = fgets( STDIN, 4096 ) ) !== FALSE )
-			{
-				$file_content .= $buffer;
-			}
-		}//END if
-
-		// If we didn't get anything from STDIN then check if we got a filename in $args
-		if ( empty( $file_content ) && ( 0 < count( $args ) ) )
-		{
-			$file = $args[0];
-
-			if ( ! file_exists( $file ) )
-			{
-				WP_CLI::error( 'Comments file does not exist!' );
-			} // END if
-
-			$file_content = file_get_contents( $file );
-		} // END if
-
+		$file_content = $this->read_from_file_or_stdin( 'save_comments', $args );
 		$comments = NULL;
-
 		if ( ! empty( $file_content ) )
 		{
 			$comments = unserialize( $file_content );
@@ -609,6 +534,45 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		
 		WP_CLI::success( 'Copied ' . $count . ' comments(s) of ' . $found . ' comments(s) found!' );
 	} // END save_comments
+
+	/**
+	 * get some input data either from a file argument or stdin.
+	 *
+	 * @param $command string which command is calling this function
+	 * @param $args cml positional arguments
+	 * @retval string file or stdin content if found.
+	 */
+	private function read_from_file_or_stdin( $command, $args )
+	{
+		// check if we have a file name param
+		if ( 0 < count( $args ) )
+		{
+			$file = $args[0];
+
+			if ( ! file_exists( $file ) )
+			{
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => $command,
+						'status' => 'error:Input file ' . $file . ' does not exist!',
+					)
+				);
+				WP_CLI::error( 'Input file ' . $file . ' does not exist!' );
+			} // END if
+
+			return file_get_contents( $file );
+		} // END if
+
+		// else try to read from STDIN
+		$stdin_data = '';
+		while ( ( $buffer = fgets( STDIN, 4096 ) ) !== FALSE )
+		{
+			$stdin_data .= $buffer;
+		}
+
+		return $stdin_data;
+	}//END read_from_file_or_stdin
 
 	/**
 	 * initialize our csv logging object
