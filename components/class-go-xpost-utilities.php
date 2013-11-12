@@ -203,7 +203,7 @@ class GO_XPost_Utilities
 	 *
 	 * @return $post_id int
 	 */
-	private function post_exists( $post )
+	public function post_exists( $post )
 	{
 		global $wpdb;
 
@@ -219,7 +219,7 @@ class GO_XPost_Utilities
 	 *
 	 * @return $comment_id
 	 */
-	private function comment_exists( $comment )
+	public function comment_exists( $comment )
 	{
 		global $wpdb;
 		
