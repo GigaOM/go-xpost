@@ -124,6 +124,7 @@ class GO_XPost_Utilities
 		{
 			$r = new stdClass;
 		}
+
 		// get the post
 		$r->post = clone get_post( $post_id );
 
@@ -202,7 +203,7 @@ class GO_XPost_Utilities
 	 *
 	 * @return $post_id int
 	 */
-	private function post_exists( $post )
+	public function post_exists( $post )
 	{
 		global $wpdb;
 
@@ -210,6 +211,22 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end post_exists
+	
+	/**
+	 * Check if comment exists
+	 *
+	 * @param $comment wp comment object
+	 *
+	 * @return $comment_id
+	 */
+	public function comment_exists( $comment )
+	{
+		global $wpdb;
+		
+		$comment_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT comment_ID FROM ' . $wpdb->commentmeta . ' WHERE comment_author = %s AND comment_date = %s', $comment->comment_author, $comment->comment_date ) );
+
+		return $comment_id;
+	}//end comment_exists
 
 	/**
 	 * Convert the post to be easily loggable
