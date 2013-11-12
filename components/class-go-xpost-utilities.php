@@ -771,6 +771,8 @@ class GO_XPost_Utilities
 				$comment_id = wp_insert_comment( $comment->comment );
 			} // END else
 			
+			add_comment_meta( $comment_id, 'go_xpost_comment', $comment->go_xpost_comment );
+			
 			// Is there comment meta?
 			if ( ! isset( $comment->meta ) || ! is_array( $comment->meta ) )
 			{
