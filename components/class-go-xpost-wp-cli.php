@@ -219,14 +219,12 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			$count++;
 		} // END foreach
 
-		if ( $count == $found )
-		{
-			WP_CLI::success( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
-		} // END if
-		else 
+		if ( $count != $found )
 		{
 			WP_CLI::error( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
-		} // END else
+		} // END if
+		
+		WP_CLI::success( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
 	} // END save_posts
 
 	/**
@@ -447,14 +445,12 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			$count++;
 		} // END foreach
 
-		if ( $count == $found )
+		if ( $count != $found )
 		{
-			WP_CLI::success( 'Copied ' . $count . ' comment(s) of ' . $found . ' comment(s) found!' );
+			WP_CLI::error( 'Copied ' . $count . ' comments(s) of ' . $found . ' comments(s) found!' );
 		} // END if
-		else 
-		{
-			WP_CLI::error( 'Copied ' . $count . ' comment(s) of ' . $found . ' comment(s) found!' );
-		} // END else
+		
+		WP_CLI::success( 'Copied ' . $count . ' comments(s) of ' . $found . ' comments(s) found!' );
 	} // END save_comments
 } // END GO_XPost_WP_CLI
 
