@@ -94,7 +94,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 			if ( is_wp_error( $post ) )
 			{
-				$return['errors'][ $post_id ][] = $post->get_error_message();
+				$return['errors'][] = $post->get_error_message();
 				continue;
 			} // END if
 
@@ -273,7 +273,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 			if ( ! $post )
 			{
-				$return['errors'][ $comment->comment_ID ][] = 'Could not get the post associated with the comment (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
+				$return['errors'][] = 'Could not get the post associated with the comment (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
 				continue;
 			} // END if
 
@@ -300,7 +300,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				} // END if
 				else
 				{
-					$return['errors'][ $comment->comment_ID ][] = 'Could not get the parent associated with the comment (PARENT ID: ' . $comment->comment_parent . ' Comment ID: ' . $comment->comment_ID . ')';
+					$return['errors'][] = 'Could not get the parent associated with the comment (PARENT ID: ' . $comment->comment_parent . ' Comment ID: ' . $comment->comment_ID . ')';
 				} // END else
 			}
 		} // END foreach
