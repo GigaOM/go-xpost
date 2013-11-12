@@ -98,9 +98,6 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				continue;
 			} // END if
 
-			// Get post comments
-			$post->comments = go_xpost_util()->get_post_comments( $post_id );
-
 			$return[] = $post;
 
 			// Copy sucessful
