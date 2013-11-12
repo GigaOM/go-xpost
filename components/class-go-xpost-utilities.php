@@ -211,6 +211,22 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end post_exists
+	
+	/**
+	 * Check if comment exists
+	 *
+	 * @param $comment wp comment object
+	 *
+	 * @return $comment_id
+	 */
+	private function comment_exists( $comment )
+	{
+		global $wpdb;
+		
+		$comment_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT comment_ID FROM ' . $wpdb->commentmeta . ' WHERE comment_author = %s AND comment_date = %s', $comment->comment_author, $comment->comment_date ) );
+
+		return $comment_id;
+	}//end comment_exists
 
 	/**
 	 * Convert the post to be easily loggable
@@ -698,22 +714,6 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end save_post
-
-	/**
-	 * Check if comment exists
-	 *
-	 * @param $comment_hash string go_xpost_comment sha hash
-	 *
-	 * @return $comment_id
-	 */
-	private function comment_exists( $comment_hash )
-	{
-		global $wpdb;
-		
-		$comment_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT comment_id FROM ' . $wpdb->commentmeta . " WHERE meta_key = 'go_xpost_comment' AND meta_value = %s", $comment_hash ) );
-
-		return $comment_id;
-	}//end comment_exists
 
 	/**
 	 * update the post comment_count based on its go_xpost_comment_count

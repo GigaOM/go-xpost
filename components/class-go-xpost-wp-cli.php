@@ -5,7 +5,7 @@
  */
 class GO_XPost_WP_CLI extends WP_CLI_Command
 {
-	public $post_guids = array();
+	public $comment_posts = array();
 
 	/**
 	 * Returns a serialized post object using the Gigaom xPost get_post method.
@@ -181,11 +181,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		// Check to see if any errors were found in the posts data
 		if ( isset( $posts['errors'] ) && is_array( $posts['errors'] ) )
 		{
-			WP_CLI::line( 'Warning: Errors were found in the posts data.' );
+			WP_CLI::warning( 'Errors were found in the posts data.' );
 
 			foreach ( $posts['errors'] as $error )
 			{
-				WP_CLI::line( $error );
+				WP_CLI::warning( $error );
 			} // END foreach
 
 			unset( $posts['errors'] );
@@ -209,7 +209,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 			if ( is_wp_error( $post_id ) )
 			{
-				WP_CLI::line( 'Warning: ' . $post_id->get_error_message() );
+				WP_CLI::warning( $post_id->get_error_message() );
 				continue;
 			} // END if
 
@@ -258,27 +258,27 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		foreach ( $comments as $key => $comment )
 		{
-			// Note the post's guid value so we can find the correct post on the other end
-			if ( isset( $this->post_guids[ $comment->comment_post_ID ] ) )
+			// Get the post object related to this comment
+			if ( isset( $this->comment_posts[ $comment->comment_post_ID ] ) )
 			{
-				$guid = $this->post_guids[ $comment->comment_post_ID ];
+				$post = $this->comment_posts[ $comment->comment_post_ID ];
 			} // END if
 			else
 			{
-				$guid = get_post_field( 'guid', $comment->comment_post_ID, 'db' );
+				$post = get_post( $comment->comment_post_ID );
 
-				// Save this in case any future comments are for the same post
-				$this->post_guids[ $comment->comment_post_ID ] = $guid;
+				// Save this in case any other comments are for the same post
+				$this->comment_posts[ $comment->comment_post_ID ] = $post;
 			} // END else
 
-			if ( is_wp_error( $guid ) )
+			if ( ! $post )
 			{
-				$return['errors'][ $comment->comment_ID ][] = 'Post associated with comment could not be found (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
+				$return['errors'][ $comment->comment_ID ][] = 'Could not get the post associated with the comment (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
 				continue;
 			} // END if
 
-			$return[ $key ]->post_guid = $guid;
-			$return[ $key ]->comment   = $comment;
+			$return[ $key ]->comment = $comment;
+			$return[ $key ]->post    = $post;
 
 			// Get comment meta
 			$comment_meta = get_comment_meta( $comment->comment_ID );
@@ -291,8 +291,18 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				} // END foreach
 			} // END if
 
-			// Create hash for use when saving comments
-			$return[ $key ]->go_xpost_comment = sha1( $comment->comment_ID . get_site_url() );
+			// Get parent
+			if( $comment->comment_parent )
+			{
+				if ( $parent = get_comment( $comment->comment_parent ) )
+				{
+					$return[ $key ]->parent = $parent;
+				} // END if
+				else
+				{
+					$return['errors'][ $comment->comment_ID ][] = 'Could not get the parent associated with the comment (PARENT ID: ' . $comment->comment_parent . ' Comment ID: ' . $comment->comment_ID . ')';
+				} // END else
+			}
 		} // END foreach
 
 		fwrite( STDOUT, serialize( $return ) );
@@ -369,11 +379,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		// Check to see if any errors were found in the posts data
 		if ( isset( $comments['errors'] ) && is_array( $comments['errors'] ) )
 		{
-			WP_CLI::line( 'Warning: Errors were found in the comments data.' );
+			WP_CLI::warning( 'Errors were found in the comments data.' );
 
 			foreach ( $comments['errors'] as $error )
 			{
-				WP_CLI::line( $error );
+				WP_CLI::warning( $error );
 			} // END foreach
 
 			unset( $comments['errors'] );
@@ -385,19 +395,26 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		foreach ( $comments as $comment )
 		{
+			// Keep this for output purposes
 			$old_comment_id = $comment->comment->comment_ID;
+			unset( $comment->comment->comment_ID );
 
 			// Does the comment's post exist?
-			$post = new stdClass;
-			$post->guid = $comment->post_guid;
-
-			if ( ! $post_id = go_xpost_util()->post_exists( $post ) )
+			if ( ! $post_id = go_xpost_util()->post_exists( $comment->post ) )
 			{
-				WP_CLI::line( 'Warning: Comment post could not be found (GUID: ' . $comment->post_guid . ')' );
+				WP_CLI::warning( 'Comment post could not be found (GUID: ' . $comment->post->guid . ')' );
+				continue;
+			} // END if
+
+			// Does the comment's parent exist?
+			if ( isset( $comment->parent ) && $parent_id = go_xpost_util()->comment_exists( $comment->parent ) )
+			{
+				WP_CLI::warning( 'Comment parent could not be found (PARENT ID: ' . $comment->parent->comment_ID . ')' );
+				continue;
 			} // END if
 
 			// Check if comment already exists
-			if ( $comment_id = go_xpost_util()->comment_exists( $comment->go_xpost_comment ) )
+			if ( $comment_id = go_xpost_util()->comment_exists( $comment ) )
 			{
 				$comment->comment->comment_ID = $comment_id;
 				wp_update_comment( $comment->comment );
@@ -405,9 +422,6 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			else
 			{
 				$comment_id = wp_insert_comment( $comment->comment );
-
-				// Record go_xpost_comment hash so we don't duplicate this comment
-				add_comment_meta( $comment_id, 'go_xpost_comment', $comment->go_xpost_comment, TRUE );
 			} // END else
 
 			// Is there comment meta?
