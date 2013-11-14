@@ -152,7 +152,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * wp go_xpost get_posts --url=pc.gigaom.com --query="post_type=post&posts_per_page=5&offset=0"
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] --logfile=<logfile>
+	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] [--include=<include-file>] --logfile=<logfile>
 	 */
 	public function get_posts( $args, $assoc_args )
 	{		
@@ -275,7 +275,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * wp go_xpost save_posts --url=pc.gigaom.com --logfile=/var/log/xpost.log
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] --logfile=<logfile> [<posts-file>]
+	 * @synopsis [--url=<url>] [--path=<path>] [--include=<include-file>] --logfile=<logfile> [<posts-file>]
 	 */
 	public function save_posts( $args, $assoc_args )
 	{
@@ -410,12 +410,14 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : Path to WordPress files.
 	 * [--query=<query>]
 	 * : Query string suitable for WP get_comments method in quotes (i.e. --query="orderby=comment_date&order=ASC&number=5&offset=0").
+	 * --logfile=<logfile>
+	 * : where to log our results.
 	 *
 	 * ## EXAMPLES
 	 *
 	 * wp go_xpost get_comments --url=<url> --query="orderby=comment_date&order=ASC&number=5&offset=0"
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>]
+	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] --logfile=<logfile>
 	 */
 	function get_comments( $args, $assoc_args )
 	{
@@ -529,12 +531,14 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : Path to WordPress files.
 	 * [<comments-file>]
 	 * : A file with a serialized array of xPost comment objects.
+	 * --logfile=<logfile>
+	 * : where to log our results.
 	 *
 	 * ## EXAMPLES
 	 *
 	 * wp go_xpost save_comments --url=<url> [<comments-file>]
 	 *
-	 * @synopsis [--url=<url>] [--path=<path>] [<comments-file>]
+	 * @synopsis [--url=<url>] [--path=<path>] [<comments-file>] --logfile=<logfile>
 	 */
 	function save_comments( $args, $assoc_args )
 	{
