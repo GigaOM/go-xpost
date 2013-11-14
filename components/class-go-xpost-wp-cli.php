@@ -143,6 +143,8 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : Path to WordPress files.
 	 * [--query=<query>]
 	 * : Query string suitable for WP get_posts method in quotes (i.e. --query="post_type=post&posts_per_page=5&offset=0").
+	 * [--include=<include-file>]
+	 * : Path to an include file to further modify the data after getting the post.
 	 * --logfile=<logfile>
 	 * : where to log our results.
 	 *
@@ -153,11 +155,20 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] --logfile=<logfile>
 	 */
 	public function get_posts( $args, $assoc_args )
-	{
+	{		
 		$this->initialize_csv_log(
 			$assoc_args,
 			$this->csv_headings['get_posts']
 		);
+
+		// Is there an include file?
+		if ( isset( $assoc_args['include'] ) )
+		{
+			if ( ! file_exists( $assoc_args['include'] ) )
+			{
+				WP_CLI::error( 'Include file doesn\'t exist.' );
+			} // END if
+		} // END if
 
 		// Setup arguments for source query
 		$query_args = wp_parse_args( isset( $assoc_args['query'] ) ? ' ' . $assoc_args['query'] : '' );
@@ -209,6 +220,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 				$permalink = $post->origin->permalink;
 				$status = 'ok';
 			}
+
 			$this->csv->log(
 				array(
 					'time' => date( DATE_ISO8601 ),
@@ -220,10 +232,17 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					'status' => $status,
 				)
 			);
+
 			if ( is_wp_error( $post ) )
 			{
 				$return['errors'][] = $post->get_error_message();
 				continue;
+			} // END if
+
+			// Call include file if appropriate
+			if ( isset( $assoc_args['include'] ) )
+			{
+				require $assoc_args['include'];
 			} // END if
 
 			// Copy sucessful
@@ -245,6 +264,8 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * : The url of the site you want save posts to.
 	 * [--path=<path>]
 	 * : Path to WordPress files.
+	 * [--include=<include-file>]
+	 * : Path to an include file to further modify the data after saving the post.
 	 * --logfile=<logfile>
 	 * : where to log our results.
 	 * [<posts-file>]
@@ -262,6 +283,15 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			$assoc_args,
 			$this->csv_headings['save_posts']
 		);
+		
+		// Is there an include file?
+		if ( isset( $assoc_args['include'] ) )
+		{
+			if ( ! file_exists( $assoc_args['include'] ) )
+			{
+				WP_CLI::error( 'Include file doesn\'t exist.' );
+			} // END if
+		} // END if
 
 		$file_content = $this->read_from_file_or_stdin( 'save_posts', $args );
 
@@ -316,6 +346,12 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		foreach ( $posts as $post )
 		{
+			// Call include file if appropriate
+			if ( isset( $assoc_args['include'] ) )
+			{
+				require $assoc_args['include'];
+			} // END if
+			
 			// is this an attachment post?
 			if ( 'attachment' == $post->post->post_type )
 			{
@@ -327,6 +363,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			}
 
 			$is_wp_error = is_wp_error( $post_id );
+
 			$this->csv->log(
 				array(
 					'time' => date( DATE_ISO8601 ),

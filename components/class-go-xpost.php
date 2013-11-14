@@ -24,7 +24,7 @@ class GO_XPost
 		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
 
 		// If wp-cli is active load the xpost additions
-		if ( defined('WP_CLI') && WP_CLI )
+		if ( defined( 'WP_CLI' ) && WP_CLI )
 		{
 			include __DIR__ . '/class-go-xpost-wp-cli.php';
 		}
