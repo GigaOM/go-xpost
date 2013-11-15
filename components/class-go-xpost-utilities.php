@@ -175,6 +175,7 @@ class GO_XPost_Utilities
 		// Get author data
 		$r->author = get_userdata( $r->post->post_author );
 
+		$r->origin = new StdClass;
 		$r->origin->ID = $post_id;
 		$r->origin->permalink = get_permalink( $post_id );
 
@@ -708,10 +709,13 @@ class GO_XPost_Utilities
 		$this->update_comment_count( $post_id, 0, 0 );
 
 		// set the taxonomy terms as received for the post
-		foreach ( (array) $post->terms as $tax => $terms )
+		if ( isset( $post->terms ) )
 		{
-			wp_set_object_terms( $post_id, $terms, $tax, FALSE );
-		}//end foreach
+			foreach ( (array) $post->terms as $tax => $terms )
+			{
+				wp_set_object_terms( $post_id, $terms, $tax, FALSE );
+			}//end foreach
+		}
 
 		do_action( 'go_xpost_save_post', $post_id, $post );
 
