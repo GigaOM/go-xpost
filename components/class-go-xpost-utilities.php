@@ -66,6 +66,7 @@ class GO_XPost_Utilities
 		}//end if
 
 		// get the post
+		$r = new StdClass();
 		$r->post = clone get_post( $post_id );
 
 		if ( is_wp_error( $r->post ) )
@@ -83,6 +84,7 @@ class GO_XPost_Utilities
 		}//end foreach
 
 		// get file paths and URLs to the attached file
+		$r->file = new StdClass();
 		$r->file->url = wp_get_attachment_url( $post_id );
 
 		// get the terms
@@ -91,6 +93,7 @@ class GO_XPost_Utilities
 			$r->terms[ $term->taxonomy ][] = $term->name;
 		}//end foreach
 
+		$r->origin = new StdClass();
 		$r->origin->ID = $post_id;
 		$r->origin->permalink = $r->file->url;
 
@@ -586,10 +589,13 @@ class GO_XPost_Utilities
 		wp_update_attachment_metadata( $post_id, wp_generate_attachment_metadata( $post_id, $file_path ) );
 
 		// set any terms on the attachment
-		foreach ( (array) $post->terms as $tax => $terms )
+		if ( isset( $post->terms ) )
 		{
-			wp_set_object_terms( $post_id, $terms, $tax, FALSE );
-		}//end foreach
+				foreach ( (array) $post->terms as $tax => $terms )
+				{
+					wp_set_object_terms( $post_id, $terms, $tax, FALSE );
+				}//end foreach
+		}//END if
 
 		// success log
 		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );

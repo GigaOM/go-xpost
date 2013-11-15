@@ -384,7 +384,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					'command' => 'save_posts',
 					'post_type' => $post->post->post_type,
 					'guid' => $post->post->guid,
-					'parent_guid' => $post->parent ? $post->parent->guid : NULL,
+					'parent_guid' => isset( $post->parent ) ? $post->parent->guid : NULL,
 					'origin_id' => $post->origin->ID,
 					'origin_permalink' => $post->origin->permalink,
 					'dest_id' => $is_wp_error ? NULL : $post_id,
