@@ -166,6 +166,13 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		{
 			if ( ! file_exists( $assoc_args['include'] ) )
 			{
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => 'get_posts',
+						'status' => 'error:Include file (' . $assoc_args['include'] . ') doesn\'t exist.',
+					)
+				);
 				WP_CLI::error( 'Include file doesn\'t exist.' );
 			} // END if
 		} // END if
@@ -289,6 +296,13 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		{
 			if ( ! file_exists( $assoc_args['include'] ) )
 			{
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => 'get_posts',
+						'status' => 'error:Include file (' . $assoc_args['include'] . ') doesn\'t exist.',
+					)
+				);
 				WP_CLI::error( 'Include file doesn\'t exist.' );
 			} // END if
 		} // END if
