@@ -142,7 +142,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * [--path=<path>]
 	 * : Path to WordPress files.
 	 * [--query=<query>]
-	 * : Query string suitable for WP get_posts method in quotes (i.e. --query="post_type=post&posts_per_page=5&offset=0").
+	 * : Query string suitable for WP get_posts method in quotes (i.e. --query="post_type=post&posts_per_page=5&offset=0&order=DESC").
 	 * [--include=<include-file>]
 	 * : Path to an include file to further modify the data after getting the post.
 	 * --logfile=<logfile>
@@ -150,7 +150,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp go_xpost get_posts --url=pc.gigaom.com --query="post_type=post&posts_per_page=5&offset=0"
+	 * wp go_xpost get_posts --url=pc.gigaom.com --query="post_type=post&posts_per_page=5&offset=0&orderby=ID&order=ASC"
 	 *
 	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] [--include=<include-file>] --logfile=<logfile>
 	 */
