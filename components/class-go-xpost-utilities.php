@@ -488,7 +488,15 @@ class GO_XPost_Utilities
 		// check and enforce limits on file types
 		if ( $file['error'] )
 		{
-			return $this->error( 'go-xpost-attachment-badfiletype', 'Bad file for GUID: '. $post->post->guid, array( 'post_id' => $post->post->ID, 'url' => $post->file->url, 'error' => $file['error'] ) );
+			return $this->error(
+				'go-xpost-attachment-badfiletype',
+				'File upload error for GUID: ' . $post->post->guid . ' (' . $file['error'] . ')',
+				array(
+					'post_id' => $post->post->ID,
+					'url' => $post->file->url, 
+					'error' => $file['error']
+				)
+			);
 		}//end if
 
 		$file_path = $file['file'];
