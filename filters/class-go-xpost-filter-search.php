@@ -231,7 +231,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			} // END elseif
 		} // END if
 
-		if ( in_array( go_config()->get_property_slug(), array( 'gigaom', 'paidcontent' ) ) )
+		if ( 'gigaom' == go_config()->get_property_slug() )
 		{
 			// special handling for excerpts on link posts
 			$go_post = new GO_Theme_Post( $post );
