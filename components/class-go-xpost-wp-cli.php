@@ -60,8 +60,6 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	);
 	public $csv = NULL;   // our Go_Csv logging object
 
-	public $comment_posts = array();
-
 	/**
 	 * Returns a serialized post object using the Gigaom xPost get_post method.
 	 *
@@ -459,70 +457,33 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		} // END if
 
 		$return = array();
-		$count  = 0;
-
 		foreach ( $comments as $key => $comment )
 		{
-			// Get the post object related to this comment
-			if ( isset( $this->comment_posts[ $comment->comment_post_ID ] ) )
+			$comment_obj = go_xpost_util()->get_comment( $comment->comment_ID );
+			// did we get an error?
+			if ( ! empty( $comment_obj->error ) )
 			{
-				$post = $this->comment_posts[ $comment->comment_post_ID ];
-			} // END if
-			else
-			{
-				$post = get_post( $comment->comment_post_ID );
-
-				// Save this in case any other comments are for the same post
-				$this->comment_posts[ $comment->comment_post_ID ] = $post;
-			} // END else
-
-			if ( ! $post )
-			{
-				$return['errors'][] = 'Could not get the post associated with the comment (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
+				$return['errors'][] = $comment_obj->error;
 				$this->csv->log(
 					array(
 						'time' => date( DATE_ISO8601 ),
 						'command' => 'get_comments',
-						'status' => 'Could not get the post associated with comment ' . $comment->comment_ID,
+						'comment_id' => $comment->comment_ID,
+						'status' => $comment_obj->error,
 					)
 				);
 				continue;
-			} // END if
+			}//END if
 
-			$return[ $key ]->comment = $comment;
-			$return[ $key ]->post    = $post;
-
-			// Get comment meta
-			$comment_meta = get_comment_meta( $comment->comment_ID );
-
-			if ( ! empty( $comment_meta ) )
-			{
-				foreach ( $comment_meta as $mkey => $mval )
-				{
-					$return[ $key ]->meta[ $mkey ] = maybe_unserialize( $mval[0] );
-				} // END foreach
-			} // END if
-
-			// Get parent
-			if( $comment->comment_parent )
-			{
-				if ( $parent = get_comment( $comment->comment_parent ) )
-				{
-					$return[ $key ]->parent = $parent;
-				} // END if
-				else
-				{
-					$return['errors'][] = 'Could not get the parent associated with the comment (PARENT ID: ' . $comment->comment_parent . ' Comment ID: ' . $comment->comment_ID . ')';
-				} // END else
-			}
+			$return[ $key ] = $comment_obj;
 
 			$this->csv->log(
 				array(
 					'time' => date( DATE_ISO8601 ),
 					'command' => 'get_comments',
-					'post_id' => $post->ID,
-					'post_guid' => $post->guid,
-					'comment_id' => $comment->comment_ID,
+					'post_id' => $comment_obj->post->ID,
+					'post_guid' => $comment_obj->post->guid,
+					'comment_id' => $comment_obj->comment->comment_ID,
 					'status' => 'ok',
 				)
 			);
@@ -606,12 +567,11 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		foreach ( $comments as $comment )
 		{
-			// Keep this for output purposes
-			$old_comment_id = $comment->comment->comment_ID;
-			unset( $comment->comment->comment_ID );
+			$source_comment_id = $comment->comment->comment_ID;
 
-			// Does the comment's post exist?
-			if ( ! $post_id = go_xpost_util()->post_exists( $comment->post ) )
+			$dest_comment = go_xpost_util()->save_comment( $comment );
+
+			if ( is_wp_error( $dest_comment ) )
 			{
 				$this->csv->log(
 					array(
@@ -619,56 +579,13 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 						'command' => 'save_comments',
 						'post_guid' => $comment->post->guid,
 						'origin_post_id' => $comment->post->ID,
-						'origin_comment_id' => $old_comment_id,
-						'status' => 'Comment post not found on destination blog',
+						'origin_comment_id' => $source_comment_id,
+						'status' => $dest_comment->get_error_message(),
 					)
 				);
-				WP_CLI::warning( 'Comment post could not be found (GUID: ' . $comment->post->guid . ')' );
+				WP_CLI::warning( $dest_comment->get_error_message() );
 				continue;
-			} // END if
-
-			$comment->comment->comment_post_ID = $post_id;
-
-			// Does the comment's parent exist?
-			if ( isset( $comment->parent ) && ! ( $parent_id = go_xpost_util()->comment_exists( $comment->comment->comment_parent ) ) )
-			{
-				$this->csv->log(
-					array(
-						'time' => date( DATE_ISO8601 ),
-						'command' => 'save_comments',
-						'post_guid' => $comment->post->guid,
-						'origin_post_id' => $comment->post->ID,
-						'origin_comment_id' => $old_comment_id,
-						'origin_comment_parent_id' => $comment->parent->comment_ID,
-						'status' => 'Comment parent not found on destination blog',
-					)
-				);
-				WP_CLI::warning( 'Comment parent could not be found (PARENT ID: ' . $comment->parent->comment_ID . ')' );
-				continue;
-			} // END if
-
-			$comment->comment->comment_parent = $parent_id;
-
-			// Check if comment already exists
-			if ( $comment_id = go_xpost_util()->comment_exists( $comment ) )
-			{
-				$comment->comment->comment_ID = $comment_id;
-				wp_update_comment( (array) $comment->comment );
-			} // END if
-			else
-			{
-				$comment_id = wp_insert_comment( (array) $comment->comment );
-			} // END else
-
-			// Is there comment meta?
-			if ( isset( $comment->meta ) && is_array( $comment->meta ) )
-			{
-				foreach ( $comment->meta as $meta_key => $meta_value )
-				{
-					delete_comment_meta( $comment_id, $meta_key );
-					add_comment_meta( $comment_id, $meta_key, $meta_value );
-				} // END foreach
-			} // END if
+			}//END if
 
 			$this->csv->log(
 				array(
@@ -676,23 +593,22 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 					'command' => 'save_comments',
 					'post_guid' => $comment->post->guid,
 					'origin_post_id' => $comment->post->ID,
-					'origin_comment_id' => $old_comment_id,
-					'origin_comment_parent_id' => $comment->parent->comment_ID,
-					'dest_post_id' => $post_id,
-					'dest_comment_id' => $comment_id,
-					'dest_comment_parent_id' => $parent_id,				
+					'origin_comment_id' => $source_comment_id,
+					'origin_comment_parent_id' => isset( $comment->parent ) ? $comment->parent->comment_ID : '',
+					'dest_post_id' => $dest_comment->comment->comment_post_ID,
+					'dest_comment_id' => $dest_comment->comment->comment_ID,
+					'dest_comment_parent_id' => $dest_comment->comment->comment_parent,
 					'status' => 'ok',
 				)
 			);
-			WP_CLI::line( 'Copied: ' . $old_comment_id . ' -> ' . $comment_id );
-
-			// Copy sucessful
+			WP_CLI::line( 'Copied: ' . $source_comment_id . ' -> ' . $dest_comment->comment->comment_ID );
 			$count++;
 		} // END foreach
 
 		if ( $count != $found )
 		{
 			WP_CLI::error( 'Copied ' . $count . ' comments(s) of ' . $found . ' comments(s) found!' );
+			// WP_CLI::error() terminates the wp-cli script
 		} // END if
 		
 		WP_CLI::success( 'Copied ' . $count . ' comments(s) of ' . $found . ' comments(s) found!' );

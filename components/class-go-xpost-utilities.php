@@ -9,6 +9,9 @@ class GO_XPost_Utilities
 {
 	private $pinged = array();
 
+	// comment post cache: key = post ID, val = post object
+	public $comment_posts = array();
+
 	/**
 	 * Ends the HTTP connection cleanly
 	 */
@@ -226,10 +229,8 @@ class GO_XPost_Utilities
 	public function comment_exists( $comment )
 	{
 		global $wpdb;
-		
-		$comment_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT comment_ID FROM ' . $wpdb->commentmeta . ' WHERE comment_author = %s AND comment_date = %s', $comment->comment_author, $comment->comment_date ) );
 
-		return $comment_id;
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT comment_ID FROM ' . $wpdb->comments . ' WHERE comment_author = %s AND comment_date = %s', $comment->comment_author, $comment->comment_date ) );
 	}//end comment_exists
 
 	/**
@@ -855,6 +856,136 @@ class GO_XPost_Utilities
 
 		return $signature;
 	}// end build_identity_hash
+
+	/**
+	 * get a comment object and associated data: post, comment meta and
+	 * comment parent.
+	 *
+	 * @param $comment_id int/string id of the comment to retrieve
+	 * @return an object with error, comment, post, meta and comment_parent
+	 *  members.
+	 */
+	public function get_comment( $comment_id )
+	{
+		$result = new StdClass;
+		$result->error = NULL;
+
+		$comment = get_comment( $comment_id );
+
+		if ( empty( $comment ) )
+		{
+			$result->error = 'comment ' . $comment_id . ' not found';
+			return $result;
+		}//END if
+
+		// check if we already have the post object related to this comment
+		if ( isset( $this->comment_posts[ $comment->comment_post_ID ] ) )
+		{
+			$post = $this->comment_posts[ $comment->comment_post_ID ];
+		} // END if
+		else
+		{
+			$post = get_post( $comment->comment_post_ID );
+
+			// Save this in case any other comments are for the same post
+			$this->comment_posts[ $comment->comment_post_ID ] = $post;
+		} // END else
+
+		if ( ! $post )
+		{
+			$result->error = 'Could not get the post associated with the comment (POST ID: ' . $comment->comment_post_ID . ' Comment ID: ' . $comment->comment_ID . ')';
+			return $result;
+		} // END if
+
+		$result->comment = $comment;
+		$result->post    = $post;
+
+		// Get comment meta
+		$comment_meta = get_comment_meta( $comment_id );
+
+		if ( ! empty( $comment_meta ) )
+		{
+			$result->meta = array();
+
+			foreach ( $comment_meta as $mkey => $mval )
+			{
+				$result->meta[ $mkey ] = maybe_unserialize( $mval[0] );
+			} // END foreach
+		} // END if
+
+		// Get parent
+		if( $comment->comment_parent )
+		{
+			if ( $parent = get_comment( $comment->comment_parent ) )
+			{
+				$result->parent = $parent;
+			} // END if
+			else
+			{
+				$result->error = 'Could not get the parent associated with the comment (PARENT ID: ' . $comment->comment_parent . ' Comment ID: ' . $comment->comment_ID . ')';
+			} // END else
+		}
+
+		return $result;
+	}//END get_comment
+
+	/**
+	 * save a comment
+	 *
+	 * @param $comment a comment object as returned from get_comment() in
+	 *  this class.
+	 * @retval objecgt the comment object updated or inserted
+	 */
+	public function save_comment( $comment )
+	{
+		// Keep this for output purposes
+		$old_comment_id = $comment->comment->comment_ID;
+		unset( $comment->comment->comment_ID );
+
+		// Does the comment's post exist?
+		if ( ! $post_id = $this->post_exists( $comment->post ) )
+		{
+			return $this->error( 'go-xpost-failed-save-comment', 'Comment post not found on destination blog',  $comment );
+		} // END if
+
+		$comment->comment->comment_post_ID = $post_id;
+
+		// Does the comment's parent exist?
+		if ( isset( $comment->parent ) )
+		{
+			$parent_id = $this->comment_exists( $comment->parent );
+			if ( ! $parent_id )
+			{
+				return $this->error( 'go-xpost-invalid-comment-parent', 'Comment parent ' . $comment->parent->comment_ID . ' not found on destination blog' );
+			}
+
+			$comment->comment->comment_parent = $parent_id;
+		} // END if
+
+		// Check if comment already exists
+		if ( $comment_id = $this->comment_exists( $comment->comment ) )
+		{
+			$comment->comment->comment_ID = $comment_id;
+			wp_update_comment( (array) $comment->comment );
+		} // END if
+		else
+		{
+			$comment_id = wp_insert_comment( (array) $comment->comment );
+		} // END else
+		$comment->comment->comment_ID = $comment_id;
+
+		// Is there comment meta?
+		if ( isset( $comment->meta ) && is_array( $comment->meta ) )
+		{
+			foreach ( $comment->meta as $meta_key => $meta_value )
+			{
+				delete_comment_meta( $comment_id, $meta_key );
+				add_comment_meta( $comment_id, $meta_key, $meta_value );
+			} // END foreach
+		} // END if
+
+		return $comment;
+	}//END save_comment
 
 	/**
 	 * Convert UTC time to the blog configured timezone time
