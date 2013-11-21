@@ -58,7 +58,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			'status',
 		),
 	);
-	public $csv = NULL;   // our Go_Csv logging object
+	public $csv = NULL;   // our csv logging object
 
 	/**
 	 * Returns a serialized post object using the Gigaom xPost get_post method.
@@ -669,7 +669,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			WP_CLI::error( 'Unable to open log file ' . $assoc_args['logfile'] );
 		}
 
-		$this->csv = new GO_Csv( $csv_file, $columns );
+		$this->csv = new GO_XPost_Csv( $csv_file, $columns );
 	}//END initialize_csv_log
 }//END class GO_XPost_WP_CLI
 
@@ -680,7 +680,7 @@ WP_CLI::add_command( 'go_xpost', 'GO_XPost_WP_CLI' );
  * originally from:
  * https://gigaom.unfuddle.com/a#/projects/7/repositories/18/file?path=%2Fmigration-scripts%2Ftrunk%2Fmigrator.php&commit=10758
  */
-class Go_Csv
+class GO_XPost_Csv
 {
 	private $output_file = NULL;
 	private $columns = array();
@@ -736,4 +736,4 @@ class Go_Csv
 			}
 		}
 	}//END set_columns
-}//END Go_Csv
+}//END GO_XPost_Csv
