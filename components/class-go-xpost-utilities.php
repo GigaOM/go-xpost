@@ -218,7 +218,7 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end post_exists
-	
+
 	/**
 	 * Check if comment exists
 	 *
@@ -494,8 +494,8 @@ class GO_XPost_Utilities
 				'File upload error for GUID: ' . $post->post->guid . ' (' . $file['error'] . ')',
 				array(
 					'post_id' => $post->post->ID,
-					'url' => $post->file->url, 
-					'error' => $file['error']
+					'url' => $post->file->url,
+					'error' => $file['error'],
 				)
 			);
 		}//end if
@@ -924,7 +924,7 @@ class GO_XPost_Utilities
 			{
 				$result->error = 'Could not get the parent associated with the comment (PARENT ID: ' . $comment->comment_parent . ' Comment ID: ' . $comment->comment_ID . ')';
 			} // END else
-		}
+		}//END if
 
 		return $result;
 	}//END get_comment
@@ -945,7 +945,7 @@ class GO_XPost_Utilities
 		// Does the comment's post exist?
 		if ( ! $post_id = $this->post_exists( $comment->post ) )
 		{
-			return $this->error( 'go-xpost-failed-save-comment', 'Comment post not found on destination blog',  $comment );
+			return $this->error( 'go-xpost-failed-save-comment', 'Comment post not found on destination blog', $comment );
 		} // END if
 
 		$comment->comment->comment_post_ID = $post_id;

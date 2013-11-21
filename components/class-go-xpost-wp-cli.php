@@ -153,7 +153,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] [--include=<include-file>] --logfile=<logfile>
 	 */
 	public function get_posts( $args, $assoc_args )
-	{		
+	{
 		$this->initialize_csv_log(
 			$assoc_args,
 			$this->csv_headings['get_posts']
@@ -288,7 +288,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			$assoc_args,
 			$this->csv_headings['save_posts']
 		);
-		
+
 		// Is there an include file?
 		if ( isset( $assoc_args['include'] ) )
 		{
@@ -363,7 +363,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			{
 				require $assoc_args['include'];
 			} // END if
-			
+
 			// is this an attachment post?
 			if ( 'attachment' == $post->post->post_type )
 			{
@@ -407,7 +407,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		{
 			WP_CLI::error( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
 		} // END if
-		
+
 		WP_CLI::success( 'Copied ' . $count . ' post(s) of ' . $found . ' post(s) found!' );
 	} // END save_posts
 
@@ -431,7 +431,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * @synopsis [--url=<url>] [--path=<path>] [--query=<query>] --logfile=<logfile>
 	 */
-	function get_comments( $args, $assoc_args )
+	public function get_comments( $args, $assoc_args )
 	{
 		$this->initialize_csv_log(
 			$assoc_args,
@@ -515,7 +515,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	 *
 	 * @synopsis [--url=<url>] [--path=<path>] [<comments-file>] --logfile=<logfile>
 	 */
-	function save_comments( $args, $assoc_args )
+	public function save_comments( $args, $assoc_args )
 	{
 		$this->initialize_csv_log(
 			$assoc_args,
@@ -610,7 +610,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			WP_CLI::error( 'Copied ' . $count . ' comments(s) of ' . $found . ' comments(s) found!' );
 			// WP_CLI::error() terminates the wp-cli script
 		} // END if
-		
+
 		WP_CLI::success( 'Copied ' . $count . ' comments(s) of ' . $found . ' comments(s) found!' );
 	} // END save_comments
 
@@ -671,8 +671,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		$this->csv = new GO_Csv( $csv_file, $columns );
 	}//END initialize_csv_log
-
-} // END GO_XPost_WP_CLI
+}//END class GO_XPost_WP_CLI
 
 WP_CLI::add_command( 'go_xpost', 'GO_XPost_WP_CLI' );
 
