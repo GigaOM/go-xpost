@@ -125,6 +125,8 @@ class GO_XPost_Redirect
 			'page',
 		);
 
+		$whitelisted_post_types = apply_filters( 'go_xpost_redirect_whitelisted_post_types', $whitelisted_post_types );
+
 		if ( ! isset( $post->post_type ) || ! in_array( $post->post_type, $whitelisted_post_types ) )
 		{
 			return;
