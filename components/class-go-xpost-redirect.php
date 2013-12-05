@@ -24,8 +24,13 @@ class GO_XPost_Redirect
 		{
 			$this->whitelisted_post_types = apply_filters( 'go_xpost_redirect_whitelisted_post_types', $this->whitelisted_post_types );
 
-			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'post', 'advanced', 'high' );
-			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'page', 'advanced', 'high' );
+			if ( is_array( $this->whitelisted_post_types ) )
+			{
+				foreach ( $this->whitelisted_post_types as $post_type )
+				{
+					add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), $post_type, 'advanced', 'high' );
+				}//end foreach
+			}//end if
 
 			add_action( 'save_post', array( $this, 'save_post' ) );
 			add_action( 'go_xpost_set_redirect', array( $this, 'set_redirect' ), 10, 3 );
@@ -125,8 +130,8 @@ class GO_XPost_Redirect
 		}// end if
 
 		// check post type matches what you intend
-		// We're using xpost-redirect for a bunch of post types, but we're actually only putting the metabox to edit this value on post.
-
+		// We're using xpost-redirect for a bunch of post types, but we're actually only putting the
+		// metabox to edit this value on a limited set of post types (hookable)
 		if ( ! isset( $post->post_type ) || ! in_array( $post->post_type, $this->whitelisted_post_types ) )
 		{
 			return;
