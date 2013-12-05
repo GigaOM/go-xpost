@@ -23,6 +23,7 @@ class GO_XPost_Redirect
 		if ( current_user_can( 'edit_others_posts' ) || current_user_can( 'edit_others_pages' ) )
 		{
 			$this->whitelisted_post_types = apply_filters( 'go_xpost_redirect_whitelisted_post_types', $this->whitelisted_post_types );
+			$this->whitelisted_post_types = array_unique( $this->whitelisted_post_types );
 
 			if ( is_array( $this->whitelisted_post_types ) )
 			{
