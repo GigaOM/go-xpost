@@ -13,6 +13,7 @@ class GO_XPost_Redirect
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'init', array( $this, 'init' ) );
 		add_filter( 'go_xpost_is_xpost', array( $this, 'go_xpost_is_xpost' ), 10, 2 );
+		add_action( 'go_xpost_redirect_whitelist_post_type', array( $this, 'whitelist_post_type' ) );
 	}//end __construct
 
 	/**
@@ -22,7 +23,6 @@ class GO_XPost_Redirect
 	{
 		if ( current_user_can( 'edit_others_posts' ) || current_user_can( 'edit_others_pages' ) )
 		{
-			$this->whitelisted_post_types = apply_filters( 'go_xpost_redirect_whitelisted_post_types', $this->whitelisted_post_types );
 			$this->whitelisted_post_types = array_unique( $this->whitelisted_post_types );
 
 			if ( is_array( $this->whitelisted_post_types ) )
@@ -276,6 +276,15 @@ class GO_XPost_Redirect
 
 		return apply_filters( 'go_xpost_redirect_meta', $redirect, $post_id );
 	} // END get_post_meta
+
+	/**
+	 * Hooked to the the go_xpost_redirect_whitelist_post_type action to allow for injection of
+	 * additional post types that can have redirects applied to them
+	 */
+	public function whitelist_post_type( $post_type )
+	{
+		$this->whitelisted_post_types[] = $post_type;
+	}//end whitelist_post_type
 }// END class
 
 function go_xpost_redirect()
