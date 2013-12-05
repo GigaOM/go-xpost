@@ -3,6 +3,10 @@
 class GO_XPost_Redirect
 {
 	public $meta_key = 'go_xpost_redirect';
+	public $whitelisted_post_types = array(
+		'post',
+		'page',
+	);
 
 	public function __construct()
 	{
@@ -18,6 +22,8 @@ class GO_XPost_Redirect
 	{
 		if ( current_user_can( 'edit_others_posts' ) || current_user_can( 'edit_others_pages' ) )
 		{
+			$this->whitelisted_post_types = apply_filters( 'go_xpost_redirect_whitelisted_post_types', $this->whitelisted_post_types );
+
 			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'post', 'advanced', 'high' );
 			add_meta_box( $this->meta_key . '_meta_box', 'Redirection', array( $this, 'meta_box' ), 'page', 'advanced', 'high' );
 
@@ -120,14 +126,8 @@ class GO_XPost_Redirect
 
 		// check post type matches what you intend
 		// We're using xpost-redirect for a bunch of post types, but we're actually only putting the metabox to edit this value on post.
-		$whitelisted_post_types = array(
-			'post',
-			'page',
-		);
 
-		$whitelisted_post_types = apply_filters( 'go_xpost_redirect_whitelisted_post_types', $whitelisted_post_types );
-
-		if ( ! isset( $post->post_type ) || ! in_array( $post->post_type, $whitelisted_post_types ) )
+		if ( ! isset( $post->post_type ) || ! in_array( $post->post_type, $this->whitelisted_post_types ) )
 		{
 			return;
 		}// end if
