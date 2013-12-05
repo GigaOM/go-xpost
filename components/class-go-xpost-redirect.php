@@ -4,8 +4,8 @@ class GO_XPost_Redirect
 {
 	public $meta_key = 'go_xpost_redirect';
 	public $whitelisted_post_types = array(
-		'post',
-		'page',
+		'post' => 'post',
+		'page' => 'page',
 	);
 
 	public function __construct()
@@ -23,8 +23,6 @@ class GO_XPost_Redirect
 	{
 		if ( current_user_can( 'edit_others_posts' ) || current_user_can( 'edit_others_pages' ) )
 		{
-			$this->whitelisted_post_types = array_unique( $this->whitelisted_post_types );
-
 			if ( is_array( $this->whitelisted_post_types ) )
 			{
 				foreach ( $this->whitelisted_post_types as $post_type )
@@ -283,7 +281,7 @@ class GO_XPost_Redirect
 	 */
 	public function whitelist_post_type( $post_type )
 	{
-		$this->whitelisted_post_types[] = $post_type;
+		$this->whitelisted_post_types[ $post_type ] = $post_type;
 	}//end whitelist_post_type
 }// END class
 
