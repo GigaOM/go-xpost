@@ -293,7 +293,7 @@ class GO_XPost_Utilities
 		$now = new DateTime();
 
 		// check the date
-		if ( ( $start_date > $now ) || ( $end_date < $now ) )
+		if ( $start_date > $now || $end_date < $now )
 		{
 			return FALSE;
 		}
