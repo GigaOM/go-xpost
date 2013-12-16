@@ -7,16 +7,6 @@
 
 class GO_XPost_Utilities
 {
-	// timestamps for the range of dates we want to slog extra stuff
-	// to debug author/user creation.
-	//TODO: remove after END_DATE
-	const START_DATE = 1385884800; // 2013-12-01 00:00:00 PST
-	const END_DATE   = 1391241599; // 2014-01-31 23:59:59 PST
-	const START_TIME = 540; // 9:00 AM as minutes of the day
-	const END_TIME   = 720; // 12:00PM as minutes of the day
-	var $pst_timezone = NULL;
-	//END TODO: remove after END_DATE
-
 	private $pinged = array();
 
 	// comment post cache: key = post ID, val = post object
@@ -290,31 +280,6 @@ class GO_XPost_Utilities
 
 		return array_intersect_key( get_object_vars( $user->data ), $interesting_keys );
 	}//END user_log_data
-
-	/**
-	 * return TRUE if we should slog what get_author() does. this is currently
-	 * set to log between 9AM and 12PM PST in Dec. 2013 and Jan 2014 only.
-	 *
-	 * TODO: remove this and related slog() calls after END_DATE
-	 */
-	public function should_slog_get_author()
-	{
-		if ( ! $this->pst_timezone )
-		{
-			$this->pst_timezone = new DateTimeZone( 'America/Los_Angeles' );
-		}
-		$now = new DateTime( NULL, $this->pst_timezone );
-
-		// check the date
-		if ( self::START_DATE > $now->getTimestamp() || self::END_DATE < $now->getTimestamp() )
-		{
-			return FALSE;
-		}
-
-		// check the time
-		$now_minutes = (int) $now->format( 'H' ) * 60 + (int) $now->format( 'i' );
-		return ( self::START_TIME <= $now_minutes ) && ( self::END_TIME >= $now_minutes );
-	}//END should_slog_get_author
 
 	/**
 	 * Ping an endpoint to tell it to get the post
@@ -872,10 +837,18 @@ class GO_XPost_Utilities
 			return 1;
 		}// end if
 
+		$should_slog_get_author = FALSE;
+
+		$config = apply_filters( 'go_config', FALSE, 'go-xpost' );
+		if ( $config && isset( $config['should_slog_get_author'] ) )
+		{
+			$should_slog_get_author =  $config['should_slog_get_author'];
+		}
+
 		// Check if author exists, allow it to be hooked if not
 		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
-			if ( $this->should_slog_get_author() )
+			if ( $should_slog_get_author )
 			{
 				apply_filters( 'go_slog', 'go-xpost-get-author', 'getting author by go_xpost_unknown_author', $this->user_log_data( $author ) );
 			}
@@ -886,7 +859,7 @@ class GO_XPost_Utilities
 
 		// ID could be different so lets replace it with the local one
 		// @TODO: Pro currently has a lot of email address duplication in user accounts.  This may cause surprising effects here. (see Om and Ingram)
-		if ( $this->should_slog_get_author() )
+		if ( $should_slog_get_author )
 		{
 			apply_filters( 'go_slog', 'go-xpost-get-author', 'matched local post author ' . $post_author->ID . ' by email', $this->user_log_data( $author ) );
 		}
