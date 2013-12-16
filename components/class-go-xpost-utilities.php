@@ -840,9 +840,9 @@ class GO_XPost_Utilities
 		$should_slog_get_author = FALSE;
 
 		$config = apply_filters( 'go_config', FALSE, 'go-xpost' );
-		if ( $config && isset( $config['should_slog_get_author'] ) )
+		if ( $config && isset( $config['slog_get_author'] ) )
 		{
-			$should_slog_get_author =  $config['should_slog_get_author'];
+			$should_slog_get_author =  $config['slog_get_author'];
 		}
 
 		// Check if author exists, allow it to be hooked if not
