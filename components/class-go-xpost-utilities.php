@@ -294,6 +294,8 @@ class GO_XPost_Utilities
 	/**
 	 * return TRUE if we should slog what get_author() does. this is currently
 	 * set to log between 9AM and 12PM PST in Dec. 2013 and Jan 2014 only.
+	 *
+	 * TODO: remove this and related slog() calls after END_DATE
 	 */
 	public function should_slog_get_author()
 	{
