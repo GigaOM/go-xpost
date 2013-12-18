@@ -839,16 +839,12 @@ class GO_XPost_Utilities
 
 		$should_slog_get_author = FALSE;
 
-		$config = apply_filters( 'go_config', FALSE, 'go-xpost' );
-		if ( $config && isset( $config['slog_get_author'] ) )
-		{
-			$should_slog_get_author =  $config['slog_get_author'];
-		}
+		$config = apply_filters( 'go_config', array(), 'go-xpost' );
 
 		// Check if author exists, allow it to be hooked if not
 		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
-			if ( $should_slog_get_author )
+			if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
 			{
 				apply_filters( 'go_slog', 'go-xpost-get-author', 'getting author by go_xpost_unknown_author', $this->user_log_data( $author ) );
 			}
@@ -859,7 +855,7 @@ class GO_XPost_Utilities
 
 		// ID could be different so lets replace it with the local one
 		// @TODO: Pro currently has a lot of email address duplication in user accounts.  This may cause surprising effects here. (see Om and Ingram)
-		if ( $should_slog_get_author )
+		if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
 		{
 			apply_filters( 'go_slog', 'go-xpost-get-author', 'matched local post author ' . $post_author->ID . ' by email', $this->user_log_data( $author ) );
 		}
