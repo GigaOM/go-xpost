@@ -57,6 +57,13 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			'dest_comment_parent_id',
 			'status',
 		),
+		'set_primary_channel' => array(
+			'time',
+			'command',
+			'post_id',
+			'channel',
+			'status',
+		),
 	);
 	public $csv = NULL;   // our csv logging object
 
@@ -615,6 +622,81 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 	} // END save_comments
 
 	/**
+	 * set the post's primary channel term (in 'primary_channel' taxonomy). the channel slug may be 'cleantech', 'tech', 'cloud', 'apple', 'mobile', 'video', 'pro', 'media', 'europe', or 'data'.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--url=<url>]
+	 * : The url of the site the post is in
+	 * [--path=<path>]
+	 * : Path to WordPress files.
+	 * --post_id
+	 * : ID of the post to set primary channel
+	 * --primary_channel
+	 * : the primary channel slug to use
+	 * --logfile=<logfile>
+	 * : where to log our results.
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp go_xpost set_primary_channel --url=go.wp.slurp.gostage.it --path=/var/www/wp --post_id=1234 --primary_channel=media --logfile=/var/log/primary_channel_fix.log
+	 *
+	 * @synopsis [--url=<url>] [--path=<path>] --post_id=<post-id> --primary_channel=<primary-channel> --logfile=<logfile>
+	 */
+	public function set_primary_channel( $args, $assoc_args )
+	{
+		$this->initialize_csv_log(
+			$assoc_args,
+			$this->csv_headings['set_primary_channel']
+		);
+
+		// make the channel names the keys for fast hash lookup
+		$valid_channels = array(
+			'cleantech' => 1,
+			'tech' => 1,
+			'cloud' => 1,
+			'apple' => 1,
+			'mobile' => 1,
+			'video' => 1,
+			'pro' => 1,
+			'media' => 1,
+			'europe' => 1,
+			'data' => 1,
+		);
+
+		$post = get_post( $assoc_args['post_id'] );
+		if ( ! $post )
+		{
+			WP_CLI::error( 'Invalid post id ' . $assoc_args['post_id'] );
+		}
+
+		$channel = $assoc_args['primary_channel'];
+		if ( ! isset( $valid_channels[ $channel ] ) )
+		{
+			WP_CLI::error( 'Invalid primary channel "' . $channel . '"' );
+		}
+
+		$ret = wp_set_object_terms( $post->ID, $channel, 'primary_channel' );
+
+		$this->csv->log(
+			array(
+				'time' => date( DATE_ISO8601 ),
+				'command' => 'set_primary_channel',
+				'post_id' => $post->ID,
+				'channel' => $channel,
+				'status' => is_wp_error( $ret ) ? 'error: ' . $ret->get_error_message() : 'ok',
+			)
+		);
+
+		if ( is_wp_error( $ret ) )
+		{
+			WP_CLI::error( 'error setting primary channel of post ' . $post->ID . ' to "' . $channel . '": ' . $ret->get_error_message() );
+		}
+
+		WP_CLI::success( 'set primary channel of post ' . $post->ID . ' to ' . $channel );
+	}//END set_primary_channel
+
+	/**
 	 * get some input data either from a file argument or stdin.
 	 *
 	 * @param $command string which command is calling this function
@@ -663,13 +745,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 			WP_CLI::error( 'missing required "logfile" parameter.' );
 		}
 
-		$csv_file = fopen( $assoc_args['logfile'], 'a+' );
-		if ( FALSE === $csv_file )
-		{
-			WP_CLI::error( 'Unable to open log file ' . $assoc_args['logfile'] );
-		}
-
-		$this->csv = new GO_XPost_Csv( $csv_file, $columns );
+		$this->csv = new GO_XPost_Csv( $assoc_args['logfile'], $columns );
 	}//END initialize_csv_log
 }//END class GO_XPost_WP_CLI
 
@@ -682,23 +758,26 @@ WP_CLI::add_command( 'go_xpost', 'GO_XPost_WP_CLI' );
  */
 class GO_XPost_Csv
 {
+	private $output_file_name = NULL;
 	private $output_file = NULL;
 	private $columns = array();
 	private $delimiter;
 	private $enclosure;
 
-	public function __construct( $output_file, $columns = null, $delimiter = ',', $enclosure = '"' )
+	public function __construct( $output_file_name, $columns = null, $delimiter = ',', $enclosure = '"' )
 	{
-		if ( ! is_resource( $output_file ) )
+		$this->output_file_name = $output_file_name;
+		$this->output_file = fopen( $output_file_name, 'a+' );
+		if ( FALSE === $this->output_file )
 		{
-			WP_CLI::error( '$output_file must be a file resource.' );
+			WP_CLI::error( 'Unable to open log file ' . $this->output_file_name );
 		}
 
-		$this->output_file = $output_file;
 		if ( $columns )
 		{
 			$this->set_columns($columns);
 		}
+
 		$this->delimiter = (string) $delimiter;
 		$this->enclosure = (string) $enclosure;
 	}//END __construct
@@ -730,10 +809,18 @@ class GO_XPost_Csv
 		if ( empty( $this->columns ) && is_array( $columns ) )
 		{
 			$this->columns = $columns;
-			if ( FALSE === fputcsv( $this->output_file, array_map( 'strval', $this->columns ) ) )
+
+			// write the column headings if this is a new log file
+			if (
+				! file_exists( $this->output_file_name ) ||
+				0 === filesize( $this->output_file_name )
+			)
 			{
-				WP_CLI::error( 'error writing to logfile' );
+				if ( FALSE === fputcsv( $this->output_file, array_map( 'strval', $this->columns ) ) )
+				{
+					WP_CLI::error( 'error writing to logfile' );
+				}
 			}
-		}
+		}//END if
 	}//END set_columns
 }//END GO_XPost_Csv
