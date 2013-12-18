@@ -62,6 +62,8 @@ class GO_XPost_Utilities
 	{
 		$post_id = (int) $post_id;
 
+		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Started getting attachment', array( 'post_id' => $post_id ) );
+
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ) )
 		{
@@ -90,6 +92,11 @@ class GO_XPost_Utilities
 		$r->file = new StdClass();
 		$r->file->url = wp_get_attachment_url( $post_id );
 
+		if ( ! $r->file->url )
+		{			
+			apply_filters( 'go_slog', 'go-xpost-get-attachment-url-failed', 'Failed to get the file url', array( 'post_id' => $post_id ) );
+		} // END if
+
 		// get the terms
 		foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $r->post->post_type ) ) as $term )
 		{
@@ -103,6 +110,8 @@ class GO_XPost_Utilities
 		// unset the attachment meta that needs to be regenerated on the remote site
 		unset( $r->meta['_wp_attachment_metadata'] );
 		unset( $r->meta['_wp_attached_file'] );
+
+		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Success!', array( 'post_id' => $post_id, 'url' => $r->file->url ) );
 
 		return $r;
 	}//end get_attachment
