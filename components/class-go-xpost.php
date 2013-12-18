@@ -49,7 +49,10 @@ class GO_XPost
 
 			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
 			add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
-		}
+
+			// Make it so that gostage.it URLs work when retrieving attachments
+			add_filter( 'http_request_host_is_external', array( $this, 'http_request_host_is_external' ), 10, 3 );
+		} // END if
 
 		return $this->admin;
 	}//END admin
@@ -242,6 +245,17 @@ class GO_XPost
 
 		return $count;
 	} // END get_comments_number
+
+	public function http_request_host_is_external( $is_external, $host, $url )
+	{
+		// If we are on gostage.it the IP address that is resolved can look local which causes save_attachment to fail
+		if ( preg_match( '#gostage\.it$#', $host ) )
+		{
+			$is_external = TRUE;
+		} // END if
+
+		return $is_external;
+	} // END http_request_host_is_external
 }//end class
 
 function go_xpost()
