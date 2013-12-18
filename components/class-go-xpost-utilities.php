@@ -837,8 +837,6 @@ class GO_XPost_Utilities
 			return 1;
 		}// end if
 
-		$should_slog_get_author = FALSE;
-
 		$config = apply_filters( 'go_config', array(), 'go-xpost' );
 
 		// Check if author exists, allow it to be hooked if not
