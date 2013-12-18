@@ -62,6 +62,8 @@ class GO_XPost_Utilities
 	{
 		$post_id = (int) $post_id;
 
+		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Started getting attachment', array( 'post_id' => $post_id ) );
+
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ) )
 		{
@@ -90,6 +92,11 @@ class GO_XPost_Utilities
 		$r->file = new StdClass();
 		$r->file->url = wp_get_attachment_url( $post_id );
 
+		if ( ! $r->file->url )
+		{			
+			apply_filters( 'go_slog', 'go-xpost-get-attachment-url-failed', 'Failed to get the file url', array( 'post_id' => $post_id ) );
+		} // END if
+
 		// get the terms
 		foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $r->post->post_type ) ) as $term )
 		{
@@ -103,6 +110,8 @@ class GO_XPost_Utilities
 		// unset the attachment meta that needs to be regenerated on the remote site
 		unset( $r->meta['_wp_attachment_metadata'] );
 		unset( $r->meta['_wp_attached_file'] );
+
+		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Success!', array( 'post_id' => $post_id, 'url' => $r->file->url ) );
 
 		return $r;
 	}//end get_attachment
@@ -503,7 +512,7 @@ class GO_XPost_Utilities
 		// and
 		// http://core.svn.wordpress.org/tags/2.9.2/wp-admin/import/wordpress.php
 
-		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
 
 		// create a location for this file
 		$file = wp_upload_bits( basename( $post->file->url ), null, '', $post->post->post_date );
@@ -515,7 +524,7 @@ class GO_XPost_Utilities
 				'go-xpost-attachment-badfiletype',
 				'File upload error for GUID: ' . $post->post->guid . ' (' . $file['error'] . ')',
 				array(
-					'post_id' => $post->post->ID,
+					'origin_post_id' => $post->origin->ID,
 					'url' => $post->file->url,
 					'error' => $file['error'],
 				)
@@ -531,19 +540,19 @@ class GO_XPost_Utilities
 		if ( ! $headers )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-unreachable', 'Remote server did not respond for ' . $post->file->url, array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid ) );
+			return $this->error( 'go-xpost-attachment-unreachable', 'Remote server did not respond for ' . $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		}//end if
 
 		// make sure the fetch was successful
 		if ( $headers['response'] != '200' )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3$s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid ) );
+			return $this->error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3$s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		}//end if
 		elseif ( isset($headers['content-length']) && filesize( $file['file'] ) != $headers['content-length'] )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, array( 'post_id' => $post->post->ID, 'guid' => $post->post->guid ) );
+			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		}//end elseif
 
 		// do actions for replication

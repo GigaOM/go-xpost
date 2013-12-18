@@ -49,7 +49,7 @@ class GO_XPost
 
 			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
 			add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
-		}
+		} // END if
 
 		return $this->admin;
 	}//END admin
