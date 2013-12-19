@@ -88,6 +88,19 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		unset( $xpost->meta['gomcom_ingestion_headline'] );
 		unset( $xpost->meta['gomcom_ingestion_excerpt'] );
 
+		// set guest author data
+		$xpost->meta['guest_author'] = get_the_author_meta( 'display_name', $xpost->post->post_author );
+		$xpost->meta['go_guest']     = array(
+			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
+			'author_override'  => TRUE,
+			'source_override'  => FALSE,
+			'author_name'      => get_the_author_meta( 'display_name', $xpost->post->post_author ),
+			'author_url'       => get_author_posts_url( $xpost->post->post_author ),
+			'source_url'       => '',
+			'publication_name' => '',
+			'publication_url'  => '',
+		);
+
 		// reports get an extra taxonomy term
 		$xpost->terms['go_syn_media'][] = 'report';
 		$xpost->terms['channel'][] = 'pro';
