@@ -167,26 +167,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// we may need to reconsider this if we use the report plugin on Gigaom or other non-subscriber sites
 				$availability = 'Subscription';
 
-				// TODO: Remove this when we launch Research
-				// Sector Roadmaps and Quarterly Wrap Ups are special
-				if ( isset( $xpost->terms['category'] ) )
-				{
-					foreach ( $xpost->terms['category'] as $category )
-					{
-						switch ( strtolower( $category ) )
-						{
-							case 'sector roadmaps':
-								$xpost->terms['go-type'][] = 'Sector Roadmap';
-								break;
-							case 'quarterly wrap ups':
-							case 'quarterly wrap-ups':
-								$xpost->terms['go-type'][] = 'Quarterly Wrap-Up';
-								break;
-
-						} // end switch
-					} // end foreach
-				} // end if
-
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
 				{
