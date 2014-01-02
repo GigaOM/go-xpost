@@ -211,18 +211,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					unset( $xpost->parent );
 				} // end elseif
 
-				// @TODO: Remove this when we launch Research
-				// Catch other types of reports, including, but not limited to:
-				// briefings, research briefings, research notes, long views
-				if ( ! count( $xpost->terms['go-type'] ) )
-				{
-					$xpost->terms['go-type'][] = 'Report';
-				}// end if
-			} // end elseif
-			// TODO: Remove go_shortpost when we launch Research
-			elseif ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
-			{
-				$xpost->terms['go-type'][] = 'Blog Post';
+
 			} // end elseif
 		} // end if
 
