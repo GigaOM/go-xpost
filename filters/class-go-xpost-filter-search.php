@@ -310,7 +310,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				foreach ( $sessions as $session )
 				{
-					$session_terms = wp_get_object_terms( $session->ID, $session_taxonomies );
+					//get taxonomy list from first session
+					$session_taxonomies = get_object_taxonomies( $sessions[0]->post_type );
 
 					if ( ! empty( $session_terms ) && ! is_wp_error( $session_terms ) )
 					{
