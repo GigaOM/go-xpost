@@ -304,14 +304,23 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				}// end foreach
 
 				$sessions = get_children( 'post_parent=' . $post_id . '&post_type=go-events-session' );
+
+				//get taxonomy list from first session
+				$session_taxonomies = get_object_taxonomies( $sessions[0]->post_type );
+
 				foreach ( $sessions as $session )
 				{
-					// get the terms for the each session and add to the event?
-					foreach ( (array) wp_get_object_terms( $session->ID, get_object_taxonomies( 'go-events-session' ) ) as $term )
+					$session_terms = wp_get_object_terms( $session->ID, $session_taxonomies );
+
+					if ( ! empty( $session_terms ) && ! is_wp_error( $session_terms ) )
 					{
-						$xpost->terms[ $term->taxonomy ][] = $term->name;
-					}// end foreach
-				}// end foreach
+						// get the terms for the each session and add to the event?
+						foreach ( $session_terms as $term )
+						{
+							$xpost->terms[ $term->taxonomy ][] = $term->name;
+						}//end foreach
+					}//end if
+				}//end foreach
 
 				// set the content
 				$xpost->post->post_content = $xpost->post->post_excerpt . go_events()->event()->get_meta( $post_id )->tagline;
