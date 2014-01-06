@@ -20,14 +20,16 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		if ( apply_filters( 'go_sponsor_posts_is_sponsor_post', FALSE, $post_id ) )
 		{
 			return FALSE;
-		} // END if
+		} // end if
 
 		// check for valid post types
 		$valid_post_types = array(
-			'go_shortpost',
+			'go-datamodule',
+			'go-events-event',
 			'go-report',
 			//'go-report-section', // temporarily disabled, need to come up with a better plan
-			'go-datamodule',
+			'go-events-session',
+			'go_shortpost',
 			'go_webinar',
 			'post',
 		);
@@ -35,7 +37,16 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		if ( ! in_array( $post->post_type, $valid_post_types ) )
 		{
 			return FALSE;
-		} // END if
+		} // end if
+
+		//only include events and sessions from the events property
+		if ( 'events' == go_config()->get_property_slug() )
+		{
+			if ( 'go-events-event' != $post->post_type && 'go-events-session' != $post->post_type )
+			{
+				return FALSE;
+			}// end if
+		}// end if
 
 		// only include charts from the research property
 		if (
@@ -44,7 +55,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		)
 		{
 			return FALSE;
-		} // END if
+		} // end if
 
 		// exclude report subsections that are about the author or about gigaom research
 		if (
@@ -61,30 +72,32 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			)
 			{
 				return FALSE;
-			}
-		} // END if
+			}//end if
+		} // end if
 
 		// exclude some categories from Pro
 		if ( 'research' != go_config()->get_property_slug() )
 		{
 			$invalid_categories = array(
-				'links',          // We don't want currated links from pro going into search
+				'links',          // We don't want curated links from pro going into search
 				'poll-summaries', // Same for poll summaries
 			);
 
 			$categories = get_the_terms( $post_id, 'category', array( 'fields' => 'slugs' ) );
-
-			foreach ( $categories as $category )
+			if ( $categories && ! is_wp_error( $categories ) )
 			{
-				if ( in_array( $category, $invalid_categories ) )
+				foreach ( $categories as $category )
 				{
-					return FALSE;
-				} // END if
-			} // END foreach
-		}//end if
+					if ( in_array( $category, $invalid_categories ) )
+					{
+						return FALSE;
+					} // end if
+				} // end foreach
+			}//end if
+		}// end if
 
 		return TRUE;
-	} // END should_send_post
+	} // end should_send_post
 
 	/**
 	 * Alter the $xpost object before returning it to the endpoint
@@ -114,12 +127,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		{
 			$xpost->post->post_content = $xpost->post->post_excerpt . "\n\n" . $xpost->post->post_content;
 			$xpost->post->post_excerpt = trim( wp_trim_words( $xpost->post->post_content, 31, '' ), '.' ) . '&hellip;';
-		}
+		}//end if
 		// or generate a post excerpt if we don't have one (saves us from having to generate it when displaying the posts)
 		else
 		{
 			$xpost->post->post_excerpt = trim( wp_trim_words( $xpost->post->post_content, 31, '' ), '.' ) . '&hellip;';
-		}
+		}//end else
 
 		// Will change this to Subscription later if appropriate
 		$availability = 'Free';
@@ -137,19 +150,19 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// set the type
 				$xpost->terms['go-type'][] = 'Webinar';
 
-				// set future scheduled webinars to be published so they can appear in search
+				// set future scheduled webinars to published so they can appear in search
 				if ( 'future' == $xpost->post->post_status )
 				{
 					$xpost->post->post_status = 'publish';
-				}
+				}//end if
 
 				// remove the go_webinar meta, as it's unused on Search.GO
 				unset( $xpost->meta['go_webinar'] );
-			} // END if
+			} // end if
 			elseif ( 0 == strncmp( 'go-report', $xpost->post->post_type, 9 ) )
 			{
 				// set the availability up top
-				// we may need to recnosider this if we use the report plugin on Gigaom or other non-subscriber sites
+				// we may need to reconsider this if we use the report plugin on Gigaom or other non-subscriber sites
 				$availability = 'Subscription';
 
 				// TODO: Remove this when we launch Research
@@ -168,9 +181,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 								$xpost->terms['go-type'][] = 'Quarterly Wrap-Up';
 								break;
 
-						} // END switch
-					} // END foreach
-				} // END if
+						} // end switch
+					} // end foreach
+				} // end if
 
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
@@ -190,8 +203,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 						// @TODO: this is commented out because we need to spend more time designing how to display the results
 						// and because it's causing the xpost pull to time out
 						//go_xpost()->process_post( $report_child->ID );
-					} // END foreach
-				} // END if
+					} // end foreach
+				} // end if
 				elseif ( 'go-report-section' == $xpost->post->post_type )
 				{
 					// set the status based on the top-level parent
@@ -214,22 +227,22 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					// remove the parent ID and object
 					$xpost->post->post_parent = 0;
 					unset( $xpost->parent );
-				} // END elseif
+				} // end elseif
 
-				// TODO: Remove this when we launch Research
+				// @TODO: Remove this when we launch Research
 				// Catch other types of reports, including, but not limited to:
 				// briefings, research briefings, research notes, long views
 				if ( ! count( $xpost->terms['go-type'] ) )
 				{
 					$xpost->terms['go-type'][] = 'Report';
-				}
-			} // END elseif
+				}//end if
+			} // end elseif
 			// TODO: Remove go_shortpost when we launch Research
 			elseif ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
 			{
 				$xpost->terms['go-type'][] = 'Blog Post';
-			} // END elseif
-		} // END if
+			} // end elseif
+		} // end if
 
 		if ( 'gigaom' == go_config()->get_property_slug() )
 		{
@@ -239,7 +252,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$content = preg_replace( $go_post->link_pattern, '', $xpost->post->post_content, 1 );
 				$xpost->post->post_excerpt = trim( wp_trim_words( $content, 31, '' ), '.' ) . '&hellip;';
-			}
+			}// end if
 			unset( $go_post );
 
 			// Gigaom and paidContent channels are transformed into verticals
@@ -249,16 +262,16 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				foreach ( $xpost->terms['channel'] as $channel )
 				{
 					$xpost->terms['vertical'][] = ucwords( $channel );
-				} // END foreach
-			} // END if
+				} // end foreach
+			} // end if
 
 			if ( isset( $xpost->terms['primary_channel'] ) )
 			{
 				foreach ( $xpost->terms['primary_channel'] as $primary_channel )
 				{
 					$xpost->terms['vertical'][] = ucwords( $primary_channel );
-				} // END foreach
-			} // END if
+				} // end foreach
+			} // end if
 
 			// get the post content type
 			// frustratingly, we have to look in multiple places for this
@@ -268,18 +281,18 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			)
 			{
 				$xpost->terms['go-type'][] = 'Video';
-			} // END elseif
+			} // end if
 			elseif (
 				'audio' == go_waterfall_options()->get_type( $post_id )
 				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'podcast', $xpost->terms['go_syn_media'] ) )
 			)
 			{
 				$xpost->terms['go-type'][] = 'Audio';
-			} // END elseif
+			} // end elseif
 			else
 			{
 				$xpost->terms['go-type'][] = 'Blog Post';
-			} // END elseif
+			} // end else
 
 			// multi-page posts with 3 OR MORE pages on GO/pC are also reports
 			if ( preg_match_all( '/--nextpage--/', $xpost->post->post_content, $matches ) )
@@ -287,9 +300,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				if ( 2 <= count( $matches ) )
 				{
 					$xpost->terms['go-type'][] = 'Report';
-				} // END if
-			} // END if
-		} // END if
+				} // end if
+			} // end if
+		} // end if
 
 		if ( 'go-datamodule' == $xpost->post->post_type )
 		{
@@ -303,13 +316,78 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 			// remove the datamodule meta, as it's unused on Search.GO
 			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
-		} // END if
+		} // end if
+
+		if ( 'events' == go_config()->get_property_slug() )
+		{
+			//set the event
+			$_REQUEST['post'] = $post_id;
+			$event = go_events()->event()->get_the_event();
+
+			if ( 'go-events-event' == $xpost->post->post_type )
+			{
+				// set the type
+				$xpost->terms['go-type'][] = 'Event';
+
+				// get the terms for the event
+				foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				{
+					$xpost->terms[ $term->taxonomy ][] = $term->name;
+				}//end foreach
+
+				$sessions = get_children( 'post_parent=' . $post_id . '&post_type=go-events-session' );
+				foreach ( $sessions as $session )
+				{
+					$session_terms = (array) wp_get_object_terms( $session->ID, get_object_taxonomies( $session->post_type ) );
+					// get the terms for the each session and add to the event?
+					foreach ( $session_terms as $term )
+					{
+						$xpost->terms[ $term->taxonomy ][] = $term->name;
+					}//end foreach
+				}//end foreach
+				
+				$xpost->post->post_content = $xpost->post->post_excerpt . go_events()->event()->get_meta( $post_id )->tagline;
+			}// end if
+			elseif ( 'go-events-session' == $xpost->post->post_type )
+			{
+				//special handling for sessions ?
+				// set the type
+				$xpost->terms['go-type'][] = 'Event Session';
+
+				// get the terms
+				foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				{
+					$xpost->terms[ $term->taxonomy ][] = $term->name;
+				}//end foreach
+
+				//then make sure each session speaker is also in there (if they aren't added as a person term)
+				$speakers = $event->session()->get_speakers( $post_id );
+				foreach ( $speakers as $speaker )
+				{
+					if ( ! in_array( $speaker->post_title, $xpost->terms['person'] ) )
+					{
+						$xpost->terms['person'][] = $speaker->post_title;
+					}//end if
+				}//end foreach
+			}// end else
+
+			$start = go_events()->event()->get_meta( $post_id )->start;
+			$now = new DateTime();
+			$xpost->post->date_pub =  ( $now > new DateTime( $start ) ) ? $start : $xpost->post->post_modified;
+			$xpost->post->author = 'support+gigaedit@gigaom.com';
+
+			// set future scheduled events/sessions to published so they can appear in search
+			if ( 'future' == $xpost->post->post_status )
+			{
+				$xpost->post->post_status = 'publish';
+			}//end if
+		}// end if
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
 		{
 			$xpost->terms['go-type'][] = 'Blog Post';
-		} // END else
+		} // end else
 
 		// search does not need the thumbnails
 		foreach( $xpost->meta as $meta_key => $meta_values )
@@ -336,7 +414,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		unset( $xpost->post->ID );
 
 		return $xpost;
-	} // END post_filter
+	} // end post_filter
 
 	/**
 	 * Cleans up research version of go-type taxonomy terms for use in search
@@ -350,11 +428,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			if ( ! isset( $term->name ) || 'Feature' == $term->name )
 			{
 				continue;
-			} // END if
+			} // end if
 
 			$new_terms[] = $term->name;
-		} // END foreach
+		} // end foreach
 
 		return $new_terms;
-	} // END clean_go_type_research_terms
-}// END GO_XPost_Filter_Search
+	} // end clean_go_type_research_terms
+}// end GO_XPost_Filter_Search
