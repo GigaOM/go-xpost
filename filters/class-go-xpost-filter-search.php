@@ -1,7 +1,7 @@
 <?php
 
 /*
-Filter Name: Posts Appropriate For search.gigaom.com -> Endpoint
+GO_XPost_Filter_Search: Posts Appropriate For search.gigaom.com -> Endpoint
 */
 
 class GO_XPost_Filter_Search extends GO_XPost_Filter
@@ -26,9 +26,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		$valid_post_types = array(
 			'go-datamodule',
 			'go-events-event',
-			'go-report',
-			//'go-report-section', // temporarily disabled, need to come up with a better plan
 			'go-events-session',
+			'go-report',
+			// 'go-report-section', // temporarily disabled, need to come up with a better plan
 			'go_shortpost',
 			'go_webinar',
 			'post',
@@ -40,6 +40,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		} // end if
 
 		//only include events and sessions from the events property
+
 		if ( 'events' == go_config()->get_property_slug() )
 		{
 			if ( 'go-events-event' != $post->post_type && 'go-events-session' != $post->post_type )
@@ -72,8 +73,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			)
 			{
 				return FALSE;
+
 			}//end if
-		} // end if
+		}//end if
 
 		// exclude some categories from Pro
 		if ( 'research' != go_config()->get_property_slug() )
@@ -132,7 +134,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		else
 		{
 			$xpost->post->post_excerpt = trim( wp_trim_words( $xpost->post->post_content, 31, '' ), '.' ) . '&hellip;';
-		}//end else
+		}// end else
 
 		// Will change this to Subscription later if appropriate
 		$availability = 'Free';
@@ -154,7 +156,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				if ( 'future' == $xpost->post->post_status )
 				{
 					$xpost->post->post_status = 'publish';
-				}//end if
+				}// end if
 
 				// remove the go_webinar meta, as it's unused on Search.GO
 				unset( $xpost->meta['go_webinar'] );
@@ -164,26 +166,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// set the availability up top
 				// we may need to reconsider this if we use the report plugin on Gigaom or other non-subscriber sites
 				$availability = 'Subscription';
-
-				// TODO: Remove this when we launch Research
-				// Sector Roadmaps and Quarterly Wrap Ups are special
-				if ( isset( $xpost->terms['category'] ) )
-				{
-					foreach ( $xpost->terms['category'] as $category )
-					{
-						switch ( strtolower( $category ) )
-						{
-							case 'sector roadmaps':
-								$xpost->terms['go-type'][] = 'Sector Roadmap';
-								break;
-							case 'quarterly wrap ups':
-							case 'quarterly wrap-ups':
-								$xpost->terms['go-type'][] = 'Quarterly Wrap-Up';
-								break;
-
-						} // end switch
-					} // end foreach
-				} // end if
 
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
@@ -229,18 +211,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					unset( $xpost->parent );
 				} // end elseif
 
-				// @TODO: Remove this when we launch Research
-				// Catch other types of reports, including, but not limited to:
-				// briefings, research briefings, research notes, long views
-				if ( ! count( $xpost->terms['go-type'] ) )
-				{
-					$xpost->terms['go-type'][] = 'Report';
-				}//end if
-			} // end elseif
-			// TODO: Remove go_shortpost when we launch Research
-			elseif ( in_array( $xpost->post->post_type, array( 'post', 'go_shortpost' ) ) )
-			{
-				$xpost->terms['go-type'][] = 'Blog Post';
+
 			} // end elseif
 		} // end if
 
@@ -326,73 +297,74 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
-				// set the type
-				$xpost->terms['go-type'][] = 'Event';
-
 				// get the terms for the event
-				foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
 					$xpost->terms[ $term->taxonomy ][] = $term->name;
-				}//end foreach
+				}// end foreach
 
 				$sessions = get_children( 'post_parent=' . $post_id . '&post_type=go-events-session' );
 
-				if ( ! empty( $sessions ) )
+				//get taxonomy list from first session
+				$session_taxonomies = get_object_taxonomies( $sessions[0]->post_type );
+
+				foreach ( $sessions as $session )
 				{
 					//get taxonomy list from first session
 					$session_taxonomies = get_object_taxonomies( $sessions[0]->post_type );
 
-					foreach ( $sessions as $session )
+					if ( ! empty( $session_terms ) && ! is_wp_error( $session_terms ) )
 					{
-						$session_terms = wp_get_object_terms( $session->ID, $session_taxonomies );
-
-						if ( ! empty( $session_terms ) && ! is_wp_error( $session_terms ) )
+						// get the terms for the each session and add to the event?
+						foreach ( $session_terms as $term )
 						{
-							// get the terms for the each session and add to the event?
-							foreach ( $session_terms as $term )
-							{
-								$xpost->terms[ $term->taxonomy ][] = $term->name;
-							}//end foreach
-						}//end if
-						
-					}//end foreach
-				}//end if
-				
+							$xpost->terms[ $term->taxonomy ][] = $term->name;
+						}//end foreach
+					}//end if
+				}//end foreach
+
+				// set the content
 				$xpost->post->post_content = $xpost->post->post_excerpt . go_events()->event()->get_meta( $post_id )->tagline;
+
+				// set event start datetime:
+				$start = new DateTime( go_events()->event()->get_meta( $post_id )->start );
+				
 			}// end if
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
-				//special handling for sessions ?
-				// set the type
-				$xpost->terms['go-type'][] = 'Event Session';
-
 				// get the terms
-				foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
 					$xpost->terms[ $term->taxonomy ][] = $term->name;
-				}//end foreach
+				}// end foreach
 
-				//then make sure each session speaker is also in there (if they aren't added as a person term)
-				$speakers = $event->session()->get_speakers( $post_id );
+				// then make sure each session speaker is also in there (if they aren't added as a person term)
+				$speakers = go_events()->event()->session()->get_speakers( $post_id );
 				foreach ( $speakers as $speaker )
 				{
-					if ( ! in_array( $speaker->post_title, $xpost->terms['person'] ) )
+					if ( ! is_array( $xpost->terms['person'] ) || ! in_array( $speaker->post_title, $xpost->terms['person'] ) )
 					{
 						$xpost->terms['person'][] = $speaker->post_title;
-					}//end if
-				}//end foreach
+					}// end if
+				}// end foreach
+
+				// set session start datetime:
+				$start = new DateTime( go_events()->event()->session()->get_meta( $post_id )->start );
 			}// end else
 
-			$start = go_events()->event()->get_meta( $post_id )->start;
-			$now = new DateTime();
-			$xpost->post->date_pub =  ( $now > new DateTime( $start ) ) ? $start : $xpost->post->post_modified;
+			// set post_date and post_date_gmt to a non-future date:
+			$start_date = ( new DateTime() < $start ) ? $start : new DateTime( $xpost->post->post_modified );
+			$xpost->post->post_date = $start_date->format( 'Y-m-d H:i:s' );
+			$start_date->setTimezone( new DateTimeZone( 'GMT' ) );
+			$xpost->post->post_date_gmt = $start_date->format( 'Y-m-d H:i:s' );
+
 			$xpost->post->author = 'support+gigaedit@gigaom.com';
 
-			// set future scheduled events/sessions to published so they can appear in search
+			// set future scheduled event/session status to published so they can appear in search
 			if ( 'future' == $xpost->post->post_status )
 			{
 				$xpost->post->post_status = 'publish';
-			}//end if
+			}// end if
 		}// end if
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
