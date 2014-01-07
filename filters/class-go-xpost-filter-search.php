@@ -1,7 +1,7 @@
 <?php
 
 /*
-Filter Name: Posts Appropriate For search.gigaom.com -> Endpoint
+GO_XPost_Filter_Search: Posts Appropriate For search.gigaom.com -> Endpoint
 */
 
 class GO_XPost_Filter_Search extends GO_XPost_Filter
@@ -298,7 +298,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
 				// get the terms for the event
-				foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
 					$xpost->terms[ $term->taxonomy ][] = $term->name;
 				}// end foreach
@@ -333,7 +333,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
 				// get the terms
-				foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
 					$xpost->terms[ $term->taxonomy ][] = $term->name;
 				}// end foreach
@@ -342,7 +342,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				$speakers = go_events()->event()->session()->get_speakers( $post_id );
 				foreach ( $speakers as $speaker )
 				{
-					if ( ! is_array($xpost->terms['person'] ) || ! in_array( $speaker->post_title, $xpost->terms['person'] ) )
+					if ( ! is_array( $xpost->terms['person'] ) || ! in_array( $speaker->post_title, $xpost->terms['person'] ) )
 					{
 						$xpost->terms['person'][] = $speaker->post_title;
 					}// end if
@@ -354,9 +354,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 			// set post_date and post_date_gmt to a non-future date:
 			$start_date = ( new DateTime() < $start ) ? $start : new DateTime( $xpost->post->post_modified );
-			$xpost->post->post_date = $start_date->format('Y-m-d H:i:s');
+			$xpost->post->post_date = $start_date->format( 'Y-m-d H:i:s' );
 			$start_date->setTimezone( new DateTimeZone( 'GMT' ) );
-			$xpost->post->post_date_gmt = $start_date->format('Y-m-d H:i:s');
+			$xpost->post->post_date_gmt = $start_date->format( 'Y-m-d H:i:s' );
 
 			$xpost->post->author = 'support+gigaedit@gigaom.com';
 
