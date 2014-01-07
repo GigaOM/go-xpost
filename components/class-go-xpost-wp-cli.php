@@ -358,6 +358,32 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		foreach ( $posts as $post )
 		{
+			if ( empty( $post ) )
+			{
+				continue;
+			}
+
+			// skip posts marked as xpost
+			if ( isset( $post->is_xpost ) && $post->is_xpost )
+			{
+				// and log a warning so we know why this was skipped
+				$this->csv->log(
+					array(
+						'time' => date( DATE_ISO8601 ),
+						'command' => 'save_posts',
+						'post_type' => $post->post->post_type,
+						'guid' => $post->post->guid,
+						'parent_guid' => isset( $post->parent ) ? $post->parent->guid : NULL,
+						'origin_id' => $post->origin->ID,
+						'origin_permalink' => $post->origin->permalink,
+						'dest_id' => NULL,
+						'dest_permalink' => NULL,
+						'status' => 'warning: not migrating xpost\'ed post',
+					)
+				);
+				continue;
+			}//END if
+
 			// Call include file if appropriate
 			if ( isset( $assoc_args['include'] ) )
 			{
