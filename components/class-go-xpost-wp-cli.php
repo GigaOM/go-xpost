@@ -360,21 +360,7 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 		{
 			if ( empty( $post ) )
 			{
-				// log and skip null posts
-				$this->csv->log(
-					array(
-						'time' => date( DATE_ISO8601 ),
-						'command' => 'save_posts',
-						'post_type' => NULL,
-						'guid' => NULL,
-						'parent_guid' => NULL,
-						'origin_id' => NULL,
-						'origin_permalink' => NULL,
-						'dest_id' => NULL,
-						'dest_permalink' => NULL,
-						'status' => 'warning: skipping an empty post',
-					)
-				);
+				// skip null posts (may be the result of the source filter)
 				continue;
 			}//END if
 
