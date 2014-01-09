@@ -358,6 +358,12 @@ class GO_XPost_WP_CLI extends WP_CLI_Command
 
 		foreach ( $posts as $post )
 		{
+			if ( empty( $post ) )
+			{
+				// skip null posts (may be the result of the source filter)
+				continue;
+			}//END if
+
 			// Call include file if appropriate
 			if ( isset( $assoc_args['include'] ) )
 			{
