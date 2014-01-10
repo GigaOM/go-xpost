@@ -170,7 +170,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
 				{
-					if ( $go_type_terms = get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) )
+					if ( $go_type_terms = get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) && ! is_wp_error( $go_type_terms ) )
 					{
 						$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $go_type_terms );
 					} // END if
@@ -197,7 +197,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->post->post_status = $parent_report->post_status;
 
 					// Report sections need to get their go-type value from the parent report
-					if ( $go_type_terms = get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) ) )
+					if ( $go_type_terms = get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) ) && ! is_wp_error( $go_type_terms ) )
 					{
 						$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $go_type_terms );
 					} // END if
