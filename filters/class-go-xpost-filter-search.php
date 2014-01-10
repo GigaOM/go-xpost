@@ -170,7 +170,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
 				{
-					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) );
+					if ( $go_type_terms = get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) ) )
+					{
+						$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $go_type_terms );
+					} // END if
 
 					// If this is a report parent post we need to make sure the children get updated too
 					$report_children = go_reports()->get_report_children();
@@ -194,7 +197,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->post->post_status = $parent_report->post_status;
 
 					// Report sections need to get their go-type value from the parent report
-					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) ) );
+					if ( $go_type_terms = get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) ) )
+					{
+						$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $go_type_terms );
+					} // END if
 
 					// set the publish times based on the top-level parent, rounding down to the nearest hour
 					//
