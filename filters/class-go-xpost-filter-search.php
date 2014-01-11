@@ -85,12 +85,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				'poll-summaries', // Same for poll summaries
 			);
 
-			$categories = get_the_terms( $post_id, 'category', array( 'fields' => 'slugs' ) );
+			$categories = get_the_terms( $post_id, 'category' );
 			if ( $categories && ! is_wp_error( $categories ) )
 			{
 				foreach ( $categories as $category )
 				{
-					if ( in_array( $category, $invalid_categories ) )
+					if ( in_array( $category->slug, $invalid_categories ) )
 					{
 						return FALSE;
 					} // end if
@@ -170,7 +170,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// Set go-type value for go-report and go-report-section types
 				if ( 'go-report' == $xpost->post->post_type )
 				{
-					$go_type_terms = get_the_terms( $post_id, 'go-type', array( 'fields' => 'names' ) );
+					$go_type_terms = get_the_terms( $post_id, 'go-type' );
 					
 					if ( $go_type_terms && ! is_wp_error( $go_type_terms ) )
 					{
@@ -198,7 +198,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$parent_report = go_reports()->get_current_report();
 					$xpost->post->post_status = $parent_report->post_status;
 
-					$go_type_terms = get_the_terms( $parent_report->ID, 'go-type', array( 'fields' => 'names' ) );
+					$go_type_terms = get_the_terms( $parent_report->ID, 'go-type' );
 					
 					if ( $go_type_terms && ! is_wp_error( $go_type_terms ) )
 					{
