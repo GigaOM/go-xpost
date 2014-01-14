@@ -1,7 +1,7 @@
 <?php
 
 /*
-GO_XPost_Filter_Search: Posts Appropriate For search.gigaom.com -> Endpoint
+Filter Name: Posts Appropriate For search.gigaom.com -> Endpoint
 */
 
 class GO_XPost_Filter_Search extends GO_XPost_Filter
