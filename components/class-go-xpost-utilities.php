@@ -634,8 +634,12 @@ class GO_XPost_Utilities
 		{
 				foreach ( (array) $post->terms as $tax => $terms )
 				{
-					wp_set_object_terms( $post_id, $terms, $tax, FALSE );
-				}//end foreach
+					$verified_term_ids = $this->get_verified_term_ids( $tax, $terms );
+					if ( ! empty( $verified_term_ids ) )
+					{
+						wp_set_object_terms( $post_id, $verified_term_ids, $tax, FALSE );
+					}
+				}//END foreach
 		}//END if
 
 		// success log
@@ -753,9 +757,13 @@ class GO_XPost_Utilities
 		{
 			foreach ( (array) $post->terms as $tax => $terms )
 			{
-				wp_set_object_terms( $post_id, $terms, $tax, FALSE );
-			}//end foreach
-		}
+				$verified_term_ids = $this->get_verified_term_ids( $tax, $terms );
+				if ( ! empty( $verified_term_ids ) )
+				{
+					wp_set_object_terms( $post_id, $verified_term_ids, $tax, FALSE );
+				}
+			}//END foreach
+		}//END if
 
 		do_action( 'go_xpost_save_post', $post_id, $post );
 
@@ -1029,6 +1037,42 @@ class GO_XPost_Utilities
 
 		return $comment;
 	}//END save_comment
+
+	/**
+	 * verify a list of terms in a taxonomy by their names. create any
+	 * term in the list that do not exist in $taxonomy.
+	 *
+	 * @param $taxonomy String the taxonomy of the term names
+	 * @param $term_names Array term names to verify or create
+	 * @retval Array a list of term ids corresponding to verified terms.
+	 */
+	public function get_verified_term_ids( $taxonomy, $term_names )
+	{
+		$term_ids = array();
+		foreach( $term_names as $term_name )
+		{
+			$term_obj = get_term_by( 'name', $term_name, $taxonomy );
+
+			if ( $term_obj )
+			{
+				$term_ids[] = $term_obj->term_id;
+			}
+			else
+			{
+				$new_term = wp_insert_term( $term_name, $taxonomy );
+
+				if ( is_wp_error( $new_term ) )
+				{
+					apply_filters( 'go_slog', 'go-xpost-get_verified_term_ids', 'error creating ' . $taxonomy . ' term: ' . $term_name, $new_term );
+					continue;
+				}//END if
+
+				$term_ids[] = $new_term['term_id'];
+			}//END else
+		}//END foreach
+
+		return $term_ids;
+	}//END get_verified_term_ids
 
 	/**
 	 * Convert UTC time to the blog configured timezone time
