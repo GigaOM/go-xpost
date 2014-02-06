@@ -218,6 +218,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					// remove the parent ID and object
 					$xpost->post->post_parent = 0;
 					unset( $xpost->parent );
+					unset( $xpost->post->post_parent );
 				} // end elseif
 
 
@@ -303,6 +304,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			//set the event
 			$_REQUEST['post'] = $post_id;
 			$event = go_events()->event()->get_the_event();
+			$xpost->terms['go-type'][] = 'Event';
 
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
@@ -319,9 +321,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				foreach ( $sessions as $session )
 				{
-					//get taxonomy list from first session
-					$session_taxonomies = get_object_taxonomies( $sessions[0]->post_type );
-
+					//get taxonomy list from the session
+					$session_terms = get_object_taxonomies( $session->post_type );
 					if ( ! empty( $session_terms ) && ! is_wp_error( $session_terms ) )
 					{
 						// get the terms for the each session and add to the event?
@@ -341,6 +342,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			}// end if
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
+				$xpost->terms['go-type'][] = 'Event Session';
 				// get the terms
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
