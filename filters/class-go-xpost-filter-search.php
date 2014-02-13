@@ -376,6 +376,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$xpost->post->post_status = 'publish';
 			}// end if
+
+			// remove the parent ID and object
+			$xpost->post->post_parent = 0;
+			unset( $xpost->parent );
+			unset( $xpost->post->post_parent );
 		}// end if
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
