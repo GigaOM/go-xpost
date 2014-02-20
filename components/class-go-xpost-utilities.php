@@ -779,14 +779,14 @@ class GO_XPost_Utilities
 					$ret = wp_set_object_terms( $post_id, $verified_term_ids, $tax, FALSE );
 					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
 					{
-						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: called wp_set_object_terms() on post ' . $post_id, array( $verified_term_ids, $ret ) );
+						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: called wp_set_object_terms() on post ' . $post_id . ' for taxonomy ' . $tax, array( $verified_term_ids, $ret ) );
 					}
 				}
 				else
 				{
 					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
 					{
-						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: empty $verified_term_ids', array() );
+						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: empty $verified_term_ids for post ' . $post_id . ' for taxonomy ' . $tax, array() );
 					}
 				}
 			}//END foreach
