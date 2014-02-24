@@ -186,6 +186,10 @@ class GO_XPost_Utilities
 		}
 		// Get author data
 		$r->author = get_userdata( $r->post->post_author );
+		if ( ! $r->author )
+		{
+			apply_filters( 'go_slog', 'go-xpost-get-post', 'author_debug: get_userdata() returned false for ' . $r->post->post_author, $r );
+		}
 
 		$r->origin = new StdClass;
 		$r->origin->ID = $post_id;
@@ -666,6 +670,16 @@ class GO_XPost_Utilities
 			return $this->error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
 		}//end if
 
+		// slog if we don't have expected author data
+		if ( ! isset( $post->author->data ) || ! is_object( $post->author->data ) )
+		{
+			apply_filters( 'go_slog', 'go-xpost-save', 'author_debug: post does not contain author->data', $post );
+		}
+		else
+		{
+			apply_filters( 'go_slog', 'go-xpost-save', 'author_debug: post contains author->data', $post->author );
+		}
+
 		$post->post->post_author = $this->get_author( $post->author );
 
 		// update the post dates based on the local gmt offset, where possible
@@ -752,6 +766,8 @@ class GO_XPost_Utilities
 		// wp_insert_post() does not update that field
 		$this->update_comment_count( $post_id, 0, 0 );
 
+		$config = apply_filters( 'go_config', array(), 'go-xpost' );
+
 		// set the taxonomy terms as received for the post
 		if ( isset( $post->terms ) )
 		{
@@ -760,7 +776,18 @@ class GO_XPost_Utilities
 				$verified_term_ids = $this->get_verified_term_ids( $tax, $terms );
 				if ( ! empty( $verified_term_ids ) )
 				{
-					wp_set_object_terms( $post_id, $verified_term_ids, $tax, FALSE );
+					$ret = wp_set_object_terms( $post_id, $verified_term_ids, $tax, FALSE );
+					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+					{
+						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: called wp_set_object_terms() on post ' . $post_id . ' for taxonomy ' . $tax, array( $verified_term_ids, $ret ) );
+					}
+				}
+				else
+				{
+					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+					{
+						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: empty $verified_term_ids for post ' . $post_id . ' for taxonomy ' . $tax, array() );
+					}
 				}
 			}//END foreach
 		}//END if
@@ -861,7 +888,7 @@ class GO_XPost_Utilities
 		{
 			if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
 			{
-				apply_filters( 'go_slog', 'go-xpost-get-author', 'getting author by go_xpost_unknown_author', $this->user_log_data( $author ) );
+				apply_filters( 'go_slog', 'go-xpost-get-author', 'author_debug: getting author by go_xpost_unknown_author', $this->user_log_data( $author ) );
 			}
 
 			// @TODO: this needs to be fixed: in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
@@ -872,7 +899,7 @@ class GO_XPost_Utilities
 		// @TODO: Pro currently has a lot of email address duplication in user accounts.  This may cause surprising effects here. (see Om and Ingram)
 		if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
 		{
-			apply_filters( 'go_slog', 'go-xpost-get-author', 'matched local post author ' . $post_author->ID . ' by email', $this->user_log_data( $author ) );
+			apply_filters( 'go_slog', 'go-xpost-get-author', 'author_debug: matched local post author ' . $post_author->ID . ' by email', $this->user_log_data( $author ) );
 		}
 
 		return $post_author->ID;
