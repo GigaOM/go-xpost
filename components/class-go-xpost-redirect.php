@@ -168,6 +168,7 @@ class GO_XPost_Redirect
 	 */
 	public function post_link( $permalink, $post )
 	{
+		// TODO: see if this comment is still needed now that BuddyPress is gone
 		// something in Pro/Research is calling this filter wrong (could be BuddyPress?)
 		if ( ! is_object( $post ) )
 		{
