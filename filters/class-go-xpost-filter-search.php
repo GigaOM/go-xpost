@@ -73,7 +73,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			)
 			{
 				return FALSE;
-
 			}//end if
 		}//end if
 
@@ -81,8 +80,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		if ( 'research' != go_config()->get_property_slug() )
 		{
 			$invalid_categories = array(
-				'links',          // We don't want curated links from pro going into search
-				'poll-summaries', // Same for poll summaries
+				// We don't want curated links from pro going into search
+				'links',
+				// Same for poll summaries
+				'poll-summaries',
 			);
 
 			$categories = get_the_terms( $post_id, 'category' );
@@ -171,7 +172,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				if ( 'go-report' == $xpost->post->post_type )
 				{
 					$go_type_terms = get_the_terms( $post_id, 'go-type' );
-					
+
 					if ( $go_type_terms && ! is_wp_error( $go_type_terms ) )
 					{
 						$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $go_type_terms );
@@ -199,7 +200,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->post->post_status = $parent_report->post_status;
 
 					$go_type_terms = get_the_terms( $parent_report->ID, 'go-type' );
-					
+
 					if ( $go_type_terms && ! is_wp_error( $go_type_terms ) )
 					{
 						$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $go_type_terms );
@@ -219,8 +220,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->post->post_parent = 0;
 					unset( $xpost->parent );
 				} // end elseif
-
-
 			} // end elseif
 		} // end if
 
@@ -303,10 +302,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			//set the event
 			$_REQUEST['post'] = $post_id;
 			$event = go_events()->event()->get_the_event();
-			$xpost->terms['go-type'][] = 'Event';
 
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
+				$xpost->terms['go-type'][] = 'Event';
 				// get the terms for the event
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
@@ -337,7 +336,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				// set event start datetime:
 				$start = new DateTime( go_events()->event()->get_meta( $post_id )->start );
-				
 			}// end if
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
@@ -360,7 +358,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				// set session start datetime:
 				$start = new DateTime( go_events()->event()->session()->get_meta( $post_id )->start );
-			}// end else
+			}// end elseif
 
 			// set post_date and post_date_gmt to a non-future date:
 			$start_date = ( new DateTime() < $start ) ? $start : new DateTime( $xpost->post->post_modified );
@@ -388,7 +386,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		} // end else
 
 		// search does not need the thumbnails
-		foreach( $xpost->meta as $meta_key => $meta_values )
+		foreach ( $xpost->meta as $meta_key => $meta_values )
 		{
 			if ( FALSE !== strpos( $meta_key, '_thumbnail_id' ) )
 			{
