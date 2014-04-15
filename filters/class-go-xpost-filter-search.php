@@ -79,6 +79,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// exclude some categories from Pro
 		if ( 'research' != go_config()->get_property_slug() )
 		{
+			//@TODO: These need to be removed at some point
 			$invalid_categories = array(
 				// We don't want curated links from pro going into search
 				'links',
