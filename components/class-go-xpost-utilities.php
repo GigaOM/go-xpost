@@ -833,8 +833,11 @@ class GO_XPost_Utilities
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_REQUEST, 401 );
 			}//end if
 		}//end if
-		else // allow Admins to make unsigned requests for easier debugging
+		else
 		{
+			// allow Admins to make unsigned requests for easier debugging
+			/* @TODO check the nonce since we're not checking signature - add a
+			dashboard UI piece that will generate a test URL with nonce we can work with. */
 			$ping_array = $_REQUEST;
 		}//end else
 
