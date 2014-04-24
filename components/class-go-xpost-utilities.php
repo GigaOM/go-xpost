@@ -19,8 +19,8 @@ class GO_XPost_Utilities
 	{
 		// suppressing errors from output buffering because this is precautionary, and will throw a notice in many cases.
 		@ob_end_clean();
-		header('Connection: close');
-		FALSE == $content ? header("Content-Encoding: none\r\n") : header("Content-Encoding: utf-8\r\n");
+		header( 'Connection: close' );
+		FALSE == $content ? header( "Content-Encoding: none\r\n" ) : header( "Content-Encoding: utf-8\r\n" );
 
 		// buffer all upcoming output
 		@ob_start();
@@ -38,7 +38,7 @@ class GO_XPost_Utilities
 		$size = ob_get_length();
 
 		// send headers to tell the browser to close the connection
-		header('Content-Length: ' . $size);
+		header( 'Content-Length: ' . $size );
 
 		// flush all output
 		ob_end_flush();
@@ -93,7 +93,7 @@ class GO_XPost_Utilities
 		$r->file->url = wp_get_attachment_url( $post_id );
 
 		if ( ! $r->file->url )
-		{			
+		{
 			apply_filters( 'go_slog', 'go-xpost-get-attachment-url-failed', 'Failed to get the file url', array( 'post_id' => $post_id ) );
 		} // END if
 
@@ -129,7 +129,7 @@ class GO_XPost_Utilities
 		$post_id = $this->sanitize_post_id( $post_id );
 
 		// confirm that the requested post exists
-		if ( ! get_post( $post_id ))
+		if ( ! get_post( $post_id ) )
 		{
 			return $this->error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: ' . $post_id . ')', $r->post );
 		}//end if
@@ -158,7 +158,7 @@ class GO_XPost_Utilities
 		}//end foreach
 
 		// get the terms
-		foreach( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $r->post->post_type ) ) as $term )
+		foreach ( (array) wp_get_object_terms( $post_id, get_object_taxonomies( $r->post->post_type ) ) as $term )
 		{
 			$r->terms[ $term->taxonomy ][] = $term->name;
 		}//end foreach
@@ -311,7 +311,7 @@ class GO_XPost_Utilities
 		}//end if
 
 		// don't ping the same endpoint multiple times for the same post for the same change
-		if ( isset( $this->pinged[ $endpoint .' '. $post_id ] ))
+		if ( isset( $this->pinged[ $endpoint .' '. $post_id ] ) )
 		{
 			return;
 		}//end if
@@ -383,8 +383,8 @@ class GO_XPost_Utilities
 		$signature  = $ping_array['signature'];
 		unset( $ping_array['signature'] );
 
-		// die if the signature doesn't match
-		if ( ! is_user_logged_in() && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
+		// die if user is not Admin and the signature doesn't match
+		if ( ! current_user_can( 'manage_options' ) && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-ping', 'Unauthorized activity', $ping_array, 401 );
 		}//end if
@@ -553,7 +553,7 @@ class GO_XPost_Utilities
 			@unlink( $file['file'] );
 			return $this->error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3$s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		}//end if
-		elseif ( isset($headers['content-length']) && filesize( $file['file'] ) != $headers['content-length'] )
+		elseif ( isset( $headers['content-length'] ) && filesize( $file['file'] ) != $headers['content-length'] )
 		{
 			@unlink( $file['file'] );
 			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
@@ -667,7 +667,7 @@ class GO_XPost_Utilities
 		// look up parent post, fail if it doesn't exist
 		if ( isset( $post->parent ) && ( ! $parent_id = $this->post_exists( $post->parent ) ) )
 		{
-			return $this->error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data($post) );
+			return $this->error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data( $post ) );
 		}//end if
 
 		// slog if we don't have expected author data
@@ -764,7 +764,7 @@ class GO_XPost_Utilities
 
 		// update the comment_count from the post meta because
 		// wp_insert_post() does not update that field
-		$this->update_comment_count( $post_id, 0, 0 );
+		$this->update_comment_count( $post_id );
 
 		$config = apply_filters( 'go_config', array(), 'go-xpost' );
 
@@ -804,12 +804,12 @@ class GO_XPost_Utilities
 	 * update the post comment_count based on its go_xpost_comment_count
 	 * post meta value
 	 */
-	public function update_comment_count( $post_id, $new, $old )
+	public function update_comment_count( $post_id )
 	{
 		if ( $xpost_comment_count = get_post_meta( $post_id, 'go_xpost_comment_count', TRUE ) )
 	 	{
 			global $wpdb;
-			$wpdb->update( $wpdb->posts, array( 'comment_count' => $xpost_comment_count), array( 'ID' => $post_id ) );
+			$wpdb->update( $wpdb->posts, array( 'comment_count' => $xpost_comment_count ), array( 'ID' => $post_id ) );
 			clean_post_cache( $post_id );
 	 	}
 	}//END update_comment_count
@@ -819,8 +819,8 @@ class GO_XPost_Utilities
 	 */
 	public function send_post()
 	{
-		// enforce the signed request for users who are not logged in
-		if ( ! is_user_logged_in() )
+		// enforce the signed request for users who are not Administrators
+		if ( ! current_user_can( 'manage_options' ) )
 		{
 			// validate the signature of the sending site
 			$ping_array = $_REQUEST;
@@ -833,8 +833,11 @@ class GO_XPost_Utilities
 				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_REQUEST, 401 );
 			}//end if
 		}//end if
-		else // allow logged in users to make unsigned requests for easier debugging
+		else
 		{
+			// allow Admins to make unsigned requests for easier debugging
+			/* @TODO check the nonce since we're not checking signature - add a
+			dashboard UI piece that will generate a test URL with nonce we can work with. */
 			$ping_array = $_REQUEST;
 		}//end else
 
@@ -992,7 +995,7 @@ class GO_XPost_Utilities
 		} // END if
 
 		// Get parent
-		if( $comment->comment_parent )
+		if ( $comment->comment_parent )
 		{
 			if ( $parent = get_comment( $comment->comment_parent ) )
 			{
@@ -1076,7 +1079,7 @@ class GO_XPost_Utilities
 	public function get_verified_term_ids( $taxonomy, $term_names )
 	{
 		$term_ids = array();
-		foreach( $term_names as $term_name )
+		foreach ( $term_names as $term_name )
 		{
 			$term_obj = get_term_by( 'name', $term_name, $taxonomy );
 
@@ -1116,7 +1119,7 @@ class GO_XPost_Utilities
 
 		$date->modify( $offset .' hours' );
 
-		return $date->format('Y-m-d H:i:s');
+		return $date->format( 'Y-m-d H:i:s' );
 	}//end utc_to_local
 
 	/**
