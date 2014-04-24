@@ -28,7 +28,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 
 		return TRUE;
 	} // END should_send_post
-	
+
 	/**
 	 * Alter the $xpost object before returning it to the endpoint
 	 * Note: $xpost is NOT a WP_Post object, but it contains one in $xpost->post
@@ -43,7 +43,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		$xpost->post->post_type = 'post';
 
 		// replace the content with the excerpt
-		if ( ! empty( $xpost->post->post_excerpt ))
+		if ( ! empty( $xpost->post->post_excerpt ) )
 		{
 			$xpost->post->post_content = $xpost->post->post_excerpt;
 		}
@@ -66,12 +66,11 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 			// this is the older postmeta prior to the creation of the new report post type
 			$xpost->post->post_title = $xpost->meta['gomcom_ingestion_headline'];
 		}
-				
+
 		if ( $marketing_title = go_reports()->get_post_custom( $post_id, 'marketing-title' ) )
 		{
 			$xpost->post->post_title = $marketing_title;
 		} // END if
-		
 
 		// unset unused meta
 		unset( $xpost->meta['document_full_id'] );
@@ -88,14 +87,22 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		unset( $xpost->meta['gomcom_ingestion_headline'] );
 		unset( $xpost->meta['gomcom_ingestion_excerpt'] );
 
+
+		//we'll use this a couple of times
+		$display_name = get_the_author_meta( 'display_name', $xpost->post->post_author );
+
 		// set guest author data
-		$xpost->meta['guest_author'] = get_the_author_meta( 'display_name', $xpost->post->post_author );
+		$xpost->meta['guest_author'] = $display_name;
+
+		//And for my next trick: getting the analyst page from a guest author!
+		$link = get_permalink( get_page_by_title( $display_name, 'OBJECT', 'go-analyst' )->ID );
+
 		$xpost->meta['go_guest']     = array(
 			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
 			'author_override'  => TRUE,
 			'source_override'  => FALSE,
-			'author_name'      => get_the_author_meta( 'display_name', $xpost->post->post_author ),
-			'author_url'       => get_author_posts_url( $xpost->post->post_author ),
+			'author_name'      => $display_name,
+			'author_url'       => $link,
 			'source_url'       => '',
 			'publication_name' => '',
 			'publication_url'  => '',
@@ -118,5 +125,5 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		unset( $xpost->terms['author'] );
 
 		return $xpost;
-	} // END post_filter
-} // END GO_XPost_Filter_Reports
+	}// END post_filter
+}// END GO_XPost_Filter_Reports
