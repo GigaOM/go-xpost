@@ -383,7 +383,7 @@ class GO_XPost_Utilities
 		$signature  = $ping_array['signature'];
 		unset( $ping_array['signature'] );
 
-		// die if use ris not Admin and the signature doesn't match
+		// die if user is not Admin and the signature doesn't match
 		if ( ! current_user_can( 'manage_options' ) && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
 			$this->error_and_die( 'go-xpost-invalid-ping', 'Unauthorized activity', $ping_array, 401 );
