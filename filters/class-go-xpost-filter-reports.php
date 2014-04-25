@@ -87,22 +87,15 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		unset( $xpost->meta['gomcom_ingestion_headline'] );
 		unset( $xpost->meta['gomcom_ingestion_excerpt'] );
 
-
-		//we'll use this a couple of times
-		$display_name = get_the_author_meta( 'display_name', $xpost->post->post_author );
-
 		// set guest author data
-		$xpost->meta['guest_author'] = $display_name;
-
-		//And for my next trick: getting the analyst page from a guest author!
-		$link = get_permalink( get_page_by_title( $display_name, 'OBJECT', 'go-analyst' )->ID );
+		$xpost->meta['guest_author'] = get_the_author_meta( 'display_name', $xpost->post->post_author );
 
 		$xpost->meta['go_guest']     = array(
 			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
 			'author_override'  => TRUE,
 			'source_override'  => FALSE,
-			'author_name'      => $display_name,
-			'author_url'       => $link,
+			'author_name'      => $xpost->meta['guest_author'],
+			'author_url'       => get_permalink(  go_analyst()->get_post_by_user_id( $xpost->post->post_author )->ID ),
 			'source_url'       => '',
 			'publication_name' => '',
 			'publication_url'  => '',
