@@ -307,6 +307,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
 				$xpost->terms['go-type'][] = 'Event';
+				$xpost->terms[ 'post_tag' ][] = $xpost->post->post_title;
+				$xpost->terms[ 'post_tag' ][] = substr( $xpost->post->post_title, 0, -5 );
+
 				// get the terms for the event
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
@@ -341,6 +344,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
 				$xpost->terms['go-type'][] = 'Event Session';
+
+				$xpost->post->post_content = $xpost->post->post_excerpt;
+
+				$xpost->terms[ 'post_tag' ][] = $xpost->parent->post_title;
+				$xpost->terms[ 'post_tag' ][] = substr( $xpost->parent->post_title, 0, -5 );
+
 				// get the terms
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
@@ -384,7 +393,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		if ( ! count( $xpost->terms['go-type'] ) )
 		{
 			$xpost->terms['go-type'][] = 'Blog Post';
-		} // end else
+		} // end if
 
 		// search does not need the thumbnails
 		foreach ( $xpost->meta as $meta_key => $meta_values )
