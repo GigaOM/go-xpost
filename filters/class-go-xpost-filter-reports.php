@@ -104,7 +104,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 			$xpost->post->post_content .= $toc;
 		}//END if
 
-		// go_shortpost and go-report don't exist on GO or pC
+		// go-report doesn't exist on GO
 		$xpost->post->post_type = 'post';
 
 		// unset unused meta
