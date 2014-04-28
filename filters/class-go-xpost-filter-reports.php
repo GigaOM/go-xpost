@@ -153,8 +153,6 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		unset( $xpost->terms['author'] );
 		unset( $xpost->terms['category'] );
 
-		do_action( 'debug_robot', print_r( $xpost, TRUE ) );
-
 		return $xpost;
 	}// END post_filter
 }// END GO_XPost_Filter_Reports
