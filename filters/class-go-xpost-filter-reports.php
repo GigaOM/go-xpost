@@ -14,17 +14,33 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 	 */
 	public function should_send_post( $post_id )
 	{
-		// to actually get all reports, we should check (in pseudocode):
-		// post_type=go-report || ( post_type=post && array_intersect( $post_category_slugs , $report_category_slugs )
 		$valid_post_types = array(
-			// 'go_shortpost', // analyst blog posts DISABLED for now, as that would be a change from previous behavior
 			'go-report',
+			'post',
 		);
 
 		if ( ! in_array( get_post( $post_id )->post_type, $valid_post_types ) )
 		{
 			return FALSE;
 		} // END if
+
+		$today18mos = new DateTime();
+		$post_date = new DateTime( get_post( $post_id )->post_date );
+
+		//nothing older than 18 months
+		if ( $post_date < $today18mos->sub( new DateInterval( 'P18M' ) ) )
+		{
+			return FALSE;
+		}//END if
+
+		$meta = get_post_meta( $post_id, 'go-research-options', TRUE );
+		$today120days = new DateTime();
+
+		//no quarterly wrap-ups older than 120 days
+		if ( 'quarterly-wrap-up' == $meta['content-type'] && $post_date < $today120days->sub( new DateInterval( 'P120D' ) ) )
+		{
+			return FALSE;
+		}//END if
 
 		return TRUE;
 	} // END should_send_post
@@ -39,38 +55,57 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 	 */
 	public function post_filter( $xpost, $post_id )
 	{
-		// go_shortpost and go-report don't exist on GO or pC
-		$xpost->post->post_type = 'post';
-
 		// replace the content with the excerpt
 		if ( ! empty( $xpost->post->post_excerpt ) )
 		{
 			$xpost->post->post_content = $xpost->post->post_excerpt;
 		}
 
-		// replace the excerpt with the shorter gomcom excerpt
-		if ( ! empty( $xpost->meta['gomcom_ingestion_excerpt'] ) )
-		{
-			// this is the older postmeta prior to the creation of the new report post type
-			$xpost->post->post_excerpt = $xpost->meta['gomcom_ingestion_excerpt'];
-		}
 
-		if ( $teaser = go_reports()->get_post_custom( $post_id, 'teaser' ) )
+		if ( 'go-report' == $xpost->post->post_type )
 		{
-			$xpost->post->post_excerpt = $teaser;
-		} // END if
+			// replace the excerpt with the shorter gomcom excerpt
+			if ( ! empty( $xpost->meta['gomcom_ingestion_excerpt'] ) )
+			{
+				// this is the older postmeta prior to the creation of the new report post type
+				$xpost->post->post_excerpt = $xpost->meta['gomcom_ingestion_excerpt'];
+			}
 
-		// replace the title with the gomcom title
-		if ( ! empty( $xpost->meta['gomcom_ingestion_headline'] ) )
-		{
-			// this is the older postmeta prior to the creation of the new report post type
-			$xpost->post->post_title = $xpost->meta['gomcom_ingestion_headline'];
-		}
+			if ( $teaser = go_reports()->get_post_custom( $post_id, 'teaser' ) )
+			{
+				$xpost->post->post_excerpt = $teaser;
+			} // END if
 
-		if ( $marketing_title = go_reports()->get_post_custom( $post_id, 'marketing-title' ) )
-		{
-			$xpost->post->post_title = $marketing_title;
-		} // END if
+			// replace the title with the gomcom title
+			if ( ! empty( $xpost->meta['gomcom_ingestion_headline'] ) )
+			{
+				// this is the older postmeta prior to the creation of the new report post type
+				$xpost->post->post_title = $xpost->meta['gomcom_ingestion_headline'];
+			}
+
+			if ( $marketing_title = go_reports()->get_post_custom( $post_id, 'marketing-title' ) )
+			{
+				$xpost->post->post_title = $marketing_title;
+			} // END if
+
+			$child_meta = $xpost->meta['go-report-children'];
+
+			$toc = '<p>Table of Contents</p><ol>';
+
+			foreach ( $child_meta as $child )
+			{
+				$toc .= '<li>';
+				$toc .= '<a href="' . get_permalink( $child->ID ) . '">' . $child->post_title . '</a>';
+				$toc .= '</li>';
+			}//END foreach
+
+			$toc .= '</ol>';
+
+			$xpost->post->post_content .= $toc;
+		}//END if
+
+		// go_shortpost and go-report don't exist on GO or pC
+		$xpost->post->post_type = 'post';
 
 		// unset unused meta
 		unset( $xpost->meta['document_full_id'] );
@@ -108,14 +143,17 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 
 		// merge all the terms into the post_tags
 		$xpost->terms['post_tag'] = array_merge(
-			(array) $xpost->terms['post_tag'],
 			(array) $xpost->terms['company'],
+			(array) $xpost->terms['post_tag'],
+			(array) $xpost->terms['person'],
 			(array) $xpost->terms['technology']
 		);
 
 		// unset the unused taxonomies
-		unset( $xpost->terms['category'] );
 		unset( $xpost->terms['author'] );
+		unset( $xpost->terms['category'] );
+
+		do_action( 'debug_robot', print_r( $xpost, TRUE ) );
 
 		return $xpost;
 	}// END post_filter
