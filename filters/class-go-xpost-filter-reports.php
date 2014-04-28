@@ -24,20 +24,18 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 			return FALSE;
 		} // END if
 
-		$today18mos = new DateTime();
-		$post_date = new DateTime( get_post( $post_id )->post_date );
+		//we're ignoring timezone, since the difference is larege enough it shouldn't matter.
+		$interval = time() - strtotime( get_post( $post_id )->post_date );
+		$meta = get_post_meta( $post_id, 'go-research-options', TRUE );
 
-		//nothing older than 18 months
-		if ( $post_date < $today18mos->sub( new DateInterval( 'P18M' ) ) )
+		//no quarterly wrap-ups older than 120 days
+		if ( 'quarterly-wrap-up' == $meta['content-type'] && (  10368000 < $interval ) )
 		{
 			return FALSE;
 		}//END if
 
-		$meta = get_post_meta( $post_id, 'go-research-options', TRUE );
-		$today120days = new DateTime();
-
-		//no quarterly wrap-ups older than 120 days
-		if ( 'quarterly-wrap-up' == $meta['content-type'] && $post_date < $today120days->sub( new DateInterval( 'P120D' ) ) )
+		//nothing older than 18 months
+		if ( 47433514 < $interval )
 		{
 			return FALSE;
 		}//END if
@@ -94,15 +92,19 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 
 			foreach ( $child_meta as $child )
 			{
-				$toc .= '<li>';
-				$toc .= '<a href="' . get_permalink( $child->ID ) . '">' . $child->post_title . '</a>';
-				$toc .= '</li>';
+				$toc .= sprintf(
+					'<li><a href="%s">%s</a></li>',
+					get_permalink( $child->ID ),
+					$child->post_title
+				);
 			}//END foreach
 
 			$toc .= '</ol>';
 
 			$xpost->post->post_content .= $toc;
 		}//END if
+
+		do_action( 'debug_robot', print_r( $xpost->post->post_content, TRUE ) );
 
 		// go-report doesn't exist on GO
 		$xpost->post->post_type = 'post';
@@ -126,14 +128,14 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		$xpost->meta['guest_author'] = get_the_author_meta( 'display_name', $xpost->post->post_author );
 
 		$xpost->meta['go_guest']     = array(
-			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
-			'author_override'  => TRUE,
-			'source_override'  => FALSE,
 			'author_name'      => $xpost->meta['guest_author'],
-			'author_url'       => get_permalink(  go_analyst()->get_post_by_user_id( $xpost->post->post_author )->ID ),
-			'source_url'       => '',
+			'author_override'  => TRUE,
+			'author_url'       => get_author_posts_url( $xpost->post->post_author ),
+			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
 			'publication_name' => '',
 			'publication_url'  => '',
+			'source_override'  => FALSE,
+			'source_url'       => '',
 		);
 
 		// reports get an extra taxonomy term
@@ -144,8 +146,8 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		// merge all the terms into the post_tags
 		$xpost->terms['post_tag'] = array_merge(
 			(array) $xpost->terms['company'],
-			(array) $xpost->terms['post_tag'],
 			(array) $xpost->terms['person'],
+			(array) $xpost->terms['post_tag'],
 			(array) $xpost->terms['technology']
 		);
 
