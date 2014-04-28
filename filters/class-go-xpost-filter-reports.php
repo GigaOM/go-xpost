@@ -15,8 +15,8 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 	public function should_send_post( $post_id )
 	{
 		$valid_post_types = array(
+			//'post',
 			'go-report',
-			'post',
 		);
 
 		if ( ! in_array( get_post( $post_id )->post_type, $valid_post_types ) )
@@ -103,8 +103,6 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 
 			$xpost->post->post_content .= $toc;
 		}//END if
-
-		do_action( 'debug_robot', print_r( $xpost->post->post_content, TRUE ) );
 
 		// go-report doesn't exist on GO
 		$xpost->post->post_type = 'post';
