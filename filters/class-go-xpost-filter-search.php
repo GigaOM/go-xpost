@@ -303,8 +303,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			//set the event
 			$_REQUEST['post'] = $post_id;
 			$event = go_events()->event()->get_the_event();
-			$xpost->terms[ 'post_tag' ][] = preg_replace( '/-[0-9]+$/', '', $event->post_name );
-			$xpost->terms[ 'post_tag' ][] = get_the_title( $event->ID );
+			$title = get_the_title( $event->ID );
+			$xpost->terms[ 'post_tag' ][] = $title;
+			$xpost->terms[ 'post_tag' ][] = preg_replace( '/\s[0-9]+$/', '', $title );
 
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
