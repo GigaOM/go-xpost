@@ -85,7 +85,18 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 				$xpost->post->post_title = $marketing_title;
 			} // END if
 
-			$toc = '<p>Table of Contents</p>' . go_reports()->table_of_contents( FALSE, $post_id );
+			//$toc = '<p>Table of Contents</p>' . go_reports()->table_of_contents( FALSE, $post_id );
+			//@TODO: swap 90-99 for the line above when we get go-reports global dependency straightened out
+			$toc = '<p>Table of Contents</p><ol>';
+			foreach ( $child_meta as $child )
+			{
+				$toc .= sprintf(
+					'<li><a href="%s">%s</a></li>',
+					get_permalink( $child->ID ),
+					$child->post_title
+				);
+			}//END foreach
+			$toc .= '</ol>';
 
 			$xpost->post->post_content .= $toc;
 		}//END if
