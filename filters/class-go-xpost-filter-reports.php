@@ -14,10 +14,8 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 	 */
 	public function should_send_post( $post_id )
 	{
-		// to actually get all reports, we should check (in pseudocode):
-		// post_type=go-report || ( post_type=post && array_intersect( $post_category_slugs , $report_category_slugs )
 		$valid_post_types = array(
-			// 'go_shortpost', // analyst blog posts DISABLED for now, as that would be a change from previous behavior
+			//'post',
 			'go-report',
 		);
 
@@ -26,9 +24,24 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 			return FALSE;
 		} // END if
 
+		//we're ignoring timezone, since the difference is larege enough it shouldn't matter.
+		$interval = time() - strtotime( get_post( $post_id )->post_date_gmt );
+		$meta = get_post_meta( $post_id, 'go-research-options', TRUE );
+
+		if ( 47433514 < $interval )
+		{
+			//nothing older than 18 months
+			return FALSE;
+		}//END if
+		elseif ( 'quarterly-wrap-up' == $meta['content-type'] && (  10396386 < $interval ) )
+		{
+			//no quarterly wrap-ups older than 120 days
+			return FALSE;
+		}//END elseif
+
 		return TRUE;
 	} // END should_send_post
-	
+
 	/**
 	 * Alter the $xpost object before returning it to the endpoint
 	 * Note: $xpost is NOT a WP_Post object, but it contains one in $xpost->post
@@ -39,39 +52,57 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 	 */
 	public function post_filter( $xpost, $post_id )
 	{
-		// go_shortpost and go-report don't exist on GO or pC
-		$xpost->post->post_type = 'post';
-
 		// replace the content with the excerpt
-		if ( ! empty( $xpost->post->post_excerpt ))
+		if ( ! empty( $xpost->post->post_excerpt ) )
 		{
 			$xpost->post->post_content = $xpost->post->post_excerpt;
 		}
 
-		// replace the excerpt with the shorter gomcom excerpt
-		if ( ! empty( $xpost->meta['gomcom_ingestion_excerpt'] ) )
-		{
-			// this is the older postmeta prior to the creation of the new report post type
-			$xpost->post->post_excerpt = $xpost->meta['gomcom_ingestion_excerpt'];
-		}
 
-		if ( $teaser = go_reports()->get_post_custom( $post_id, 'teaser' ) )
+		if ( 'go-report' == $xpost->post->post_type )
 		{
-			$xpost->post->post_excerpt = $teaser;
-		} // END if
+			// replace the excerpt with the shorter gomcom excerpt
+			if ( ! empty( $xpost->meta['gomcom_ingestion_excerpt'] ) )
+			{
+				// this is the older postmeta prior to the creation of the new report post type
+				$xpost->post->post_excerpt = $xpost->meta['gomcom_ingestion_excerpt'];
+			}
 
-		// replace the title with the gomcom title
-		if ( ! empty( $xpost->meta['gomcom_ingestion_headline'] ) )
-		{
-			// this is the older postmeta prior to the creation of the new report post type
-			$xpost->post->post_title = $xpost->meta['gomcom_ingestion_headline'];
-		}
-				
-		if ( $marketing_title = go_reports()->get_post_custom( $post_id, 'marketing-title' ) )
-		{
-			$xpost->post->post_title = $marketing_title;
-		} // END if
-		
+			if ( $teaser = go_reports()->get_post_custom( $post_id, 'teaser' ) )
+			{
+				$xpost->post->post_excerpt = $teaser;
+			} // END if
+
+			// replace the title with the gomcom title
+			if ( ! empty( $xpost->meta['gomcom_ingestion_headline'] ) )
+			{
+				// this is the older postmeta prior to the creation of the new report post type
+				$xpost->post->post_title = $xpost->meta['gomcom_ingestion_headline'];
+			}
+
+			if ( $marketing_title = go_reports()->get_post_custom( $post_id, 'marketing-title' ) )
+			{
+				$xpost->post->post_title = $marketing_title;
+			} // END if
+
+			//$toc = '<p>Table of Contents</p>' . go_reports()->table_of_contents( FALSE, $post_id );
+			//@TODO: swap 90-99 for the line above when we get go-reports global dependency straightened out
+			$toc = '<p>Table of Contents</p><ol>';
+			foreach ( $child_meta as $child )
+			{
+				$toc .= sprintf(
+					'<li><a href="%s">%s</a></li>',
+					get_permalink( $child->ID ),
+					get_title( $child->ID )
+				);
+			}//END foreach
+			$toc .= '</ol>';
+
+			$xpost->post->post_content .= $toc;
+		}//END if
+
+		// go-report doesn't exist on GO
+		$xpost->post->post_type = 'post';
 
 		// unset unused meta
 		unset( $xpost->meta['document_full_id'] );
@@ -90,15 +121,16 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 
 		// set guest author data
 		$xpost->meta['guest_author'] = get_the_author_meta( 'display_name', $xpost->post->post_author );
+
 		$xpost->meta['go_guest']     = array(
-			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
+			'author_name'      => $xpost->meta['guest_author'],
 			'author_override'  => TRUE,
-			'source_override'  => FALSE,
-			'author_name'      => get_the_author_meta( 'display_name', $xpost->post->post_author ),
 			'author_url'       => get_author_posts_url( $xpost->post->post_author ),
-			'source_url'       => '',
+			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
 			'publication_name' => '',
 			'publication_url'  => '',
+			'source_override'  => FALSE,
+			'source_url'       => '',
 		);
 
 		// reports get an extra taxonomy term
@@ -108,15 +140,16 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 
 		// merge all the terms into the post_tags
 		$xpost->terms['post_tag'] = array_merge(
-			(array) $xpost->terms['post_tag'],
 			(array) $xpost->terms['company'],
+			(array) $xpost->terms['person'],
+			(array) $xpost->terms['post_tag'],
 			(array) $xpost->terms['technology']
 		);
 
 		// unset the unused taxonomies
-		unset( $xpost->terms['category'] );
 		unset( $xpost->terms['author'] );
+		unset( $xpost->terms['category'] );
 
 		return $xpost;
-	} // END post_filter
-} // END GO_XPost_Filter_Reports
+	}// END post_filter
+}// END GO_XPost_Filter_Reports
