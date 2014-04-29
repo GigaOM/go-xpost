@@ -28,14 +28,14 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		$interval = time() - strtotime( get_post( $post_id )->post_date_gmt );
 		$meta = get_post_meta( $post_id, 'go-research-options', TRUE );
 
-		if ( 'quarterly-wrap-up' == $meta['content-type'] && (  10368000 < $interval ) )
-		{
-			//no quarterly wrap-ups older than 120 days
-			return FALSE;
-		}//END if
-		elseif ( 47433514 < $interval )
+		if ( 47433514 < $interval )
 		{
 			//nothing older than 18 months
+			return FALSE;
+		}//END if
+		elseif ( 'quarterly-wrap-up' == $meta['content-type'] && (  10396386 < $interval ) )
+		{
+			//no quarterly wrap-ups older than 120 days
 			return FALSE;
 		}//END elseif
 
@@ -93,7 +93,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 				$toc .= sprintf(
 					'<li><a href="%s">%s</a></li>',
 					get_permalink( $child->ID ),
-					$child->post_title
+					get_title( $child->ID )
 				);
 			}//END foreach
 			$toc .= '</ol>';
