@@ -309,7 +309,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
 				$xpost->terms['go-type'][] = 'Event';
-
 				// get the terms for the event
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
@@ -344,9 +343,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
 				$xpost->terms['go-type'][] = 'Event Session';
-
-				$xpost->post->post_content = $xpost->post->post_excerpt;
-
 				// get the terms
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
