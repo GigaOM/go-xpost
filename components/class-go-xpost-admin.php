@@ -32,12 +32,12 @@ class GO_XPost_Admin
 		);
 
 		$this->update_settings();
-	} // END admin_init
+	} // end admin_init
 
 	public function admin_menu()
 	{
 		add_options_page( $this->name . ' Settings', $this->short_name . ' Settings', 'manage_options', $this->slug . '-settings', array( $this, 'settings' ) );
-	} // END admin_menu
+	} // end admin_menu
 
 	public function settings()
 	{
@@ -60,7 +60,7 @@ class GO_XPost_Admin
 			<div class="<?php echo $this->slug; ?>-filter">
 				<label for="<?php echo $this->slug; ?>-filter-keynum"><strong>Filter</strong></label><br />
 				<select name='<?php echo $this->slug; ?>-filter-keynum' class='select' id="<?php echo $this->slug; ?>-filter-keynum">
-					<?php echo $this->_build_options( $filters, ''); ?>
+					<?php echo $this->_build_options( $filters, '' ); ?>
 				</select>
 			</div>
 			<div class="<?php echo $this->slug; ?>-endpoint">
@@ -81,7 +81,7 @@ class GO_XPost_Admin
 				<?php
 			}// end if
 			?>
-			<?php screen_icon('options-general'); ?>
+			<?php screen_icon( 'options-general' ); ?>
 			<?php echo $add_link; ?>
 			<h2><?php echo $this->name ?> Settings</h2>
 			<form method="post">
@@ -103,12 +103,12 @@ class GO_XPost_Admin
 							</div>
 							<div class="<?php echo $this->slug; ?>-endpoint">
 								<label for="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>"><strong>Endpoint</strong></label><br />
-								<input class="input" type="text" name="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" value="<?php echo esc_attr($item['endpoint']); ?>" placeholder="http://domain/wp-admin/admin-ajax.php" />
+								<input class="input" type="text" name="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" value="<?php echo esc_attr( $item['endpoint'] ); ?>" placeholder="http://domain/wp-admin/admin-ajax.php" />
 							</div>
 							<input type="hidden" name="<?php echo $this->slug; ?>-number-<?php echo $key + 1; ?>" value="<?php echo $key + 1; ?>" class="number" />
 						</li>
 						<?php
-					} // END foreach
+					} // end foreach
 					?>
 				</ul>
 
@@ -120,7 +120,7 @@ class GO_XPost_Admin
 
 				<div class="<?php echo $this->slug; ?>-method">
 					<label for="<?php echo $this->slug; ?>-method"><strong>Request Method</strong></label><br />
-					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php if ( 'GET' == $method || !$method ) { echo 'checked'; } ?>/> GET<br />
+					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php if ( 'GET' == $method || ! $method ) { echo 'checked'; } ?>/> GET<br />
 					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php if ( 'POST' == $method ) { echo 'checked'; } ?>/> POST<br />
 				</div>
 
@@ -142,7 +142,7 @@ class GO_XPost_Admin
 			</form>
 		</div>
 		<?php
-	} // END settings
+	} // end settings
 
 	public function update_settings()
 	{
@@ -157,13 +157,13 @@ class GO_XPost_Admin
 			return;
 		}// end if
 
-		$numbers_array = explode( ',', $_POST[$this->slug . '-setting-numbers'] );
+		$numbers_array = explode( ',', $_POST[ $this->slug . '-setting-numbers' ] );
 
 		$compiled_settings = array();
 
 		foreach ( $numbers_array as $number )
 		{
-			if ( isset( $_POST[$this->slug . '-endpoint-' . $number] ) && preg_match( '#((https?)\:\/\/)#', $_POST[$this->slug . '-endpoint-' . $number] ) )
+			if ( isset( $_POST[ $this->slug . '-endpoint-' . $number ] ) && preg_match( '#((https?)\:\/\/)#', $_POST[ $this->slug . '-endpoint-' . $number ] ) )
 			{
 				$compiled_settings[] = array(
 					'filter'   => $_POST[ $this->slug . '-filter-' . $number ],
@@ -171,13 +171,13 @@ class GO_XPost_Admin
 					//'secret'   => $_POST[ $this->slug . '-secret-' . $number ],
 				);
 			}// end if
-		} // END foreach
+		} // end foreach
 
 		update_option( $this->slug . '-settings', $compiled_settings );
 		update_option( $this->slug . '-secret', $_POST[ $this->slug . '-secret' ] );
 		update_option( $this->slug . '-method', $_POST[ $this->slug . '-method' ] );
 		$_POST['updated'] = TRUE;
-	} // END update_settings
+	} // end update_settings
 
 	private function _get_filters()
 	{
@@ -197,17 +197,17 @@ class GO_XPost_Admin
 			$name = '';
 
 			// only load filters that have names, this will skip the abstract parent
-			if ( preg_match( '|Filter Name:(.*)$|mi', $template_data, $name ))
+			if ( preg_match( '|Filter Name:(.*)$|mi', $template_data, $name ) )
 			{
 				// remove the class-go-xpost-filter portion of the file
 				$filter = substr( basename( $file, '.php' ), 22 );
 
-				$filters[$filter] = $filter . ' - ' . _cleanup_header_comment( $name[1] );
+				$filters[ $filter ] = $filter . ' - ' . _cleanup_header_comment( $name[1] );
 			}// end if
 		}// end foreach
 
 		return $filters;
-	} // END _get_filters
+	} // end _get_filters
 
 	private function _build_options( $options, $existing )
 	{
@@ -219,7 +219,7 @@ class GO_XPost_Admin
 		}// end foreach
 
 		return $select_options;
-	}// END _build_options
+	}// end _build_options
 
 	/**
 	 * Hooked to admin ajax request
@@ -230,7 +230,7 @@ class GO_XPost_Admin
 		{
 			return;
 		}// end if
-		
+
 		$batch_name = sanitize_key( $_GET['batch_name'] );
 		$post_types = sanitize_text_field( $_GET['post_types'] );
 		$num = isset( $_GET['num'] ) ? absint( $_GET['num'] ) : 10;
@@ -244,7 +244,7 @@ class GO_XPost_Admin
 				go_xpost()->process_post( $post->ID );
 				wp_set_post_terms( $post->ID, $batch_name, $this->batch_taxonomy, true );
 
-				sleep(2);
+				sleep( 2 );
 			}// end if
 		}// end foreach
 
@@ -303,7 +303,35 @@ class GO_XPost_Admin
 		);
 		$query = new WP_Query( $args );
 
-		return $query->posts;
+		$posts = $query->posts;
+
+		//Future go-events need to go as well
+		$intersect = array_intersect( $post_types, array( 'go-events-event', 'go-events-session' ) );
+
+		if ( 0 < count( $intersect ) )
+		{
+			$new_limit = $limit - count( $posts );
+			$args2 = array(
+				'post_status' => array( 'future' ),
+				'post_type' => $intersect,
+				'tax_query' => array(
+					array(
+						'taxonomy' => $this->batch_taxonomy,
+						'field' => 'slug',
+						'terms' => sanitize_key( $batch_name ),
+						'operator' => 'NOT IN',
+					),
+				),
+				'orderby' => 'ID',
+				'order' => 'DESC',
+				'posts_per_page' => $limit,
+			);
+			$query2 = new WP_Query( $args2 );
+
+			$posts = array_merge( $posts, $query2->posts );
+		}// end if
+
+		return $posts;
 	}// end get_posts_to_batch
 }//end class
 

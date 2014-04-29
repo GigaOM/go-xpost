@@ -223,8 +223,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				} // end elseif
 			} // end elseif
 		} // end if
-
-		if ( 'gigaom' == go_config()->get_property_slug() )
+		elseif ( 'gigaom' == go_config()->get_property_slug() )
 		{
 			// special handling for excerpts on link posts
 			$go_post = new GO_Theme_Post( $post );
@@ -282,23 +281,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->terms['go-type'][] = 'Report';
 				} // end if
 			} // end if
-		} // end if
-
-		if ( 'go-datamodule' == $xpost->post->post_type )
-		{
-			// set the type and availability
-			$xpost->terms['go-type'][] = 'Chart';
-			$availability = 'Subscription';
-
-			// remove the parent ID and object
-			$xpost->post->post_parent = 0;
-			unset( $xpost->parent );
-
-			// remove the datamodule meta, as it's unused on Search.GO
-			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
-		} // end if
-
-		if ( 'events' == go_config()->get_property_slug() )
+		} // end elseif
+		elseif ( 'events' == go_config()->get_property_slug() )
 		{
 			//set the event
 			$_REQUEST['post'] = $post_id;
@@ -313,7 +297,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// get the terms for the event
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
-					$xpost->terms[ $term->taxonomy ][] = $term->name;
+					$this->maybe_add_taxonomy( $xpost, $term );
 				}// end foreach
 
 				$sessions = get_children( 'post_parent=' . $post_id . '&post_type=go-events-session' );
@@ -330,7 +314,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 						// get the terms for the each session and add to the event?
 						foreach ( $session_terms as $term )
 						{
-							$xpost->terms[ $term->taxonomy ][] = $term->name;
+							$this->maybe_add_taxonomy( $xpost, $term );
 						}//end foreach
 					}//end if
 				}//end foreach
@@ -347,7 +331,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// get the terms
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
-					$xpost->terms[ $term->taxonomy ][] = $term->name;
+					if ( ! empty( $term->taxonomy ) )
+					{
+						$this->maybe_add_taxonomy( $xpost, $term );
+					}//end if
 				}// end foreach
 
 				// then make sure each session speaker is also in there (if they aren't added as a person term)
@@ -381,7 +368,21 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			// remove the parent ID and object
 			$xpost->post->post_parent = 0;
 			unset( $xpost->parent );
-		}// end if
+		}// end elseif
+
+		if ( 'go-datamodule' == $xpost->post->post_type )
+		{
+			// set the type and availability
+			$xpost->terms['go-type'][] = 'Chart';
+			$availability = 'Subscription';
+
+			// remove the parent ID and object
+			$xpost->post->post_parent = 0;
+			unset( $xpost->parent );
+
+			// remove the datamodule meta, as it's unused on Search.GO
+			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
+		} // end if
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
@@ -415,6 +416,14 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		return $xpost;
 	} // end post_filter
+
+	public function maybe_add_taxonomy( &$xpost, $term )
+	{
+		if ( ! empty( $taxonomy ) )
+		{
+			$xpost->terms[ $term->taxonomy ][] = $term->name;
+		}//end if
+	}// end maybe_add_taxonomy
 
 	/**
 	 * Cleans up research version of go-type taxonomy terms for use in search
