@@ -25,20 +25,19 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		} // END if
 
 		//we're ignoring timezone, since the difference is larege enough it shouldn't matter.
-		$interval = time() - strtotime( get_post( $post_id )->post_date );
+		$interval = time() - strtotime( get_post( $post_id )->post_date_gmt );
 		$meta = get_post_meta( $post_id, 'go-research-options', TRUE );
 
-		//no quarterly wrap-ups older than 120 days
 		if ( 'quarterly-wrap-up' == $meta['content-type'] && (  10368000 < $interval ) )
 		{
+			//no quarterly wrap-ups older than 120 days
 			return FALSE;
 		}//END if
-
-		//nothing older than 18 months
-		if ( 47433514 < $interval )
+		elseif ( 47433514 < $interval )
 		{
+			//nothing older than 18 months
 			return FALSE;
-		}//END if
+		}//END elseif
 
 		return TRUE;
 	} // END should_send_post
