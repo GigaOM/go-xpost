@@ -89,7 +89,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 			$child_meta = $xpost->meta['go-report-children'];
 
 			$toc = '<p>Table of Contents</p><ol>';
-
+/*
 			foreach ( $child_meta as $child )
 			{
 				$toc .= sprintf(
@@ -98,8 +98,11 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 					$child->post_title
 				);
 			}//END foreach
-
+*/
+			$toc .= go_reports()->table_of_contents( FALSE, $post_id );
 			$toc .= '</ol>';
+
+			do_action( 'debug_robot', print_r( $toc, TRUE ) );
 
 			$xpost->post->post_content .= $toc;
 		}//END if
