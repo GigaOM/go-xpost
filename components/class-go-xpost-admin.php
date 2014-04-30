@@ -310,8 +310,7 @@ class GO_XPost_Admin
 
 		if ( 0 < count( $intersect ) )
 		{
-			$new_limit = $limit - count( $posts );
-			$args2 = array(
+			$future_args = array(
 				'post_status' => array( 'future' ),
 				'post_type' => $intersect,
 				'tax_query' => array(
@@ -326,9 +325,9 @@ class GO_XPost_Admin
 				'order' => 'DESC',
 				'posts_per_page' => $limit,
 			);
-			$query2 = new WP_Query( $args2 );
+			$future_query = new WP_Query( $future_args );
 
-			$posts = array_merge( $posts, $query2->posts );
+			$posts = array_merge( $posts, $future_query->posts );
 		}// end if
 
 		return $posts;
