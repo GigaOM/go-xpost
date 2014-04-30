@@ -307,16 +307,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				foreach ( $sessions as $session )
 				{
-					//get taxonomy list from the session
-					$session_terms = get_object_taxonomies( $session->post_type );
-					if ( ! empty( $session_terms ) && ! is_wp_error( $session_terms ) )
+					// get the terms for the each session and add to the event?
+					foreach ( ( array ) wp_get_object_terms( $session->ID, get_object_taxonomies( $session->post_type ) ) as $term )
 					{
-						// get the terms for the each session and add to the event?
-						foreach ( $session_terms as $term )
-						{
-							$this->maybe_add_taxonomy( $xpost, $term );
-						}//end foreach
-					}//end if
+						$this->maybe_add_taxonomy( $xpost, $term );
+					}//end foreach
 				}//end foreach
 
 				// set the content
@@ -331,10 +326,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// get the terms
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
-					if ( ! empty( $term->taxonomy ) )
-					{
-						$this->maybe_add_taxonomy( $xpost, $term );
-					}//end if
+					$this->maybe_add_taxonomy( $xpost, $term );
 				}// end foreach
 
 				// then make sure each session speaker is also in there (if they aren't added as a person term)
@@ -417,9 +409,19 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		return $xpost;
 	} // end post_filter
 
+	/**
+	 * Cleans up event taxonomy terms for use in search
+	 */
 	public function maybe_add_taxonomy( &$xpost, $term )
 	{
-		if ( ! empty( $taxonomy ) )
+		$accepted_event_taxonomies = array(
+			'post_tag',
+			'company',
+			'technology',
+			'person',
+		);
+
+		if ( in_array( $term->taxonomy, $accepted_event_taxonomies ) )
 		{
 			$xpost->terms[ $term->taxonomy ][] = $term->name;
 		}//end if
