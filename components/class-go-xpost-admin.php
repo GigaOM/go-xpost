@@ -288,7 +288,7 @@ class GO_XPost_Admin
 
 		//Get all the posts - let search sort them out.
 		$args = array(
-			'post_status' => array( 'all' ),
+			'post_status' => array( 'any' ),
 			'post_type' => $post_types,
 			'tax_query' => array(
 				array(
