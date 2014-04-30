@@ -290,6 +290,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			$title = get_the_title( $event->ID );
 			$xpost->terms[ 'post_tag' ][] = $title;
 			$xpost->terms[ 'post_tag' ][] = preg_replace( '/\s[0-9]+$/', '', $title );
+			//because we get go-type = Featured and simliar rubbish. See also clean_go_type_research_terms()
 			$accepted_event_taxonomies = array(
 				'post_tag',
 				'company',
