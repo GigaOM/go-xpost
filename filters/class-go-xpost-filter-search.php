@@ -290,14 +290,20 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			$title = get_the_title( $event->ID );
 			$xpost->terms[ 'post_tag' ][] = $title;
 			$xpost->terms[ 'post_tag' ][] = preg_replace( '/\s[0-9]+$/', '', $title );
+			$accepted_event_taxonomies = array(
+				'post_tag',
+				'company',
+				'technology',
+				'person',
+			);
 
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
 				$xpost->terms['go-type'][] = 'Event';
 				// get the terms for the event
-				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, $accepted_event_taxonomies ) as $term )
 				{
-					$this->maybe_add_taxonomy( $xpost, $term );
+					$xpost->terms[ $term->taxonomy ][] = $term->name;
 				}// end foreach
 
 				$sessions = get_children( 'post_parent=' . $post_id . '&post_type=go-events-session' );
@@ -308,9 +314,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				foreach ( $sessions as $session )
 				{
 					// get the terms for the each session and add to the event?
-					foreach ( ( array ) wp_get_object_terms( $session->ID, get_object_taxonomies( $session->post_type ) ) as $term )
+					foreach ( ( array ) wp_get_object_terms( $session->ID, $accepted_event_taxonomies ) as $term )
 					{
-						$this->maybe_add_taxonomy( $xpost, $term );
+						$xpost->terms[ $term->taxonomy ][] = $term->name;
 					}//end foreach
 				}//end foreach
 
@@ -324,9 +330,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			{
 				$xpost->terms['go-type'][] = 'Event Session';
 				// get the terms
-				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, $accepted_event_taxonomies ) as $term )
 				{
-					$this->maybe_add_taxonomy( $xpost, $term );
+					$xpost->terms[ $term->taxonomy ][] = $term->name;
 				}// end foreach
 
 				// then make sure each session speaker is also in there (if they aren't added as a person term)
@@ -408,24 +414,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		return $xpost;
 	} // end post_filter
-
-	/**
-	 * Cleans up event taxonomy terms for use in search
-	 */
-	public function maybe_add_taxonomy( &$xpost, $term )
-	{
-		$accepted_event_taxonomies = array(
-			'post_tag',
-			'company',
-			'technology',
-			'person',
-		);
-
-		if ( in_array( $term->taxonomy, $accepted_event_taxonomies ) )
-		{
-			$xpost->terms[ $term->taxonomy ][] = $term->name;
-		}//end if
-	}// end maybe_add_taxonomy
 
 	/**
 	 * Cleans up research version of go-type taxonomy terms for use in search

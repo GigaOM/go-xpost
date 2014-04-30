@@ -286,8 +286,9 @@ class GO_XPost_Admin
 			$post_types = 'post';
 		}// end else
 
+		//Get all the posts - let search sort them out.
 		$args = array(
-			'post_status' => array( 'publish', 'inherit' ),
+			'post_status' => array( 'all' ),
 			'post_type' => $post_types,
 			'tax_query' => array(
 				array(
@@ -304,31 +305,6 @@ class GO_XPost_Admin
 		$query = new WP_Query( $args );
 
 		$posts = $query->posts;
-
-		//Future go-events need to go as well
-		$intersect = array_intersect( $post_types, array( 'go-events-event', 'go-events-session' ) );
-
-		if ( 0 < count( $intersect ) )
-		{
-			$future_args = array(
-				'post_status' => array( 'future' ),
-				'post_type' => $intersect,
-				'tax_query' => array(
-					array(
-						'taxonomy' => $this->batch_taxonomy,
-						'field' => 'slug',
-						'terms' => sanitize_key( $batch_name ),
-						'operator' => 'NOT IN',
-					),
-				),
-				'orderby' => 'ID',
-				'order' => 'DESC',
-				'posts_per_page' => $limit,
-			);
-			$future_query = new WP_Query( $future_args );
-
-			$posts = array_merge( $posts, $future_query->posts );
-		}// end if
 
 		return $posts;
 	}// end get_posts_to_batch
