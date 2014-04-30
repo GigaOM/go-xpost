@@ -304,9 +304,7 @@ class GO_XPost_Admin
 		);
 		$query = new WP_Query( $args );
 
-		$posts = $query->posts;
-
-		return $posts;
+		return $query->posts;
 	}// end get_posts_to_batch
 }//end class
 
