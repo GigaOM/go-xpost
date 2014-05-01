@@ -290,19 +290,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			$title = get_the_title( $event->ID );
 			$xpost->terms[ 'post_tag' ][] = $title;
 			$xpost->terms[ 'post_tag' ][] = preg_replace( '/\s[0-9]+$/', '', $title );
-			//because we get go-type = Featured and simliar rubbish. See also clean_go_type_research_terms()
-			$accepted_event_taxonomies = array(
-				'post_tag',
-				'company',
-				'technology',
-				'person',
-			);
 
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
-				$xpost->terms['go-type'][] = 'Event';
 				// get the terms for the event
-				foreach ( ( array ) wp_get_object_terms( $post_id, $accepted_event_taxonomies ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
 					$xpost->terms[ $term->taxonomy ][] = $term->name;
 				}// end foreach
@@ -315,7 +307,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				foreach ( $sessions as $session )
 				{
 					// get the terms for the each session and add to the event?
-					foreach ( ( array ) wp_get_object_terms( $session->ID, $accepted_event_taxonomies ) as $term )
+					foreach ( ( array ) wp_get_object_terms( $session->ID, get_object_taxonomies( $session ) ) as $term )
 					{
 						$xpost->terms[ $term->taxonomy ][] = $term->name;
 					}//end foreach
@@ -326,12 +318,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				// set event start datetime:
 				$start = new DateTime( go_events()->event()->get_meta( $post_id )->start );
+
+				$xpost->terms['go-type'][] = 'Event';
 			}// end if
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
-				$xpost->terms['go-type'][] = 'Event Session';
 				// get the terms
-				foreach ( ( array ) wp_get_object_terms( $post_id, $accepted_event_taxonomies ) as $term )
+				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
 					$xpost->terms[ $term->taxonomy ][] = $term->name;
 				}// end foreach
@@ -348,7 +341,19 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				// set session start datetime:
 				$start = new DateTime( go_events()->event()->session()->get_meta( $post_id )->start );
+
+				$xpost->terms['go-type'][] = 'Event Session';
 			}// end elseif
+
+			//Remove 'Feature' as a 'go-type' term
+			$keys = array_keys( $xpost->terms['go-type'], 'Feature' );
+			if ( ! empty( $keys ) )
+			{
+				foreach ( $keys as $key )
+				{
+					unset( $xpost->terms['go-type'][ $key ] );
+				}//end foreach
+			}//end if
 
 			// set post_date and post_date_gmt to a non-future date:
 			$start_date = ( new DateTime() < $start ) ? $start : new DateTime( $xpost->post->post_modified );
