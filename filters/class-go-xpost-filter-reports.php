@@ -123,6 +123,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		// set guest author data
 		$xpost->meta['guest_author'] = get_the_author_meta( 'display_name', $xpost->post->post_author );
 
+		/* INSANE ESC_ */
 		$xpost->meta['go_guest']     = array(
 			'author_name'      => esc_html( $xpost->meta['guest_author'] ),
 			'author_override'  => TRUE,
