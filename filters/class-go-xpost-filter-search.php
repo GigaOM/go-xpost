@@ -287,7 +287,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			//set the event
 			$_REQUEST['post'] = $post_id;
 			$event = go_events()->event()->get_the_event();
-			$title = get_the_title( $event->ID );
+			/* INSANE */
+			$title = esc_html( get_the_title( $event->ID ) );
 			$xpost->terms[ 'post_tag' ][] = $title;
 			$xpost->terms[ 'post_tag' ][] = preg_replace( '/\s[0-9]+$/', '', $title );
 
