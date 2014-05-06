@@ -320,6 +320,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// set event start datetime:
 				$start = new DateTime( go_events()->event()->get_meta( $post_id )->start );
 
+				unset( $xpost->terms['go-type'] ); // pretty sure this won't throw an error or notice if called on an unset key
+				$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type' ) );
 				$xpost->terms['go-type'][] = 'Event';
 			}// end if
 			elseif ( 'go-events-session' == $xpost->post->post_type )
@@ -343,18 +345,10 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				// set session start datetime:
 				$start = new DateTime( go_events()->event()->session()->get_meta( $post_id )->start );
 
+				unset( $xpost->terms['go-type'] ); // pretty sure this won't throw an error or notice if called on an unset key
+				$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type' ) );
 				$xpost->terms['go-type'][] = 'Event Session';
 			}// end elseif
-
-			//Remove 'Feature' as a 'go-type' term
-			$keys = array_keys( $xpost->terms['go-type'], 'Feature' );
-			if ( ! empty( $keys ) )
-			{
-				foreach ( $keys as $key )
-				{
-					unset( $xpost->terms['go-type'][ $key ] );
-				}//end foreach
-			}//end if
 
 			// set post_date and post_date_gmt to a non-future date:
 			$start_date = ( new DateTime() < $start ) ? $start : new DateTime( $xpost->post->post_modified );
