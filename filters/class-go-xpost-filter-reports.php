@@ -90,7 +90,7 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 			$toc = '<p>Table of Contents</p><ol>';
 			foreach ( $child_meta as $child )
 			{
-				/* INSANE ESC_ */
+				/* @INSANE ESC_ */
 				$toc .= sprintf(
 					'<li><a href="%s">%s</a></li>',
 					esc_url( get_permalink( $child->ID ) ),
@@ -121,11 +121,11 @@ class GO_XPost_Filter_Reports extends GO_XPost_Filter
 		unset( $xpost->meta['gomcom_ingestion_excerpt'] );
 
 		// set guest author data
-		$xpost->meta['guest_author'] = get_the_author_meta( 'display_name', $xpost->post->post_author );
+		$xpost->meta['guest_author'] = esc_html( get_the_author_meta( 'display_name', $xpost->post->post_author ) );
 
-		/* INSANE ESC_ */
+		/* @INSANE ESC_ */
 		$xpost->meta['go_guest']     = array(
-			'author_name'      => esc_html( $xpost->meta['guest_author'] ),
+			'author_name'      => esc_html( get_the_author_meta( 'display_name', $xpost->post->post_author ) ),
 			'author_override'  => TRUE,
 			'author_url'       => esc_url( get_author_posts_url( $xpost->post->post_author ) ),
 			'post_id'          => 0, // go-guest saves this value but doesn't actually use it; we don't know it yet in any case
