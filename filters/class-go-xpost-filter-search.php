@@ -126,11 +126,16 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// strip out any and all shortcodes
 		$xpost->post->post_content = preg_replace( '/(\[.*?\])/', '', $xpost->post->post_content );
 
-		// shorten the post excerpt if we have one (preserve the full excerpt in the post content, so we can still search it)
+		// shorten the post excerpt if we have one
 		if ( ! empty( $xpost->post->post_excerpt ) )
 		{
-			$xpost->post->post_content = $xpost->post->post_excerpt . "\n\n" . $xpost->post->post_content;
-			$xpost->post->post_excerpt = trim( wp_trim_words( $xpost->post->post_content, 31, '' ), '.' ) . '&hellip;';
+			//let's only do this if the excerpt needs shortening (wp_trim_words doesn't check)
+			if ( str_word_count( $xpost->post->post_excerpt ) > 31 )
+			{
+				//preserve the full excerpt at the end of the post content, so we can still search it
+				$xpost->post->post_content .= "\n\n" . $xpost->post->post_excerpt;
+				$xpost->post->post_excerpt = trim( wp_trim_words( $xpost->post->post_excerpt, 31, '' ), '.' ) . '&hellip;';
+			}//end if
 		}//end if
 		// or generate a post excerpt if we don't have one (saves us from having to generate it when displaying the posts)
 		else
@@ -314,14 +319,20 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					}//end foreach
 				}//end foreach
 
-				// set the content
+				// set the content to excerpt + tagline
 				$xpost->post->post_content = $xpost->post->post_excerpt . go_events()->event()->get_meta( $post_id )->tagline;
 
 				// set event start datetime:
 				$start = new DateTime( go_events()->event()->get_meta( $post_id )->start );
 
 				unset( $xpost->terms['go-type'] );
-				$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type' ) );
+
+				$maybe_terms = wp_get_object_terms( $post_id, 'go-type' );
+				if ( ! empty( $maybe_terms ) && ! is_wp_error( $maybe_terms ) )
+				{
+					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $maybe_terms );
+				}//end if
+
 				$xpost->terms['go-type'][] = 'Event';
 			}// end if
 			elseif ( 'go-events-session' == $xpost->post->post_type )
@@ -342,12 +353,20 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					}// end if
 				}// end foreach
 
+				// set the content to excerpt - we've already trimmed it and such above
+				$xpost->post->post_content = $xpost->post->post_excerpt;
+
 				// set session start datetime:
 				$start = new DateTime( go_events()->event()->session()->get_meta( $post_id )->start );
 
 				unset( $xpost->terms['go-type'] );
 
-				$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type' ) );
+				$maybe_terms = wp_get_object_terms( $post_id, 'go-type' );
+				if ( ! empty( $maybe_terms ) && ! is_wp_error( $maybe_terms ) )
+				{
+					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $maybe_terms );
+				}//end if
+
 				$xpost->terms['go-type'][] = 'Event Session';
 			}// end elseif
 
