@@ -223,8 +223,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 				} // end elseif
 			} // end elseif
 		} // end if
-
-		if ( 'gigaom' == go_config()->get_property_slug() )
+		elseif ( 'gigaom' == go_config()->get_property_slug() )
 		{
 			// special handling for excerpts on link posts
 			$go_post = new GO_Theme_Post( $post );
@@ -282,34 +281,19 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					$xpost->terms['go-type'][] = 'Report';
 				} // end if
 			} // end if
-		} // end if
-
-		if ( 'go-datamodule' == $xpost->post->post_type )
-		{
-			// set the type and availability
-			$xpost->terms['go-type'][] = 'Chart';
-			$availability = 'Subscription';
-
-			// remove the parent ID and object
-			$xpost->post->post_parent = 0;
-			unset( $xpost->parent );
-
-			// remove the datamodule meta, as it's unused on Search.GO
-			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
-		} // end if
-
-		if ( 'events' == go_config()->get_property_slug() )
+		} // end elseif
+		elseif ( 'events' == go_config()->get_property_slug() )
 		{
 			//set the event
 			$_REQUEST['post'] = $post_id;
 			$event = go_events()->event()->get_the_event();
-			$title = get_the_title( $event->ID );
+			/* INSANE */
+			$title = esc_html( get_the_title( $event->ID ) );
 			$xpost->terms[ 'post_tag' ][] = $title;
 			$xpost->terms[ 'post_tag' ][] = preg_replace( '/\s[0-9]+$/', '', $title );
 
 			if ( 'go-events-event' == $xpost->post->post_type )
 			{
-				$xpost->terms['go-type'][] = 'Event';
 				// get the terms for the event
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
@@ -323,16 +307,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				foreach ( $sessions as $session )
 				{
-					//get taxonomy list from the session
-					$session_terms = get_object_taxonomies( $session->post_type );
-					if ( ! empty( $session_terms ) && ! is_wp_error( $session_terms ) )
+					// get the terms for the each session and add to the event?
+					foreach ( ( array ) wp_get_object_terms( $session->ID, get_object_taxonomies( $session ) ) as $term )
 					{
-						// get the terms for the each session and add to the event?
-						foreach ( $session_terms as $term )
-						{
-							$xpost->terms[ $term->taxonomy ][] = $term->name;
-						}//end foreach
-					}//end if
+						$xpost->terms[ $term->taxonomy ][] = $term->name;
+					}//end foreach
 				}//end foreach
 
 				// set the content
@@ -340,10 +319,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				// set event start datetime:
 				$start = new DateTime( go_events()->event()->get_meta( $post_id )->start );
+
+				unset( $xpost->terms['go-type'] );
+				$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type' ) );
+				$xpost->terms['go-type'][] = 'Event';
 			}// end if
 			elseif ( 'go-events-session' == $xpost->post->post_type )
 			{
-				$xpost->terms['go-type'][] = 'Event Session';
 				// get the terms
 				foreach ( ( array ) wp_get_object_terms( $post_id, get_object_taxonomies( $xpost->post->post_type ) ) as $term )
 				{
@@ -362,6 +344,11 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				// set session start datetime:
 				$start = new DateTime( go_events()->event()->session()->get_meta( $post_id )->start );
+
+				unset( $xpost->terms['go-type'] );
+
+				$xpost->terms['go-type'] = $this->clean_go_type_research_terms( get_the_terms( $post_id, 'go-type' ) );
+				$xpost->terms['go-type'][] = 'Event Session';
 			}// end elseif
 
 			// set post_date and post_date_gmt to a non-future date:
@@ -381,7 +368,21 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			// remove the parent ID and object
 			$xpost->post->post_parent = 0;
 			unset( $xpost->parent );
-		}// end if
+		}// end elseif
+
+		if ( 'go-datamodule' == $xpost->post->post_type )
+		{
+			// set the type and availability
+			$xpost->terms['go-type'][] = 'Chart';
+			$availability = 'Subscription';
+
+			// remove the parent ID and object
+			$xpost->post->post_parent = 0;
+			unset( $xpost->parent );
+
+			// remove the datamodule meta, as it's unused on Search.GO
+			unset( $xpost->meta['data_set_v2'], $xpost->meta['data_set_v3'] );
+		} // end if
 
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
