@@ -383,7 +383,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 			// remove the parent ID and object
 			$xpost->post->post_parent = 0;
-			do_action( 'debug_robot', print_r( $xpost->terms, TRUE ) );
 			unset( $xpost->parent );
 		}// end elseif
 
