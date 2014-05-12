@@ -327,8 +327,8 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 				unset( $xpost->terms['go-type'] );
 
-				$maybe_terms = wp_get_object_terms( $post_id, 'go-type' );
-				if ( ! empty( $maybe_terms ) && ! is_wp_error( $maybe_terms ) )
+				$maybe_terms = get_the_terms( $post_id, 'go-type' );
+				if ( $maybe_terms && ! is_wp_error( $maybe_terms ) )
 				{
 					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $maybe_terms );
 				}//end if
@@ -353,16 +353,13 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					}// end if
 				}// end foreach
 
-				// set the content to excerpt - we've already trimmed it and such above
-				$xpost->post->post_content = $xpost->post->post_excerpt;
-
 				// set session start datetime:
 				$start = new DateTime( go_events()->event()->session()->get_meta( $post_id )->start );
 
 				unset( $xpost->terms['go-type'] );
 
-				$maybe_terms = wp_get_object_terms( $post_id, 'go-type' );
-				if ( ! empty( $maybe_terms ) && ! is_wp_error( $maybe_terms ) )
+				$maybe_terms = get_the_terms( $post_id, 'go-type' );
+				if ( $maybe_terms  && ! is_wp_error( $maybe_terms ) )
 				{
 					$xpost->terms['go-type'] = $this->clean_go_type_research_terms( $maybe_terms );
 				}//end if
@@ -386,6 +383,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 			// remove the parent ID and object
 			$xpost->post->post_parent = 0;
+			do_action( 'debug_robot', print_r( $xpost->terms, TRUE ) );
 			unset( $xpost->parent );
 		}// end elseif
 
