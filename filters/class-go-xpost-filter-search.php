@@ -198,6 +198,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 						// and because it's causing the xpost pull to time out
 						//go_xpost()->process_post( $report_child->ID );
 					} // end foreach
+
+					// Because of caching the report parents may not have the latest terms so we pull them from meta if available
+					if ( $terms = get_post_meta( $post_id, 'go-report-terms', TRUE ) )
+					{
+						$xpost->terms = $terms;
+					} // END if
 				} // end if
 				elseif ( 'go-report-section' == $xpost->post->post_type )
 				{
