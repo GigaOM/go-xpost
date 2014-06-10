@@ -202,9 +202,24 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					// Because of caching the report parents may not have the latest terms so we pull them from meta if available
 					if ( $compiled_terms = get_post_meta( $post_id, 'go-report-terms', TRUE ) )
 					{
-						foreach ( $compiled_terms as $taxonomy => $terms )
+						// This we we are only screwing with taxonomies that we care about in this case
+						$taxonomies = array(
+							'post_tag',
+							'company',
+							'technology',
+						);
+
+						foreach ( $taxonomies as $taxonomy )
 						{
-							$xpost->terms[ $taxonomy ] = $terms;
+							if ( isset( $compiled_terms[ $taxonomy ] ) )
+							{
+								$xpost->terms[ $taxonomy ] = $compiled_terms[ $taxonomy ];
+							} // END if
+							else
+							{
+								// If the taxonomy isn't in the $compiled_terms we should clear out this taxonomy
+								unset( $xpost->terms[ $taxonomy ] );
+							} // END else
 						} // END foreach
 					} // END if
 				} // end if
