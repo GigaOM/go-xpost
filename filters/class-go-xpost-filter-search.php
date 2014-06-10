@@ -199,7 +199,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 						//go_xpost()->process_post( $report_child->ID );
 					} // end foreach
 
-					// Because of caching the report parents may not have the latest terms so we pull them from meta if available
+					// Because of caching the report parent may not have the latest terms so we pull them directly here
 					$xpost->terms = $this->get_report_terms( $post_id, $xpost->terms );
 				} // end if
 				elseif ( 'go-report-section' == $xpost->post->post_type )
@@ -455,37 +455,22 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		return $new_terms;
 	} // end clean_go_type_research_terms
-	
+
 	/**
 	 * Returns report terms updated from those found in post_meta if available
 	 */
 	public function get_report_terms( $post_id, $xpost_terms )
 	{
-		if ( ! $compiled_terms = get_post_meta( $post_id, 'go-report-terms', TRUE ) )
+		if ( ! $compiled_terms = go_reports()->get_report_children_terms( $post_id ) )
 		{
 			return $xpost_terms;
 		} // END if
-		
-		// This we we are only screwing with taxonomies that we care about in this case
-		$taxonomies = array(
-			'post_tag',
-			'company',
-			'technology',
-		);
 
-		foreach ( $taxonomies as $taxonomy )
+		foreach ( $compiled_terms as $taxonomy => $terms )
 		{
-			if ( isset( $compiled_terms[ $taxonomy ] ) )
-			{
-				$xpost_terms[ $taxonomy ] = $compiled_terms[ $taxonomy ];
-			} // END if
-			else
-			{
-				// If the taxonomy isn't in the $compiled_terms we should clear out this taxonomy
-				unset( $xpost_terms[ $taxonomy ] );
-			} // END else
-		} // END foreach
-		
+			$xpost_terms[ $taxonomy ] = $terms;
+		}// end foreach
+
 		return $xpost_terms;
 	} // END get_report_terms
 }// end GO_XPost_Filter_Search
