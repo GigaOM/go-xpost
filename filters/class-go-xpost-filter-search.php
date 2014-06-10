@@ -200,9 +200,12 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 					} // end foreach
 
 					// Because of caching the report parents may not have the latest terms so we pull them from meta if available
-					if ( $terms = get_post_meta( $post_id, 'go-report-terms', TRUE ) )
+					if ( $compiled_terms = get_post_meta( $post_id, 'go-report-terms', TRUE ) )
 					{
-						$xpost->terms = $terms;
+						foreach ( $compiled_terms as $taxonomy => $terms )
+						{
+							$xpost->terms[ $taxonomy ] = $terms;
+						} // END foreach
 					} // END if
 				} // end if
 				elseif ( 'go-report-section' == $xpost->post->post_type )
