@@ -76,30 +76,6 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			}//end if
 		}//end if
 
-		// exclude some categories from Pro
-		if ( 'research' != go_config()->get_property_slug() )
-		{
-			//@TODO: These need to be removed at some point
-			$invalid_categories = array(
-				// We don't want curated links from pro going into search
-				'links',
-				// Same for poll summaries
-				'poll-summaries',
-			);
-
-			$categories = get_the_terms( $post_id, 'category' );
-			if ( $categories && ! is_wp_error( $categories ) )
-			{
-				foreach ( $categories as $category )
-				{
-					if ( in_array( $category->slug, $invalid_categories ) )
-					{
-						return FALSE;
-					} // end if
-				} // end foreach
-			}//end if
-		}// end if
-
 		return TRUE;
 	} // end should_send_post
 
