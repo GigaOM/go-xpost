@@ -198,6 +198,9 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 						// and because it's causing the xpost pull to time out
 						//go_xpost()->process_post( $report_child->ID );
 					} // end foreach
+
+					// Because of caching the report parent may not have the latest terms so we pull them directly here
+					$xpost->terms = $this->get_report_terms( $post_id, $xpost->terms );
 				} // end if
 				elseif ( 'go-report-section' == $xpost->post->post_type )
 				{
@@ -452,4 +455,22 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 
 		return $new_terms;
 	} // end clean_go_type_research_terms
+
+	/**
+	 * Returns report terms updated from those found in post_meta if available
+	 */
+	public function get_report_terms( $post_id, $xpost_terms )
+	{
+		if ( ! $compiled_terms = go_reports()->get_report_children_terms( $post_id ) )
+		{
+			return $xpost_terms;
+		} // END if
+
+		foreach ( $compiled_terms as $taxonomy => $terms )
+		{
+			$xpost_terms[ $taxonomy ] = $terms;
+		}// end foreach
+
+		return $xpost_terms;
+	} // END get_report_terms
 }// end GO_XPost_Filter_Search
