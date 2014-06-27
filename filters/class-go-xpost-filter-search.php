@@ -441,7 +441,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 	 */
 	public function get_report_terms( $post_id, $xpost_terms )
 	{
-		if ( ! $compiled_terms = go_reports()->get_report_children_terms( $post_id ) )
+		if ( ! $compiled_terms = go_reports()->get_inherited_terms( $post_id ) )
 		{
 			return $xpost_terms;
 		} // END if
