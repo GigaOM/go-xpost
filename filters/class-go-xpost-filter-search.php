@@ -370,11 +370,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			// set the type and availability
 			$xpost->terms['go-type'][] = 'Chart';
 			$xpost->terms['chart-type'][] = $xpost->meta['data_set_v3']['settings']['graph_type'];
-			$units = wp_get_object_terms( $xpost->post->ID, 'go-datamodule-units' );
-			foreach ( $units as $unit_term )
-			{
-				$xpost->terms['chart-units'][] = $unit_term->name;
-			}//end foreach
+			$xpost->terms['chart-units'] = $xpost->terms['go-datamodule-units'];
 			unset( $xpost->terms['go-datamodule-units'] );
 
 			$availability = 'Subscription';
