@@ -142,5 +142,6 @@ class GO_XPost_Cron
 		} // END else
 
 		wp_safe_redirect( add_query_arg( 'success', $success, admin_url( 'options-general.php?page=go-xpost-settings' ) ) );
+		die;
 	} // END register_cron
 } // END GO_XPost_Cron
