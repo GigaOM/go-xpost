@@ -11,26 +11,14 @@ class GO_XPost_Cron
 
 	public function __construct()
 	{
-		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'wp_ajax_go_xpost_register_cron', array( $this, 'register_cron' ) );
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
-	}
+	} // END __construct
 
-	public function init()
-	{
-		// Taxonomy for keeping track of posts that have already been xposted via the cron job
-		register_taxonomy(
-			$this->slug,
-			go_xpost()->config->cron_post_types,
-			array(
-				'label'   => 'Gigaom xPost Cron',
-				'public'  => FALSE,
-				'rewrite' => FALSE,
-			)
-		);
-	} // END init
-
+	/**
+	 * Get posts and xPost them as configured
+	 */
 	public function process_cron()
 	{
 		$posts = $this->get_posts(
@@ -58,6 +46,9 @@ class GO_XPost_Cron
 		} // END foreach
 	} // END process_cron
 
+	/**
+	 * Add our custom cron interval to WordPress
+	 */
 	public function cron_schedules( $schedules )
 	{
 		$schedules[ $this->slug . '-interval' ] = array(
@@ -68,6 +59,9 @@ class GO_XPost_Cron
 		return $schedules;
 	} // END cron_schedules
 
+	/**
+	 * Get posts for use in process_cron or batch xPosting
+	 */
 	public function get_posts( $post_types, $term, $limit = 10 )
 	{
 		$args = array(
@@ -96,6 +90,9 @@ class GO_XPost_Cron
 		return $query->posts;
 	} // END get_posts
 
+	/**
+	 * Return a nonce link to use for registering/unregistering our cron hook with WordPress
+	 */
 	public function register_cron_link()
 	{
 		$args = array(
@@ -117,6 +114,9 @@ class GO_XPost_Cron
 		return '<a href="' . esc_url( $url ) . '" title="' . esc_attr( $direction ) . ' Cron xPosting" class="button-primary">' . esc_html( $direction ) . ' Cron xPosting</a>';
 	} // END register_cron_link
 
+	/**
+	 * AJAX endpoint which registers or unregisters our cron hook wtih WordPress
+	 */
 	public function register_cron()
 	{
 		if ( ! current_user_can( 'manage_options' ) )

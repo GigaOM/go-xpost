@@ -11,6 +11,7 @@ class GO_XPost
 
 	public function __construct()
 	{
+		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'edit_post', array( $this, 'edit_post' ) );
 
 		if ( is_admin() )
@@ -32,6 +33,23 @@ class GO_XPost
 			include __DIR__ . '/class-go-xpost-wp-cli.php';
 		}
 	}//end __construct
+
+	/**
+	 * Register the cron/batch custom taxnomy to the relevant post_types
+	 */
+	public function init()
+	{
+		// Taxonomy for keeping track of posts that have already been xposted via the cron job or batch functionality Cron/Batch
+		register_taxonomy(
+			$this->slug . '-cron',
+			go_xpost()->config->cron_post_types,
+			array(
+				'label'   => 'Gigaom xPost Cron/Batch',
+				'public'  => FALSE,
+				'rewrite' => FALSE,
+			)
+		);
+	} // END init
 
 	public function config()
 	{
