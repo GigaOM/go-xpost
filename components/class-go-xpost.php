@@ -2,12 +2,12 @@
 
 class GO_XPost
 {
-	public $admin = FALSE;
-	public $cron  = FALSE;
+	public $admin   = FALSE;
+	public $cron    = FALSE;
 	public $filters = array();
 	public $slug    = 'go-xpost';
-	public $secret;
-	public $config;
+	public $secret  = NULL;
+	public $config  = NULL;
 
 	public function __construct()
 	{
@@ -66,7 +66,7 @@ class GO_XPost
 		if ( ! $this->cron )
 		{
 			require_once __DIR__ . '/class-go-xpost-cron.php';
-			$this->cron = go_xpost_cron();
+			$this->cron = new GO_XPost_Cron();
 		} // END if
 
 		return $this->cron;
@@ -76,10 +76,8 @@ class GO_XPost
 	{
 		if ( ! $this->admin )
 		{
-			// Admins could possibly need the cron methods if the batch stuff gets used
-			require_once __DIR__ . '/class-go-xpost-cron.php';
 			require __DIR__ . '/class-go-xpost-admin.php';
-			$this->admin = go_xpost_admin();
+			$this->admin = new GO_XPost_Admin();
 
 			$this->load_filters();
 			$this->secret = $this->get_secret();

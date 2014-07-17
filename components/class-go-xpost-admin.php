@@ -5,7 +5,6 @@ class GO_XPost_Admin
 	public $name       = 'Gigaom xPost';
 	public $short_name = 'GO xPost';
 	public $slug       = 'go-xpost';
-	private $batch_taxonomy = 'go-xpost-batch';
 
 	public function __construct()
 	{
@@ -158,7 +157,10 @@ class GO_XPost_Admin
 
 		if ( ! $posts )
 		{
-			?><p>No posts found.</p><?php
+			?>
+			<p>No posts found.</p>
+			<p><a href="<?php echo admin_url( 'options-general.php?page=go-xpost-settings' ); ?>" onclick="clearTimeout(reloader)">Gigaom xPost Settings</a></p>
+			<?php
 			die;
 		} // END if
 
@@ -191,7 +193,10 @@ class GO_XPost_Admin
 			}, 5000);
 		</script>
 		<p><em>Will reload to the next 10, every 5 seconds.</em></p>
-		<p><a href="#stop" onclick="clearTimeout(reloader)">Stop</a></p>
+		<p>
+			  <a href="#stop" onclick="clearTimeout(reloader)">Stop</a>
+			| <a href="<?php echo admin_url( 'options-general.php?page=go-xpost-settings' ); ?>" onclick="clearTimeout(reloader)">Gigaom xPost Settings</a>
+		</p>
 		<?php
 		die;
 	}// end batch
@@ -213,22 +218,10 @@ class GO_XPost_Admin
 			$post_types = array( 'post' );
 		}// end else
 
-		return go_xpost_cron()->get_posts(
+		return go_xpost()->cron()->get_posts(
 			$post_types,
 			sanitize_key( $batch_name ),
 			$limit
 		);
 	}// end get_posts_to_batch
 }//end class
-
-function go_xpost_admin()
-{
-	global $go_xpost_admin;
-
-	if ( ! isset( $go_xpost_admin ) )
-	{
-		$go_xpost_admin = new GO_XPost_Admin();
-	}// end if
-
-	return $go_xpost_admin;
-}// end go_xpost_admin

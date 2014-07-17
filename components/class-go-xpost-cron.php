@@ -67,9 +67,9 @@ class GO_XPost_Cron
 	public function cron_schedules( $schedules )
 	{
 		$schedules[ $this->slug . '-interval' ] = array(
-	        'interval' => absint( go_xpost()->config()->cron_interval ) * 60,
-	        'display'  => 'Cron interval for Gigaom xPost (' . absint( go_xpost()->config()->cron_interval ) . 'min)',
-	    );
+			'interval' => absint( go_xpost()->config()->cron_interval ) * 60,
+			'display'  => 'Cron interval for Gigaom xPost (' . absint( go_xpost()->config()->cron_interval ) . 'min)',
+		);
 
 		return $schedules;
 	} // END cron_schedules
@@ -102,15 +102,3 @@ class GO_XPost_Cron
 		return $query->posts;
 	} // END get_posts
 } // END GO_XPost_Cron
-
-function go_xpost_cron()
-{
-	global $go_xpost_cron;
-
-	if ( ! isset( $go_xpost_cron ) )
-	{
-		$go_xpost_cron = new GO_XPost_Cron();
-	}// end if
-
-	return $go_xpost_cron;
-}// end go_xpost_cron
