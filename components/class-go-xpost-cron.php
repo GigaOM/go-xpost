@@ -13,7 +13,6 @@ class GO_XPost_Cron
 	{
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'wp_ajax_go_xpost_register_cron', array( $this, 'register_cron' ) );
-		add_action( 'go_xpost_process_cron', array( $this, 'process_cron' ) );
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 	}

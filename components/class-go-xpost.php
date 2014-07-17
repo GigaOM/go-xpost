@@ -13,11 +13,6 @@ class GO_XPost
 	{
 		add_action( 'edit_post', array( $this, 'edit_post' ) );
 
-		if ( $this->config()->cron_interval )
-		{
-			$this->cron();
-		} // END if
-
 		if ( is_admin() )
 		{
 			$this->admin();
@@ -29,6 +24,7 @@ class GO_XPost
 		// hook this action to update crossposted comment count after WP sets that
 		// number, else the xpost'ed comment count will always get overwritten by WP
 		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
+		add_action( 'go_xpost_process_cron', array( $this, 'process_cron' ) );
 
 		// If wp-cli is active load the xpost additions
 		if ( defined( 'WP_CLI' ) && WP_CLI )
@@ -284,6 +280,14 @@ class GO_XPost
 
 		return $count;
 	} // END get_comments_number
+
+	/**
+	 * This calls the process_cron in the GO_XPost_Cron class
+	 */
+	public function process_cron()
+	{
+		$this->cron()->process_cron();
+	} // END process_cron
 }//end class
 
 function go_xpost()
