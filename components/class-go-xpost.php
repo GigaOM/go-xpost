@@ -2,14 +2,21 @@
 
 class GO_XPost
 {
-	public $admin = FALSE;     // the admin object
+	public $admin = FALSE;
+	public $cron  = FALSE;
 	public $filters = array();
 	public $slug    = 'go-xpost';
 	public $secret;
+	public $config;
 
 	public function __construct()
 	{
 		add_action( 'edit_post', array( $this, 'edit_post' ) );
+
+		if ( $this->config()->cron_interval )
+		{
+			$this->cron;
+		} // END if
 
 		if ( is_admin() )
 		{
@@ -30,10 +37,47 @@ class GO_XPost
 		}
 	}//end __construct
 
+	public function config()
+	{
+		if ( ! $this->config )
+		{
+			$default_config = array(
+				'slog_get_author' => FALSE,
+				// Set to FALSE to turn off cron xposting
+				'cron_interval'  => 5, // Minutes
+				// List of post types to xPost via cron
+				'cron_post_types' => array(
+					'post',
+				),
+				// Term used for checking if a post has already xPosted
+				'cron_term' => 'posted',
+				// Number of posts to attempt to xPost each time the cron is run
+				'cron_limit' => 10,
+			);
+
+			$this->config = (object) apply_filters( 'go_config', $default_config, 'go-xpost' );
+		} // END if
+
+		return $this->config;
+	} // END config
+
+	public function cron()
+	{
+		if ( ! $this->cron )
+		{
+			require __DIR__ . '/class-go-xpost-cron.php';
+			$this->cron = go_xpost_cron();
+		} // END if
+
+		return $this->cron;
+	} // END cron
+
 	public function admin()
 	{
 		if ( ! $this->admin )
 		{
+			// Admins could possibly need the cron methods if the batch stuff gets used
+			require __DIR__ . '/class-go-xpost-cron.php';
 			require __DIR__ . '/class-go-xpost-admin.php';
 			$this->admin = go_xpost_admin();
 
@@ -162,7 +206,7 @@ class GO_XPost
 			array(
 				'filter'   => '',
 				'endpoint' => '',
-				'secret' => '',
+				'secret'   => '',
 			),
 		);
 

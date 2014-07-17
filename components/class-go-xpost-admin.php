@@ -53,95 +53,8 @@ class GO_XPost_Admin
 		$filters  = $this->_get_filters();
 
 		$add_link = '<a href="#add-endpoint" title="Add Filter/Endpoint" class="' . $this->slug . '-add-endpoint button">Add Endpoint</a>';
-		?>
-		<!-- This is for the Add button so it has a template to work off of. -->
-		<li style="display: none;" class="<?php echo $this->slug; ?>-setting-template">
-			<a href="#remove-endpoint" title="Remove Filter/Endpoint" class="<?php echo $this->slug; ?>-delete-endpoint">Delete</a>
-			<div class="<?php echo $this->slug; ?>-filter">
-				<label for="<?php echo $this->slug; ?>-filter-keynum"><strong>Filter</strong></label><br />
-				<select name='<?php echo $this->slug; ?>-filter-keynum' class='select' id="<?php echo $this->slug; ?>-filter-keynum">
-					<?php echo $this->_build_options( $filters, '' ); ?>
-				</select>
-			</div>
-			<div class="<?php echo $this->slug; ?>-endpoint">
-				<label for="<?php echo $this->slug; ?>-endpoint-keynum"><strong>Endpoint</strong></label><br />
-				<input class="input" type="text" name="<?php echo $this->slug ;?>-endpoint-keynum" id="<?php echo $this->slug; ?>-endpoint-keynum" value="" placeholder="http://domain/wp-admin/admin-ajax.php" />
-			</div>
-			<input type="hidden" name="<?php echo $this->slug; ?>-number-keynum" value="keynum" class="number" />
-		</li>
-		<div class="wrap">
-			<?php
-			if ( isset( $_POST['updated'] ) )
-			{
-				?>
-				<br />
-				<div id="go-xpost-settings-updated" class="updated fade">
-					<p><strong>Settings updated.</strong></p>
-				</div>
-				<?php
-			}// end if
-			?>
-			<?php screen_icon( 'options-general' ); ?>
-			<?php echo $add_link; ?>
-			<h2><?php echo $this->name ?> Settings</h2>
-			<form method="post">
-				<ul class="<?php echo $this->slug; ?>-settings">
-					<?php
-					$setting_numbers = '';
 
-					foreach ( $settings as $key => $item )
-					{
-						$setting_numbers .= $key + 1 . ',';
-						?>
-						<li>
-							<a href="#remove-endpoint" title="Remove Filter/Endpoint" class="<?php echo $this->slug; ?>-delete-endpoint">Delete</a>
-							<div class="<?php echo $this->slug; ?>-filter">
-								<label for="<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>"><strong>Filter</strong></label><br />
-								<select name='<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>' class='select' id="<?php echo $this->slug; ?>-filter-<?php echo $key + 1; ?>">
-									<?php echo $this->_build_options( $filters, $item['filter'] ); ?>
-								</select>
-							</div>
-							<div class="<?php echo $this->slug; ?>-endpoint">
-								<label for="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>"><strong>Endpoint</strong></label><br />
-								<input class="input" type="text" name="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" id="<?php echo $this->slug; ?>-endpoint-<?php echo $key + 1; ?>" value="<?php echo esc_attr( $item['endpoint'] ); ?>" placeholder="http://domain/wp-admin/admin-ajax.php" />
-							</div>
-							<input type="hidden" name="<?php echo $this->slug; ?>-number-<?php echo $key + 1; ?>" value="<?php echo $key + 1; ?>" class="number" />
-						</li>
-						<?php
-					} // end foreach
-					?>
-				</ul>
-
-				<div class="<?php echo $this->slug; ?>-secret">
-					<label for="<?php echo $this->slug; ?>-secret"><strong>Shared Secret</strong></label><br />
-					<input class="input" type="text" name="<?php echo $this->slug; ?>-secret" id="<?php echo $this->slug; ?>-secret" value="<?php echo esc_attr( $secret ); ?>" placeholder="Something complex..." /><br />
-					<em>Secret that is shared between all of the sites being xPosted to/from.</em>
-				</div>
-
-				<div class="<?php echo $this->slug; ?>-method">
-					<label for="<?php echo $this->slug; ?>-method"><strong>Request Method</strong></label><br />
-					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php if ( 'GET' == $method || ! $method ) { echo 'checked'; } ?>/> GET<br />
-					<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php if ( 'POST' == $method ) { echo 'checked'; } ?>/> POST<br />
-				</div>
-
-				<p class="submit">
-					<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
-					<input type="hidden" name="<?php echo $this->slug; ?>-setting-numbers" class="<?php echo $this->slug; ?>-setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
-					<input type="submit" class="button button-primary" name="save-<?php echo $this->slug; ?>-settings" value="Save Changes" />
-				</p>
-			</form>
-			<hr />
-			<h4>Batch posting</h4>
-			<em>This is an advanced feature and should *only* be used with full understanding of the code</em>
-			<form method="get" action="admin-ajax.php">
-				<label for="batch_name">Batch Name: </label><input type="text" name="batch_name" /><br/>
-				<label for="post_types">Post types: </label><input type="text" name="post_types" /> <em>(comma separated)</em><br/>
-				<label for="num">Number posts per batch: </label><input type="text" name="num" placeholder="10" /><br/>
-				<input type="submit" class="button button-primary" value="Process" />
-				<input type="hidden" name="action" value="go_xpost_batch" />
-			</form>
-		</div>
-		<?php
+		require __DIR__ . '/templates/settings.php';
 	} // end settings
 
 	public function update_settings()
@@ -168,7 +81,6 @@ class GO_XPost_Admin
 				$compiled_settings[] = array(
 					'filter'   => $_POST[ $this->slug . '-filter-' . $number ],
 					'endpoint' => $_POST[ $this->slug . '-endpoint-' . $number ],
-					//'secret'   => $_POST[ $this->slug . '-secret-' . $number ],
 				);
 			}// end if
 		} // end foreach
@@ -176,6 +88,7 @@ class GO_XPost_Admin
 		update_option( $this->slug . '-settings', $compiled_settings );
 		update_option( $this->slug . '-secret', $_POST[ $this->slug . '-secret' ] );
 		update_option( $this->slug . '-method', $_POST[ $this->slug . '-method' ] );
+
 		$_POST['updated'] = TRUE;
 	} // end update_settings
 
@@ -231,29 +144,44 @@ class GO_XPost_Admin
 			return;
 		}// end if
 
+		?><h2><?php echo $this->name ?> Batch xPosting</h2><?php
+
 		$batch_name = sanitize_key( $_GET['batch_name'] );
 		$post_types = sanitize_text_field( $_GET['post_types'] );
-		$num = isset( $_GET['num'] ) ? absint( $_GET['num'] ) : 10;
-		$posts = $this->get_posts_to_batch( $batch_name, $post_types, $num );
+		$num        = isset( $_GET['num'] ) ? absint( $_GET['num'] ) : 10;
+		$posts      = $this->get_posts_to_batch( $batch_name, $post_types, $num );
+		$page       = isset( $_GET['page'] ) ? absint( $_GET['page'] ) : 1;
+		?>
+		<h3><?php echo esc_html( $batch_name ); ?></h3>
+		<p>Batch <?php echo absint( $page ); ?></p>
+		<?php
+
+		if ( ! $posts )
+		{
+			?><p>No posts found.</p><?php
+			die;
+		} // END if
 
 		foreach ( $posts as $post )
 		{
-			if ( $post->ID )
+			if ( ! isset( $post->ID ) )
 			{
-				echo $post->ID . '<br/>';
-				go_xpost()->process_post( $post->ID );
-				wp_set_post_terms( $post->ID, $batch_name, $this->batch_taxonomy, true );
-
-				sleep( 2 );
+				continue;
 			}// end if
+
+			echo $post->ID . '<br/>';
+			go_xpost()->process_post( $post->ID );
+			wp_set_post_terms( $post->ID, $batch_name, $this->batch_taxonomy, true );
+
+			sleep( 2 );
 		}// end foreach
 
 		$args = array(
-			'action' => 'go_xpost_batch',
+			'action'     => 'go_xpost_batch',
 			'batch_name' => $batch_name,
 			'post_types' => $post_types,
-			'page' => absint( $_GET['page'] ) + 1,
-			'num' => $num,
+			'page'       => $page + 1,
+			'num'        => $num,
 		);
 
 		?>
@@ -262,9 +190,8 @@ class GO_XPost_Admin
 				window.location = "?<?php echo http_build_query( $args ); ?>";
 			}, 5000);
 		</script>
-		<br/><br/>
-		<a href="#stop" onclick="clearTimeout(reloader)">Stop</a><br/>
-		Will reload to the next 10, every 5 seconds.
+		<p><em>Will reload to the next 10, every 5 seconds.</em></p>
+		<p><a href="#stop" onclick="clearTimeout(reloader)">Stop</a></p>
 		<?php
 		die;
 	}// end batch
@@ -283,28 +210,14 @@ class GO_XPost_Admin
 		}// end if
 		else
 		{
-			$post_types = 'post';
+			$post_types = array( 'post' );
 		}// end else
 
-		//Get all the posts - let search sort them out.
-		$args = array(
-			'post_status' => array( 'any' ),
-			'post_type' => $post_types,
-			'tax_query' => array(
-				array(
-					'taxonomy' => $this->batch_taxonomy,
-					'field' => 'slug',
-					'terms' => sanitize_key( $batch_name ),
-					'operator' => 'NOT IN',
-				),
-			),
-			'orderby' => 'ID',
-			'order' => 'DESC',
-			'posts_per_page' => $limit,
+		return go_xpost_cron()->get_posts(
+			$post_types,
+			sanitize_key( $batch_name ),
+			$limit
 		);
-		$query = new WP_Query( $args );
-
-		return $query->posts;
 	}// end get_posts_to_batch
 }//end class
 
