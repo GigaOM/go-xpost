@@ -19,17 +19,6 @@ class GO_XPost_Admin
 		wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
 		wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
 
-		// taxonomy for keeping track of xpost imports
-		register_taxonomy(
-			$this->batch_taxonomy,
-			'post',
-			array(
-				'label'   => __( 'Batch Names' ),
-				'public'  => FALSE,
-				'rewrite' => FALSE,
-			)
-		);
-
 		$this->update_settings();
 	} // end admin_init
 
