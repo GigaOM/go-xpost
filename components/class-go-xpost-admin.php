@@ -155,7 +155,6 @@ class GO_XPost_Admin
 		<h3><?php echo esc_html( $batch_name ); ?></h3>
 		<p>Batch <?php echo absint( $page ); ?></p>
 		<?php
-
 		if ( ! $posts )
 		{
 			?>
@@ -186,7 +185,6 @@ class GO_XPost_Admin
 			'page'       => $page + 1,
 			'num'        => $num,
 		);
-
 		?>
 		<script>
 			var reloader = window.setTimeout(function(){

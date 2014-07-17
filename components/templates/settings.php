@@ -24,6 +24,25 @@
 		</div>
 		<?php
 	}// end if
+	elseif ( isset( $_GET['success'] ) )
+	{
+		if ( 'registered' == $_GET['success'] )
+		{
+			?>
+			<div id="go-xpost-settings-success" class="updated fade">
+				<p><strong>Cron xPosting enabled. </strong></p>
+			</div>
+			<?php
+		} // END if
+		elseif ( 'unregistered' == $_GET['success'] )
+		{
+			?>
+			<div id="go-xpost-settings-success" class="updated fade">
+				<p><strong>Cron xPosting disabled.</strong></p>
+			</div>
+			<?php
+		} // END elseif
+	} // END elseif
 	?>
 	<?php echo $add_link; ?>
 	<h2><?php echo $this->name ?> Settings</h2>
@@ -64,7 +83,7 @@
 		<div class="<?php echo $this->slug; ?>-method">
 			<label for="<?php echo $this->slug; ?>-method"><strong>Request method</strong></label><br />
 			<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php checked( $method, 'GET' ); ?>/> GET<br />
-			<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php checked( $method, 'POST' ); ?>/> POST<br />
+			<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php checked( $method, 'POSTf' ); ?>/> POST<br />
 		</div>
 
 		<p class="submit">
@@ -73,9 +92,20 @@
 			<input type="submit" class="button button-primary" name="save-<?php echo $this->slug; ?>-settings" value="Save Changes" />
 		</p>
 	</form>
+	<?php
+	if ( go_xpost()->config()->cron_interval )
+	{
+		?>
+		<hr />
+		<h3>Cron xPosting</h3>
+		<p><em>Enables/Disables xPosting via WordPress Cron hook.</em></p>
+		<p><?php echo go_xpost()->cron()->register_cron_link(); ?></p>
+		<?php
+	} // END if
+	?>
 	<hr />
 	<h3>Batch xPosting</h3>
-	<em>This is an advanced feature and should <strong>only</strong> be used with full understanding of the code.</em>
+	<p><em>This is an advanced feature and should <strong>only</strong> be used with full understanding of the code.</em></p>
 	<form method="get" action="admin-ajax.php" class="<?php echo esc_attr( $this->slug . '-batch-form' ); ?>">
 		<p>
 			<label for="batch_name"><strong>Batch name</strong></label><br />

@@ -12,6 +12,7 @@ class GO_XPost_Cron
 	public function __construct()
 	{
 		add_action( 'init', array( $this, 'init' ) );
+		add_action( 'wp_ajax_go_xpost_register_cron', array( $this, 'register_cron' ) );
 		add_action( 'go_xpost_process_cron', array( $this, 'process_cron' ) );
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
@@ -19,12 +20,6 @@ class GO_XPost_Cron
 
 	public function init()
 	{
-		// Schedule the cron job if it's not already scheduled
-		if ( ! wp_next_scheduled( 'go_xpost_process_cron' ) )
-		{
-			wp_schedule_event( time(), $this->slug . '-interval', 'go_xpost_process_cron' );
-		}
-
 		// Taxonomy for keeping track of posts that have already been xposted via the cron job
 		register_taxonomy(
 			$this->slug,
@@ -101,4 +96,52 @@ class GO_XPost_Cron
 
 		return $query->posts;
 	} // END get_posts
+
+	public function register_cron_link()
+	{
+		$args = array(
+			'action' => 'go_xpost_register_cron',
+			'nonce'  => wp_create_nonce( $this->slug . '-registier-cron' ),
+		);
+
+		if ( ! wp_next_scheduled( 'go_xpost_process_cron' ) )
+		{
+			$direction = 'Enable';
+		} // END if
+		else
+		{
+			$direction = 'Disable';
+		} // END else
+
+		$url = add_query_arg( $args, admin_url( 'admin-ajax.php' ) );
+
+		return '<a href="' . esc_url( $url ) . '" title="' . esc_attr( $direction ) . ' Cron xPosting" class="button-primary">' . esc_html( $direction ) . ' Cron xPosting</a>';
+	} // END register_cron_link
+
+	public function register_cron()
+	{
+		if ( ! current_user_can( 'manage_options' ) )
+		{
+			wp_die( 'You don not have permission to be here!', 'Bad user! Bad!' );
+		} // END if
+
+		if ( ! wp_verify_nonce( $_GET['nonce'], $this->slug . '-registier-cron' ) )
+		{
+			wp_nonce_ays( 'register-cron' );
+		} // END if
+
+		// Schedule the cron job if it's not already scheduled
+		if ( ! $timestamp = wp_next_scheduled( 'go_xpost_process_cron' ) )
+		{
+			wp_schedule_event( time(), $this->slug . '-interval', 'go_xpost_process_cron' );
+			$success = 'registered';
+		}
+		else
+		{
+			wp_unschedule_event( $timestamp, 'go_xpost_process_cron' );
+			$success = 'unregistered';
+		} // END else
+
+		wp_safe_redirect( add_query_arg( 'success', $success, admin_url( 'options-general.php?page=go-xpost-settings' ) ) );
+	} // END register_cron
 } // END GO_XPost_Cron
