@@ -15,7 +15,7 @@ class GO_XPost
 
 		if ( $this->config()->cron_interval )
 		{
-			$this->cron;
+			$this->cron();
 		} // END if
 
 		if ( is_admin() )
