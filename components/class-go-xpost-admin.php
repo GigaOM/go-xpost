@@ -48,6 +48,7 @@ class GO_XPost_Admin
 		$settings = go_xpost()->get_settings();
 		$secret   = go_xpost()->get_secret();
 		$method   = go_xpost()->get_request_method();
+		$method   = ! $method ? 'GET' : $method;
 
 		$filters  = $this->_get_filters();
 

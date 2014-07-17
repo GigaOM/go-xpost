@@ -89,7 +89,7 @@ class GO_XPost
 			add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
 			add_action( 'wp_ajax_nopriv_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
 
-			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
+			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 			add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 		} // END if
 
@@ -187,11 +187,11 @@ class GO_XPost
 	 *
 	 * @param $post WP_Post object
 	 */
-	public function receive_ping( $post )
+	public function receive_ping( $unused_post )
 	{
 		// Remove edit_post action so we don't trigger an accidental crosspost
 		remove_action( 'edit_post', array( $this, 'edit_post' ) );
-	}// end receive_push
+	}// end receive_ping
 
 	/**
 	 * Get settings for the plugin
@@ -248,7 +248,7 @@ class GO_XPost
 			if ( $setting['filter'] )
 			{
 				$this->load_filter( $setting['filter'] );
-				$this->filters[$setting['filter']]->endpoint = $setting['endpoint'];
+				$this->filters[ $setting['filter'] ]->endpoint = $setting['endpoint'];
 			}// end if
 		}// end foreach
 	}// end load_filters

@@ -63,8 +63,8 @@
 
 		<div class="<?php echo $this->slug; ?>-method">
 			<label for="<?php echo $this->slug; ?>-method"><strong>Request method</strong></label><br />
-			<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php if ( 'GET' == $method || ! $method ) { echo 'checked'; } ?>/> GET<br />
-			<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php if ( 'POST' == $method ) { echo 'checked'; } ?>/> POST<br />
+			<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="GET" <?php checked( $method, 'GET' ); ?>/> GET<br />
+			<input type="radio" name="<?php echo $this->slug; ?>-method" id="<?php echo $this->slug; ?>-method-get" value="POST" <?php checked( $method, 'POST' ); ?>/> POST<br />
 		</div>
 
 		<p class="submit">
