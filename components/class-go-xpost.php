@@ -65,7 +65,7 @@ class GO_XPost
 	{
 		if ( ! $this->cron )
 		{
-			require __DIR__ . '/class-go-xpost-cron.php';
+			require_once __DIR__ . '/class-go-xpost-cron.php';
 			$this->cron = go_xpost_cron();
 		} // END if
 
@@ -77,7 +77,7 @@ class GO_XPost
 		if ( ! $this->admin )
 		{
 			// Admins could possibly need the cron methods if the batch stuff gets used
-			require __DIR__ . '/class-go-xpost-cron.php';
+			require_once __DIR__ . '/class-go-xpost-cron.php';
 			require __DIR__ . '/class-go-xpost-admin.php';
 			$this->admin = go_xpost_admin();
 
