@@ -12,7 +12,11 @@ class GO_XPost
 	public function __construct()
 	{
 		add_action( 'init', array( $this, 'init' ) );
-		add_action( 'edit_post', array( $this, 'edit_post' ) );
+
+		if ( go_xpost()->config->xpost_on_edit )
+		{
+			add_action( 'edit_post', array( $this, 'edit_post' ) );
+		} // END if
 
 		if ( is_admin() )
 		{
@@ -57,8 +61,10 @@ class GO_XPost
 		{
 			$default_config = array(
 				'slog_get_author' => FALSE,
-				// Set to FALSE to turn off cron xposting
-				'cron_interval'  => 5, // Minutes
+				// Set to FALSE to turn off regular on save/edit xPosting
+				'xpost_on_edit' => TRUE,
+				// Set to FALSE to turn off cron xPosting
+				'cron_interval'  => 15, // Minutes
 				// List of post types to xPost via cron
 				'cron_post_types' => array(
 					'post',
