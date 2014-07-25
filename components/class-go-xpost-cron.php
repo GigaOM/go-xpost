@@ -11,10 +11,34 @@ class GO_XPost_Cron
 
 	public function __construct()
 	{
+		add_action( 'edit_post', array( $this, 'edit_post' ) );
+		add_action( 'wp_update_comment_count', array( $this, 'wp_update_comment_count' ) );
 		add_action( 'wp_ajax_go_xpost_register_cron', array( $this, 'register_cron' ) );
 
 		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 	} // END __construct
+
+	/**
+	 * On post save/edit remove the cron xPost term
+	 */
+	public function edit_post( $post_id )
+	{
+		// Don't bother with autosaves
+		if ( defined( 'DOING_AUTOSAVE' ) )
+		{
+			return;
+		}//end if
+
+		$this->remove_cron_term( $post_id );
+	} // END edit_post
+
+	/**
+	 * Remove the cron term from the xPost taxonomy for a given post
+	 */
+	public function remove_cron_term( $post_id )
+	{
+		wp_remove_object_terms( $post_id, go_xpost()->config->cron_term, $this->slug );
+	} // END remove_comment_cron
 
 	/**
 	 * Get posts and xPost them as configured
@@ -40,7 +64,7 @@ class GO_XPost_Cron
 			} // END if
 
 			go_xpost()->process_post( $post->ID );
-			wp_set_post_terms( $post->ID, 'posted', $this->slug );
+			wp_set_post_terms( $post->ID, go_xpost()->config->cron_term, $this->slug );
 
 			sleep( 2 );
 		} // END foreach
