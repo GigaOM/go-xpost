@@ -162,7 +162,7 @@ class GO_XPost_Admin
 
 			echo $post->ID . '<br/>';
 			go_xpost()->process_post( $post->ID );
-			wp_set_post_terms( $post->ID, $batch_name, $this->batch_taxonomy, true );
+			wp_set_post_terms( $post->ID, $batch_name, go_xpost()->cron()->slug, TRUE );
 
 			sleep( 2 );
 		}// end foreach

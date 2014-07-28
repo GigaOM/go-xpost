@@ -33,11 +33,11 @@ class GO_XPost_Cron
 	} // END edit_post
 
 	/**
-	 * Remove the cron term from the xPost taxonomy for a given post
+	 * Remove all terms the xPost taxonomy for a given post
 	 */
 	public function remove_cron_term( $post_id )
 	{
-		wp_remove_object_terms( $post_id, go_xpost()->config->cron_term, $this->slug );
+		wp_delete_object_term_relationships( $post_id, $this->slug );
 	} // END remove_comment_cron
 
 	/**
@@ -64,7 +64,7 @@ class GO_XPost_Cron
 			} // END if
 
 			go_xpost()->process_post( $post->ID );
-			wp_set_post_terms( $post->ID, go_xpost()->config->cron_term, $this->slug );
+			wp_set_post_terms( $post->ID, go_xpost()->config->cron_term, $this->slug, TRUE );
 
 			sleep( 2 );
 		} // END foreach
