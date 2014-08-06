@@ -2,14 +2,21 @@
 
 class GO_XPost
 {
-	public $admin = FALSE;     // the admin object
+	public $admin   = FALSE;
+	public $cron    = FALSE;
 	public $filters = array();
 	public $slug    = 'go-xpost';
-	public $secret;
+	public $secret  = NULL;
+	public $config  = NULL;
 
 	public function __construct()
 	{
-		add_action( 'edit_post', array( $this, 'edit_post' ) );
+		add_action( 'init', array( $this, 'init' ) );
+
+		if ( go_xpost()->config->xpost_on_edit )
+		{
+			add_action( 'edit_post', array( $this, 'edit_post' ) );
+		} // END if
 
 		if ( is_admin() )
 		{
@@ -22,6 +29,7 @@ class GO_XPost
 		// hook this action to update crossposted comment count after WP sets that
 		// number, else the xpost'ed comment count will always get overwritten by WP
 		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
+		add_action( 'go_xpost_process_cron', array( $this, 'process_cron' ) );
 
 		// If wp-cli is active load the xpost additions
 		if ( defined( 'WP_CLI' ) && WP_CLI )
@@ -30,12 +38,66 @@ class GO_XPost
 		}
 	}//end __construct
 
+	/**
+	 * Register the cron/batch custom taxnomy to the relevant post_types
+	 */
+	public function init()
+	{
+		// Taxonomy for keeping track of posts that have already been xposted via the cron job or batch functionality Cron/Batch
+		register_taxonomy(
+			$this->slug . '-cron',
+			go_xpost()->config->cron_post_types,
+			array(
+				'label'   => 'Gigaom xPost Cron/Batch',
+				'public'  => FALSE,
+				'rewrite' => FALSE,
+			)
+		);
+	} // END init
+
+	public function config()
+	{
+		if ( ! $this->config )
+		{
+			$default_config = array(
+				'slog_get_author' => FALSE,
+				// Set to FALSE to turn off regular on save/edit xPosting
+				'xpost_on_edit' => TRUE,
+				// Set to FALSE to turn off cron xPosting
+				'cron_interval'  => 15, // Minutes
+				// List of post types to xPost via cron
+				'cron_post_types' => array(
+					'post',
+				),
+				// Term used for checking if a post has already xPosted
+				'cron_term' => 'posted',
+				// Number of posts to attempt to xPost each time the cron is run
+				'cron_limit' => 10,
+			);
+
+			$this->config = (object) apply_filters( 'go_config', $default_config, 'go-xpost' );
+		} // END if
+
+		return $this->config;
+	} // END config
+
+	public function cron()
+	{
+		if ( ! $this->cron )
+		{
+			require_once __DIR__ . '/class-go-xpost-cron.php';
+			$this->cron = new GO_XPost_Cron();
+		} // END if
+
+		return $this->cron;
+	} // END cron
+
 	public function admin()
 	{
 		if ( ! $this->admin )
 		{
 			require __DIR__ . '/class-go-xpost-admin.php';
-			$this->admin = go_xpost_admin();
+			$this->admin = new GO_XPost_Admin();
 
 			$this->load_filters();
 			$this->secret = $this->get_secret();
@@ -47,7 +109,7 @@ class GO_XPost
 			add_action( 'wp_ajax_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
 			add_action( 'wp_ajax_nopriv_go_xpost_pull', array( go_xpost_util(), 'send_post' ) );
 
-			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ));
+			add_action( 'wp_ajax_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 			add_action( 'wp_ajax_nopriv_go_xpost_ping', array( go_xpost_util(), 'receive_ping' ) );
 		} // END if
 
@@ -145,11 +207,11 @@ class GO_XPost
 	 *
 	 * @param $post WP_Post object
 	 */
-	public function receive_ping( $post )
+	public function receive_ping( $unused_post )
 	{
 		// Remove edit_post action so we don't trigger an accidental crosspost
 		remove_action( 'edit_post', array( $this, 'edit_post' ) );
-	}// end receive_push
+	}// end receive_ping
 
 	/**
 	 * Get settings for the plugin
@@ -162,7 +224,7 @@ class GO_XPost
 			array(
 				'filter'   => '',
 				'endpoint' => '',
-				'secret' => '',
+				'secret'   => '',
 			),
 		);
 
@@ -206,7 +268,7 @@ class GO_XPost
 			if ( $setting['filter'] )
 			{
 				$this->load_filter( $setting['filter'] );
-				$this->filters[$setting['filter']]->endpoint = $setting['endpoint'];
+				$this->filters[ $setting['filter'] ]->endpoint = $setting['endpoint'];
 			}// end if
 		}// end foreach
 	}// end load_filters
@@ -242,6 +304,14 @@ class GO_XPost
 
 		return $count;
 	} // END get_comments_number
+
+	/**
+	 * This calls the process_cron in the GO_XPost_Cron class
+	 */
+	public function process_cron()
+	{
+		$this->cron()->process_cron();
+	} // END process_cron
 }//end class
 
 function go_xpost()

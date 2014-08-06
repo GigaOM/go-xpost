@@ -1,20 +1,13 @@
-/* @override 
-	http://pc.localhost/wp-content/themes/vip/gigaom2/plugins/go-xpost/components//css/go-xpost.css?ver=3.5.1 */
-
 a.go-xpost-add-endpoint.button {
 	float: right;
 	margin-top: 1em;
 }
 
 .go-xpost-settings li {
-	background: #eee;
-	border: 1px solid #ddd;
+	background: white;
+	border: 1px solid #e5e5e5;
 	margin-bottom: 1em;
-	-webkit-border-radius: 5px;
-	-moz-border-radius: 5px;
-	-o-border-radius: 5px;
-	border-radius: 5px;
-	padding: 0.7em 1.3em 0.5em 0.5em;
+	padding: 12px;
 }
 
 .go-xpost-settings li > div {
@@ -33,6 +26,11 @@ a.go-xpost-add-endpoint.button {
 	float: right;
 }
 
-input#go-xpost-secret.input {
+input#go-xpost-secret.input,
+.go-xpost-batch-form input[type="text"] {
 	width: 530px;
+}
+
+.go-xpost-batch-form input[type="number"] {
+	width: 73px;
 }
