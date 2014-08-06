@@ -11,7 +11,7 @@ class GO_XPost_Cron
 
 	public function __construct()
 	{
-		add_action( 'edit_post', array( $this, 'edit_post' ) );
+		add_action( 'save_post', array( $this, 'save_post' ) );
 		add_action( 'wp_update_comment_count', array( $this, 'wp_update_comment_count' ) );
 		add_action( 'wp_ajax_go_xpost_register_cron', array( $this, 'register_cron' ) );
 
@@ -21,7 +21,7 @@ class GO_XPost_Cron
 	/**
 	 * On post save/edit remove the cron xPost term
 	 */
-	public function edit_post( $post_id )
+	public function save_post( $post_id )
 	{
 		// Don't bother with autosaves
 		if ( defined( 'DOING_AUTOSAVE' ) )
