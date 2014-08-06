@@ -30,7 +30,7 @@ class GO_XPost_Cron
 		}//end if
 
 		$this->remove_cron_term( $post_id );
-	} // END edit_post
+	} // END save_post
 
 	/**
 	 * Remove all terms the xPost taxonomy for a given post
@@ -38,7 +38,7 @@ class GO_XPost_Cron
 	public function remove_cron_term( $post_id )
 	{
 		wp_delete_object_term_relationships( $post_id, $this->slug );
-	} // END remove_comment_cron
+	} // END remove_cron_term
 
 	/**
 	 * Get posts and xPost them as configured
