@@ -46,9 +46,9 @@ class GO_XPost_Cron
 	public function process_cron()
 	{
 		$posts = $this->get_posts(
-			go_xpost()->config->cron_post_types,
-			go_xpost()->config->cron_term,
-			go_xpost()->config->cron_limit
+			go_xpost()->config()->cron_post_types,
+			go_xpost()->config()->cron_term,
+			go_xpost()->config()->cron_limit
 		);
 
 		if ( ! $posts )
@@ -64,7 +64,7 @@ class GO_XPost_Cron
 			} // END if
 
 			go_xpost()->process_post( $post->ID );
-			wp_set_post_terms( $post->ID, go_xpost()->config->cron_term, $this->slug, TRUE );
+			wp_set_post_terms( $post->ID, go_xpost()->config()->cron_term, $this->slug, TRUE );
 
 			sleep( 2 );
 		} // END foreach
