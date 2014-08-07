@@ -13,7 +13,7 @@ class GO_XPost
 	{
 		add_action( 'init', array( $this, 'init' ) );
 
-		if ( go_xpost()->config->xpost_on_edit )
+		if ( $this->config()->xpost_on_edit )
 		{
 			add_action( 'edit_post', array( $this, 'edit_post' ) );
 		} // END if
@@ -46,7 +46,7 @@ class GO_XPost
 		// Taxonomy for keeping track of posts that have already been xposted via the cron job or batch functionality Cron/Batch
 		register_taxonomy(
 			$this->slug . '-cron',
-			go_xpost()->config->cron_post_types,
+			$this->config()->cron_post_types,
 			array(
 				'label'   => 'Gigaom xPost Cron/Batch',
 				'public'  => FALSE,
