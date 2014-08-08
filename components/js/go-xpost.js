@@ -9,7 +9,7 @@ if ( 'undefined' == typeof go_xpost ) {
 		$( '.go-xpost-add-endpoint' ).on( 'click', function( event ) {
 			var number   = parseInt( $( 'ul.go-xpost-settings li:last .number' ).attr( 'value' ) ) + 1;
 
-			if ( number = 'NAN' ) {
+			if ( isNaN( number ) ) {
 				number = 1;
 			}
 
