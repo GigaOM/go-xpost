@@ -41,8 +41,6 @@ class GO_XPost_Admin
 
 		$filters  = $this->_get_filters();
 
-		$add_link = '<a href="#add-endpoint" title="Add Filter/Endpoint" class="' . $this->slug . '-add-endpoint button">Add Endpoint</a>';
-
 		require __DIR__ . '/templates/settings.php';
 	} // end settings
 
