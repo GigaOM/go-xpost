@@ -114,6 +114,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		else
 		{
 			$xpost->post->post_excerpt = trim( wp_trim_words( $xpost->post->post_content, 31, '' ), '.' ) . '&hellip;';
+			$xpost->post->post_excerpt = preg_replace( '#\[[^\]]+\].*\[/[^\]]+\]#', '', $xpost->post->post_excerpt );
 		}// end else
 
 		// Will change this to Subscription later if appropriate
