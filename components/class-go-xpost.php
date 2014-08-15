@@ -25,6 +25,7 @@ class GO_XPost
 
 		// Filter comment counts for crossposted content.
 		add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
+		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 
 		// hook this action to update crossposted comment count after WP sets that
 		// number, else the xpost'ed comment count will always get overwritten by WP
@@ -304,6 +305,14 @@ class GO_XPost
 
 		return $count;
 	} // END get_comments_number
+
+	/**
+	 * Add our custom cron interval to WordPress
+	 */
+	public function cron_schedules( $schedules )
+	{
+		return $this->cron()->cron_schedules( $schedules );
+	} // END cron_schedules
 
 	/**
 	 * This calls the process_cron in the GO_XPost_Cron class
