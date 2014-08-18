@@ -13,9 +13,6 @@ class GO_XPost_Cron
 	{
 		add_action( 'save_post', array( $this, 'save_post' ) );
 		add_action( 'wp_update_comment_count', array( $this, 'wp_update_comment_count' ) );
-		add_action( 'wp_ajax_go_xpost_register_cron', array( $this, 'register_cron' ) );
-
-		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 	} // END __construct
 
 	/**

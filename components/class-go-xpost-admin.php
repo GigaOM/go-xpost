@@ -12,6 +12,7 @@ class GO_XPost_Admin
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'wp_ajax_go_xpost_update_settings', array( $this, 'update_settings' ) );
 		add_action( 'wp_ajax_go_xpost_batch', array( $this, 'batch' ) );
+		add_action( 'wp_ajax_go_xpost_register_cron', array( $this, 'register_cron' ) );
 	}// end __construct
 
 	public function admin_init()
@@ -210,4 +211,12 @@ class GO_XPost_Admin
 			$limit
 		);
 	}// end get_posts_to_batch
+
+	/**
+	 * AJAX endpoint which registers or unregisters our cron hook wtih WordPress
+	 */
+	public function register_cron()
+	{
+		go_xpost()->cron()->register_cron();
+	} // END register_cron
 }//end class
