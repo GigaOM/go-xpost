@@ -60,7 +60,19 @@ class GO_XPost_Cron
 				continue;
 			} // END if
 
-			apply_filters( 'go_slog', 'go-xpost-cron-process-start', 'Started processing post (GUID: ' . $post->guid . ')', array( 'post_id' => $post->ID, 'post_title' => $post->post_title ) );
+			apply_filters(
+				'go_slog',
+				'go-xpost-cron-process-start',
+				'Started processing post (GUID: ' . $post->guid . ')',
+				array(
+					'post_id'       => $post->ID,
+					'post_title'    => $post->post_title,
+					'post_status'   => $post->post_status,
+					'post_type'     => $post->post_type,
+					'post_date'     => $post->post_date,
+					'post_date_gmt' => $post->post_date_gmt,
+				)
+			);
 
 			go_xpost()->process_post( $post->ID );
 			wp_set_post_terms( $post->ID, go_xpost()->config()->cron_term, $this->slug, TRUE );
