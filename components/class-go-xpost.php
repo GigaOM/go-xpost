@@ -155,12 +155,30 @@ class GO_XPost
 		// In some cases we may want to receive xposts but not send them
 		if ( FALSE == $this->filters )
 		{
+			if ( $this->cron()->processing )
+			{
+				apply_filters( 'go_slog', 'go-xpost-cron-no-filters', 'Processing failed because there are no filters!',
+					array(
+						'post_id' => $post_id,
+					)
+				);
+			} // END if
+
 			return;
 		}// end if
 
 		// don't attempt to crosspost a crosspost
 		if ( go_xpost_redirect()->is_xpost( $post_id ) )
 		{
+			if ( $this->cron()->processing )
+			{
+				apply_filters( 'go_slog', 'go-xpost-cron-is-xpost', 'Processing failed because this post is a xPost!',
+					array(
+						'post_id' => $post_id,
+					)
+				);
+			} // END if
+
 			return;
 		}//end if
 
@@ -170,6 +188,16 @@ class GO_XPost
 		// Loop through filters and push to them if appropriate
 		foreach ( $this->filters as $filter_name => $filter )
 		{
+			if ( $this->cron()->processing )
+			{
+				apply_filters( 'go_slog', 'go-xpost-cron-filter-start', 'Started filtering cron xPost!',
+					array(
+						'post_id' => $post_id,
+						'filter'  => $filter_name,
+					)
+				);
+			} // END if
+
 			if ( empty( $filter->endpoint ) )
 			{
 				continue;
@@ -182,7 +210,7 @@ class GO_XPost
 				// log that we have a bad endpoint configured
 				apply_filters( 'go_slog', 'go-xpost-bad-endpoint', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': Bad endpoint!',
 					array(
-						'post_id'   => $post_id,
+						'post_id' => $post_id,
 					)
 				);
 				return;
@@ -200,6 +228,26 @@ class GO_XPost
 
 				go_xpost_util()->ping( $filter->endpoint, $post_id, $this->secret, $filter_name );
 			}// end if
+			elseif ( $this->cron()->processing )
+			{
+				apply_filters( 'go_slog', 'go-xpost-cron-filter-failed', 'Processing failed because should_send_post returned FALSE!',
+					array(
+						'post_id'  => $post_id,
+						'filter'   => $filter_name,
+						'endpoint' => $filter->endpoint,
+					)
+				);
+			} // END elseif
+
+			if ( $this->cron()->processing )
+			{
+				apply_filters( 'go_slog', 'go-xpost-cron-filter-stop', 'Finished filtering cron xPost!',
+					array(
+						'post_id' => $post_id,
+						'filter'  => $filter_name,
+					)
+				);
+			} // END if
 		} // END foreach
 	} // END process_post
 

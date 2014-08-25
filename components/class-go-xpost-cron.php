@@ -8,6 +8,7 @@
 class GO_XPost_Cron
 {
 	public $slug = 'go-xpost-cron';
+	public $processing = FALSE;
 
 	public function __construct()
 	{
@@ -52,6 +53,8 @@ class GO_XPost_Cron
 		{
 			return;
 		} // END if
+
+		$this->processing = TRUE;
 
 		foreach ( $posts as $post )
 		{
