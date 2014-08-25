@@ -137,7 +137,7 @@ class GO_XPost_Cron
 	{
 		$args = array(
 			'action' => 'go_xpost_register_cron',
-			'nonce'  => wp_create_nonce( $this->slug . '-registier-cron' ),
+			'nonce'  => wp_create_nonce( $this->slug . '-register-cron' ),
 		);
 
 		if ( ! wp_next_scheduled( 'go_xpost_process_cron' ) )
@@ -164,7 +164,7 @@ class GO_XPost_Cron
 			wp_die( 'You don not have permission to be here!', 'Bad user! Bad!' );
 		} // END if
 
-		if ( ! wp_verify_nonce( $_GET['nonce'], $this->slug . '-registier-cron' ) )
+		if ( ! wp_verify_nonce( $_GET['nonce'], $this->slug . '-register-cron' ) )
 		{
 			wp_nonce_ays( 'register-cron' );
 		} // END if
