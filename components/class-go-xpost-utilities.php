@@ -62,7 +62,10 @@ class GO_XPost_Utilities
 	{
 		$post_id = (int) $post_id;
 
-		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Started getting attachment', array( 'post_id' => $post_id ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Started getting attachment', array( 'post_id' => $post_id ) );
+		}//end if
 
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ) )
@@ -111,7 +114,10 @@ class GO_XPost_Utilities
 		unset( $r->meta['_wp_attachment_metadata'] );
 		unset( $r->meta['_wp_attached_file'] );
 
-		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Success!', array( 'post_id' => $post_id, 'url' => $r->file->url ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Success!', array( 'post_id' => $post_id, 'url' => $r->file->url ) );
+		}//end if
 
 		return $r;
 	}//end get_attachment
@@ -167,7 +173,6 @@ class GO_XPost_Utilities
 		{
 			$r->parent = get_post( $r->post->post_parent );
 		}//end if
-
 
 		// map the thumbnail post ID to post/guid
 		// this is compatible with the http://wordpress.org/extend/plugins/multiple-post-thumbnails/ plugin available on VIP
@@ -352,8 +357,11 @@ class GO_XPost_Utilities
 		// save an activity log for this execution instance
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
 
-		// log and return success
-		apply_filters( 'go_slog', 'go-xpost-send-ping', $endpoint . ' ' . $post_id, array( 'post_id' => $post_id, 'response' => $return['response'] ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			// log and return success
+			apply_filters( 'go_slog', 'go-xpost-send-ping', $endpoint . ' ' . $post_id, array( 'post_id' => $post_id, 'response' => $return['response'] ) );
+		}//end if
 
 		return;
 	}//end ping
@@ -389,8 +397,11 @@ class GO_XPost_Utilities
 			$this->error_and_die( 'go-xpost-invalid-ping', 'Unauthorized activity', $ping_array, 401 );
 		}//end if
 
-		// log this
-		apply_filters( 'go_slog', 'go-xpost-received-ping', urldecode( $ping_array['source'] ) . ' ' . $ping_array['post_id'], $ping_array );
+		if ( go_xpost()->verbose_log() )
+		{
+			// log this
+			apply_filters( 'go_slog', 'go-xpost-received-ping', urldecode( $ping_array['source'] ) . ' ' . $ping_array['post_id'], $ping_array );
+		}//end if
 
 		// OK, we're good to go, but let's wait a moment for everything to settle on the other side
 		sleep( $sleep );
@@ -441,8 +452,11 @@ class GO_XPost_Utilities
 			die;
 		}// end if
 
-		// report our success
-		apply_filters( 'go_slog', 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			// report our success
+			apply_filters( 'go_slog', 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		}//end if
 
 		// allow the GO_Xpost class (and others) to do something in response to the ping being received
 		do_action( 'go_xpost_receive_ping', $post );
@@ -516,7 +530,10 @@ class GO_XPost_Utilities
 		// and
 		// http://core.svn.wordpress.org/tags/2.9.2/wp-admin/import/wordpress.php
 
-		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+		}//end if
 
 		// create a location for this file
 		$file = wp_upload_bits( basename( $post->file->url ), null, '', $post->post->post_date );
@@ -646,8 +663,11 @@ class GO_XPost_Utilities
 				}//END foreach
 		}//END if
 
-		// success log
-		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			// success log
+			apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		}//end if
 
 		return $post_id;
 	}//end save_attachment
@@ -674,11 +694,11 @@ class GO_XPost_Utilities
 		if ( ! isset( $post->author->data ) || ! is_object( $post->author->data ) )
 		{
 			apply_filters( 'go_slog', 'go-xpost-save', 'author_debug: post does not contain author->data', $post );
-		}
-		else
+		}//end if
+		elseif ( go_xpost()->verbose_log() )
 		{
 			apply_filters( 'go_slog', 'go-xpost-save', 'author_debug: post contains author->data', $post->author );
-		}
+		}//end elseif
 
 		$post->post->post_author = $this->get_author( $post->author );
 
@@ -727,7 +747,10 @@ class GO_XPost_Utilities
 			return $this->error( 'go-xpost-failed-save', 'Failed to save post (GUID: ' . $post->post->guid . ')', $this->post_log_data( $post ) );
 		}//end if
 
-		apply_filters( 'go_slog', 'go-xpost-meta', 'Xpost meta fields', array_keys( $post->meta ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', 'go-xpost-meta', 'Xpost meta fields', array_keys( $post->meta ) );
+		}//end if
 
 		// set the post meta as received for the post
 		foreach ( (array) $post->meta as $meta_key => $meta_values )
@@ -777,14 +800,14 @@ class GO_XPost_Utilities
 				if ( ! empty( $verified_term_ids ) )
 				{
 					$ret = wp_set_object_terms( $post_id, $verified_term_ids, $tax, FALSE );
-					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+					if ( go_xpost()->verbose_log() )
 					{
 						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: called wp_set_object_terms() on post ' . $post_id . ' for taxonomy ' . $tax, array( $verified_term_ids, $ret ) );
 					}
 				}
 				else
 				{
-					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+					if ( go_xpost()->verbose_log() )
 					{
 						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: empty $verified_term_ids for post ' . $post_id . ' for taxonomy ' . $tax, array() );
 					}
@@ -867,7 +890,10 @@ class GO_XPost_Utilities
 		// Ending the connection while passing just the post content to prevent go_slog filter from causing issues
 		$this->end_http_connection( $post );
 
-		apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] . ' ' . $ping_array['post_id'], $ping_array );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] . ' ' . $ping_array['post_id'], $ping_array );
+		}//end if
 
 		// all done, bye bye
 		die;
@@ -889,10 +915,10 @@ class GO_XPost_Utilities
 		// Check if author exists, allow it to be hooked if not
 		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
-			if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+			if ( go_xpost()->verbose_log() )
 			{
 				apply_filters( 'go_slog', 'go-xpost-get-author', 'author_debug: getting author by go_xpost_unknown_author', $this->user_log_data( $author ) );
-			}
+			}//end if
 
 			// @TODO: this needs to be fixed: in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
 			return apply_filters( 'go_xpost_unknown_author', 0, $author );
@@ -900,10 +926,10 @@ class GO_XPost_Utilities
 
 		// ID could be different so lets replace it with the local one
 		// @TODO: Pro currently has a lot of email address duplication in user accounts.  This may cause surprising effects here. (see Om and Ingram)
-		if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+		if ( go_xpost()->verbose_log() )
 		{
 			apply_filters( 'go_slog', 'go-xpost-get-author', 'author_debug: matched local post author ' . $post_author->ID . ' by email', $this->user_log_data( $author ) );
-		}
+		}//end if
 
 		return $post_author->ID;
 	}// end get_author

@@ -8,6 +8,7 @@ class GO_XPost
 	public $slug    = 'go-xpost';
 	public $secret  = NULL;
 	public $config  = NULL;
+	private $verbose_log = NULL;
 
 	public function __construct()
 	{
@@ -61,7 +62,6 @@ class GO_XPost
 		if ( ! $this->config )
 		{
 			$default_config = array(
-				'slog_get_author' => FALSE,
 				// Set to FALSE to turn off regular on save/edit xPosting
 				'xpost_on_edit' => TRUE,
 				// Set to FALSE to turn off cron xPosting
@@ -155,9 +155,9 @@ class GO_XPost
 		// In some cases we may want to receive xposts but not send them
 		if ( FALSE == $this->filters )
 		{
-			if ( $this->cron()->processing )
+			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', 'go-xpost-cron-no-filters', 'Processing failed because there are no filters!',
+				apply_filters( 'go_slog', 'go-xpost-no-filters', 'Processing failed because there are no filters!',
 					array(
 						'post_id' => $post_id,
 					)
@@ -170,9 +170,9 @@ class GO_XPost
 		// don't attempt to crosspost a crosspost
 		if ( go_xpost_redirect()->is_xpost( $post_id ) )
 		{
-			if ( $this->cron()->processing )
+			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', 'go-xpost-cron-is-xpost', 'Processing failed because this post is a xPost!',
+				apply_filters( 'go_slog', 'go-xpost-is-xpost', 'Processing failed because this post is a xPost!',
 					array(
 						'post_id' => $post_id,
 					)
@@ -188,9 +188,9 @@ class GO_XPost
 		// Loop through filters and push to them if appropriate
 		foreach ( $this->filters as $filter_name => $filter )
 		{
-			if ( $this->cron()->processing )
+			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', 'go-xpost-cron-filter-start', 'Started filtering cron xPost!',
+				apply_filters( 'go_slog', 'go-xpost-filter-start', 'Started filtering xPost!',
 					array(
 						'post_id' => $post_id,
 						'filter'  => $filter_name,
@@ -228,9 +228,9 @@ class GO_XPost
 
 				go_xpost_util()->ping( $filter->endpoint, $post_id, $this->secret, $filter_name );
 			}// end if
-			elseif ( $this->cron()->processing )
+			elseif ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', 'go-xpost-cron-filter-failed', 'Processing failed because should_send_post returned FALSE!',
+				apply_filters( 'go_slog', 'go-xpost-filter-failed', 'Processing failed because should_send_post returned FALSE!',
 					array(
 						'post_id'  => $post_id,
 						'filter'   => $filter_name,
@@ -239,9 +239,9 @@ class GO_XPost
 				);
 			} // END elseif
 
-			if ( $this->cron()->processing )
+			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', 'go-xpost-cron-filter-stop', 'Finished filtering cron xPost!',
+				apply_filters( 'go_slog', 'go-xpost-filter-stop', 'Finished filtering xPost!',
 					array(
 						'post_id' => $post_id,
 						'filter'  => $filter_name,
@@ -289,6 +289,21 @@ class GO_XPost
 	{
 		return get_option( $this->slug . '-secret' );
 	} // END get_secret
+
+	/**
+	 * determine if logging should be verbose
+	 *
+	 * @return boolean
+	 */
+	public function verbose_log()
+	{
+		if ( $this->verbose_log === NULL )
+		{
+			$this->verbose_log = get_option( $this->slug . '-verbose-log' );
+		}//end if
+
+		return $this->verbose_log;
+	} // END verbose_log
 
 	/**
 	 * Get the request method (GET or POST) for this site
