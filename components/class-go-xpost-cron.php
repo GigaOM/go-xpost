@@ -56,6 +56,9 @@ class GO_XPost_Cron
 
 		$this->processing = TRUE;
 
+		go_xpost()->load_filters();
+		go_xpost()->secret = go_xpost()->get_secret();
+
 		foreach ( $posts as $post )
 		{
 			if ( ! isset( $post->ID ) )
