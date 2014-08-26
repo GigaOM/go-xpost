@@ -308,7 +308,7 @@ class GO_XPost
 	/**
 	 * Load the filters as defined in settings, will instantiate objects for each
 	 */
-	private function load_filters()
+	public function load_filters()
 	{
 		$settings = $this->get_settings();
 
