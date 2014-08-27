@@ -55,6 +55,7 @@ class GO_XPost_Cron
 		} // END if
 
 		$this->processing = TRUE;
+		go_xpost()->slog_prefix .= 'cron-';
 
 		go_xpost()->load_filters();
 		go_xpost()->secret = go_xpost()->get_secret();
@@ -68,7 +69,7 @@ class GO_XPost_Cron
 
 			apply_filters(
 				'go_slog',
-				'go-xpost-cron-process-start',
+				go_xpost()->slog_prefix . 'process-start',
 				'Started processing post (GUID: ' . $post->guid . ')',
 				array(
 					'post_id'       => $post->ID,
@@ -83,7 +84,7 @@ class GO_XPost_Cron
 			go_xpost()->process_post( $post->ID );
 			wp_set_post_terms( $post->ID, go_xpost()->config()->cron_term, $this->slug, TRUE );
 
-			apply_filters( 'go_slog', 'go-xpost-cron-process-end', 'Finished processing post (GUID: ' . $post->guid . ')', array( 'post_id' => $post->ID, 'post_title' => $post->post_title ) );
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'process-end', 'Finished processing post (GUID: ' . $post->guid . ')', array( 'post_id' => $post->ID, 'post_title' => $post->post_title ) );
 
 			sleep( 2 );
 		} // END foreach
