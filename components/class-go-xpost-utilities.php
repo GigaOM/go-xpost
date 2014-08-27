@@ -62,12 +62,15 @@ class GO_XPost_Utilities
 	{
 		$post_id = (int) $post_id;
 
-		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Started getting attachment', array( 'post_id' => $post_id ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'get-attachment', 'Started getting attachment', array( 'post_id' => $post_id ) );
+		}//end if
 
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ) )
 		{
-			return $this->error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: ' . $post_id . ')', $post_id );
+			return $this->error( 'failed-to-get-attachment', 'Failed to get the requested attachment (ID: ' . $post_id . ')', $post_id );
 		}//end if
 
 		// get the post
@@ -76,7 +79,7 @@ class GO_XPost_Utilities
 
 		if ( is_wp_error( $r->post ) )
 		{
-			return $this->error( 'go-xpost-failed-to-get-attachment', 'Failed to get the requested attachment (ID: ' . $post_id . ')', $this->post_log_data( $r->post ) );
+			return $this->error( 'failed-to-get-attachment', 'Failed to get the requested attachment (ID: ' . $post_id . ')', $this->post_log_data( $r->post ) );
 		}//end if
 
 		// unset the post ID in the post object now to prevent risk of overwriting a post in another blog
@@ -94,7 +97,7 @@ class GO_XPost_Utilities
 
 		if ( ! $r->file->url )
 		{
-			apply_filters( 'go_slog', 'go-xpost-get-attachment-url-failed', 'Failed to get the file url', array( 'post_id' => $post_id ) );
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'get-attachment-url-failed', 'Failed to get the file url', array( 'post_id' => $post_id ) );
 		} // END if
 
 		// get the terms
@@ -111,7 +114,10 @@ class GO_XPost_Utilities
 		unset( $r->meta['_wp_attachment_metadata'] );
 		unset( $r->meta['_wp_attached_file'] );
 
-		apply_filters( 'go_slog', 'go-xpost-get-attachment', 'Success!', array( 'post_id' => $post_id, 'url' => $r->file->url ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'get-attachment', 'Success!', array( 'post_id' => $post_id, 'url' => $r->file->url ) );
+		}//end if
 
 		return $r;
 	}//end get_attachment
@@ -131,7 +137,7 @@ class GO_XPost_Utilities
 		// confirm that the requested post exists
 		if ( ! get_post( $post_id ) )
 		{
-			return $this->error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: ' . $post_id . ')', $r->post );
+			return $this->error( 'failed-to-get-post', 'Failed to get the requested post (ID: ' . $post_id . ')', $r->post );
 		}//end if
 
 		//Should fix the 'Creating default object from empty value' error
@@ -145,7 +151,7 @@ class GO_XPost_Utilities
 
 		if ( is_wp_error( $r->post ) )
 		{
-			return $this->error( 'go-xpost-failed-to-get-post', 'Failed to get the requested post (ID: ' . $post_id . ')', $r->post );
+			return $this->error( 'failed-to-get-post', 'Failed to get the requested post (ID: ' . $post_id . ')', $r->post );
 		}//end if
 
 		// unset the post ID in the post object now to prevent risk of overwriting a post in another blog
@@ -168,7 +174,6 @@ class GO_XPost_Utilities
 			$r->parent = get_post( $r->post->post_parent );
 		}//end if
 
-
 		// map the thumbnail post ID to post/guid
 		// this is compatible with the http://wordpress.org/extend/plugins/multiple-post-thumbnails/ plugin available on VIP
 		foreach ( (array) $r->meta as $mkey => $mval )
@@ -188,7 +193,7 @@ class GO_XPost_Utilities
 		$r->author = get_userdata( $r->post->post_author );
 		if ( ! $r->author )
 		{
-			apply_filters( 'go_slog', 'go-xpost-get-post', 'author_debug: get_userdata() returned false for ' . $r->post->post_author, $r );
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'get-post', 'author_debug: get_userdata() returned false for ' . $r->post->post_author, $r );
 		}
 
 		$r->origin = new StdClass;
@@ -346,14 +351,17 @@ class GO_XPost_Utilities
 
 		if ( is_wp_error( $return ) )
 		{
-			return $this->error( 'go-xpost-ping-error', 'Ping failed', array( 'post_id' => $post_id, 'guid' => get_the_guid( $post_id ), 'source' => $source, 'endpoint' => $endpoint, 'messages' => $return->get_error_messages() ) );
+			return $this->error( 'ping-error', 'Ping failed', array( 'post_id' => $post_id, 'guid' => get_the_guid( $post_id ), 'source' => $source, 'endpoint' => $endpoint, 'messages' => $return->get_error_messages() ) );
 		}// end if
 
 		// save an activity log for this execution instance
 		$this->pinged[ $endpoint .' '. $post_id ] = time();
 
-		// log and return success
-		apply_filters( 'go_slog', 'go-xpost-send-ping', $endpoint . ' ' . $post_id, array( 'post_id' => $post_id, 'response' => $return['response'] ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			// log and return success
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'send-ping', $endpoint . ' ' . $post_id, array( 'post_id' => $post_id, 'response' => $return['response'] ) );
+		}//end if
 
 		return;
 	}//end ping
@@ -365,7 +373,7 @@ class GO_XPost_Utilities
 	{
 		if ( empty( $_REQUEST['source'] ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-ping', 'Forbidden or missing parameters', $_REQUEST, 403 );
+			$this->error_and_die( 'invalid-ping', 'Forbidden or missing parameters', $_REQUEST, 403 );
 		}//end if
 
 		// Tell the pinger that we don't need them anymore
@@ -386,11 +394,14 @@ class GO_XPost_Utilities
 		// die if user is not Admin and the signature doesn't match
 		if ( ! current_user_can( 'manage_options' ) && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-ping', 'Unauthorized activity', $ping_array, 401 );
+			$this->error_and_die( 'invalid-ping', 'Unauthorized activity', $ping_array, 401 );
 		}//end if
 
-		// log this
-		apply_filters( 'go_slog', 'go-xpost-received-ping', urldecode( $ping_array['source'] ) . ' ' . $ping_array['post_id'], $ping_array );
+		if ( go_xpost()->verbose_log() )
+		{
+			// log this
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'received-ping', urldecode( $ping_array['source'] ) . ' ' . $ping_array['post_id'], $ping_array );
+		}//end if
 
 		// OK, we're good to go, but let's wait a moment for everything to settle on the other side
 		sleep( $sleep );
@@ -422,7 +433,7 @@ class GO_XPost_Utilities
 		// confirm we got a response
 		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-response-error', 'Original post could not be retrieved (source: ' . $_REQUEST['source'] . ')', $query_array );
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'response-error', 'Original post could not be retrieved (source: ' . $_REQUEST['source'] . ')', $query_array );
 			die;
 		}// end if
 
@@ -437,12 +448,15 @@ class GO_XPost_Utilities
 				$more_data['error_messages'] = $post->get_error_messages();
 			}// end if
 
-			apply_filters( 'go_slog', 'go-xpost-retrieve-error', 'Original post was not a valid object after unserializing (source: ' . $_REQUEST['source'] . ')', $more_data );
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'retrieve-error', 'Original post was not a valid object after unserializing (source: ' . $_REQUEST['source'] . ')', $more_data );
 			die;
 		}// end if
 
-		// report our success
-		apply_filters( 'go_slog', 'go-xpost-retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			// report our success
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'retrieved-post', 'Original post as retrieved by get_post (GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		}//end if
 
 		// allow the GO_Xpost class (and others) to do something in response to the ping being received
 		do_action( 'go_xpost_receive_ping', $post );
@@ -516,7 +530,10 @@ class GO_XPost_Utilities
 		// and
 		// http://core.svn.wordpress.org/tags/2.9.2/wp-admin/import/wordpress.php
 
-		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Started attachment saving', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'save-attachment', 'Started attachment saving', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+		}//end if
 
 		// create a location for this file
 		$file = wp_upload_bits( basename( $post->file->url ), null, '', $post->post->post_date );
@@ -525,7 +542,7 @@ class GO_XPost_Utilities
 		if ( $file['error'] )
 		{
 			return $this->error(
-				'go-xpost-attachment-badfiletype',
+				'attachment-badfiletype',
 				'File upload error for GUID: ' . $post->post->guid . ' (' . $file['error'] . ')',
 				array(
 					'origin_post_id' => $post->origin->ID,
@@ -544,19 +561,19 @@ class GO_XPost_Utilities
 		if ( ! $headers )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-unreachable', 'Remote server did not respond for ' . $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
+			return $this->error( 'attachment-unreachable', 'Remote server did not respond for ' . $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		}//end if
 
 		// make sure the fetch was successful
 		if ( $headers['response'] != '200' )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3$s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
+			return $this->error( 'attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3$s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		}//end if
 		elseif ( isset( $headers['content-length'] ) && filesize( $file['file'] ) != $headers['content-length'] )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-attachment-badsize', 'Remote file is incorrect size '. $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
+			return $this->error( 'attachment-badsize', 'Remote file is incorrect size '. $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		}//end elseif
 
 		// do actions for replication
@@ -578,7 +595,7 @@ class GO_XPost_Utilities
 			if ( ! $post->post->post_parent )
 			{
 				@unlink( $file );
-				return $this->error( 'go-xpost-attachment-noparent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data( $post ) );
+				return $this->error( 'attachment-noparent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data( $post ) );
 			}//end if
 		}// end if
 		*/
@@ -604,7 +621,7 @@ class GO_XPost_Utilities
 		if ( is_wp_error( $post_id ) )
 		{
 			@unlink( $file['file'] );
-			return $this->error( 'go-xpost-failed-save', 'Failed to save attachment (GUID: ' . $post->post->guid . ')', $post_id );
+			return $this->error( 'failed-save', 'Failed to save attachment (GUID: ' . $post->post->guid . ')', $post_id );
 		}//end if
 
 		// set the post meta as received for the post
@@ -646,8 +663,11 @@ class GO_XPost_Utilities
 				}//END foreach
 		}//END if
 
-		// success log
-		apply_filters( 'go_slog', 'go-xpost-save-attachment', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			// success log
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'save-attachment', 'Success! '. $action .' (ID: '. $post_id .', GUID: '. $post->post->guid . ')', $this->post_log_data( $post ) );
+		}//end if
 
 		return $post_id;
 	}//end save_attachment
@@ -667,18 +687,18 @@ class GO_XPost_Utilities
 		// look up parent post, fail if it doesn't exist
 		if ( isset( $post->parent ) && ( ! $parent_id = $this->post_exists( $post->parent ) ) )
 		{
-			return $this->error( 'go-xpost-failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data( $post ) );
+			return $this->error( 'failed-parent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data( $post ) );
 		}//end if
 
 		// slog if we don't have expected author data
 		if ( ! isset( $post->author->data ) || ! is_object( $post->author->data ) )
 		{
-			apply_filters( 'go_slog', 'go-xpost-save', 'author_debug: post does not contain author->data', $post );
-		}
-		else
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'save', 'author_debug: post does not contain author->data', $post );
+		}//end if
+		elseif ( go_xpost()->verbose_log() )
 		{
-			apply_filters( 'go_slog', 'go-xpost-save', 'author_debug: post contains author->data', $post->author );
-		}
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'save', 'author_debug: post contains author->data', $post->author );
+		}//end elseif
 
 		$post->post->post_author = $this->get_author( $post->author );
 
@@ -724,10 +744,13 @@ class GO_XPost_Utilities
 		// go home crying if we encounter an error inserting or updating the post
 		if ( is_wp_error( $post_id ) )
 		{
-			return $this->error( 'go-xpost-failed-save', 'Failed to save post (GUID: ' . $post->post->guid . ')', $this->post_log_data( $post ) );
+			return $this->error( 'failed-save', 'Failed to save post (GUID: ' . $post->post->guid . ')', $this->post_log_data( $post ) );
 		}//end if
 
-		apply_filters( 'go_slog', 'go-xpost-meta', 'Xpost meta fields', array_keys( $post->meta ) );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'meta', 'Xpost meta fields', array_keys( $post->meta ) );
+		}//end if
 
 		// set the post meta as received for the post
 		foreach ( (array) $post->meta as $meta_key => $meta_values )
@@ -777,16 +800,16 @@ class GO_XPost_Utilities
 				if ( ! empty( $verified_term_ids ) )
 				{
 					$ret = wp_set_object_terms( $post_id, $verified_term_ids, $tax, FALSE );
-					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+					if ( go_xpost()->verbose_log() )
 					{
-						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: called wp_set_object_terms() on post ' . $post_id . ' for taxonomy ' . $tax, array( $verified_term_ids, $ret ) );
+						apply_filters( 'go_slog', go_xpost()->slog_prefix . 'save-post', 'author_debug: called wp_set_object_terms() on post ' . $post_id . ' for taxonomy ' . $tax, array( $verified_term_ids, $ret ) );
 					}
 				}
 				else
 				{
-					if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+					if ( go_xpost()->verbose_log() )
 					{
-						apply_filters( 'go_slog', 'go-xpost-save-post', 'author_debug: empty $verified_term_ids for post ' . $post_id . ' for taxonomy ' . $tax, array() );
+						apply_filters( 'go_slog', go_xpost()->slog_prefix . 'save-post', 'author_debug: empty $verified_term_ids for post ' . $post_id . ' for taxonomy ' . $tax, array() );
 					}
 				}
 			}//END foreach
@@ -795,7 +818,7 @@ class GO_XPost_Utilities
 		do_action( 'go_xpost_save_post', $post_id, $post );
 
 		// success log
-		apply_filters( 'go_slog', 'go-xpost-save-post', 'Success! ' . $action . ' (ID: '. $post_id . ', GUID: ' . $post->post->guid . ')', $this->post_log_data( $post ) );
+		apply_filters( 'go_slog', go_xpost()->slog_prefix . 'save-post', 'Success! ' . $action . ' (ID: '. $post_id . ', GUID: ' . $post->post->guid . ')', $this->post_log_data( $post ) );
 
 		return $post_id;
 	}//end save_post
@@ -830,7 +853,7 @@ class GO_XPost_Utilities
 			// die if the signature doesn't match
 			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 			{
-				$this->error_and_die( 'go-xpost-invalid-pull', 'Unauthorized activity', $_REQUEST, 401 );
+				$this->error_and_die( 'invalid-pull', 'Unauthorized activity', $_REQUEST, 401 );
 			}//end if
 		}//end if
 		else
@@ -844,7 +867,7 @@ class GO_XPost_Utilities
 		// if we don't have a post ID, don't continue
 		if ( ! isset( $ping_array['post_id'] ) || ! is_numeric( $ping_array['post_id'] ) )
 		{
-			$this->error_and_die( 'go-xpost-invalid-pull', 'Forbidden or missing parameters', $ping_array, 403 );
+			$this->error_and_die( 'invalid-pull', 'Forbidden or missing parameters', $ping_array, 403 );
 		}//end if
 
 		// Load the filter we got passed
@@ -867,7 +890,10 @@ class GO_XPost_Utilities
 		// Ending the connection while passing just the post content to prevent go_slog filter from causing issues
 		$this->end_http_connection( $post );
 
-		apply_filters( 'go_slog', 'go-xpost-send-post', $_SERVER['REMOTE_ADDR'] . ' ' . $ping_array['post_id'], $ping_array );
+		if ( go_xpost()->verbose_log() )
+		{
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'send-post', $_SERVER['REMOTE_ADDR'] . ' ' . $ping_array['post_id'], $ping_array );
+		}//end if
 
 		// all done, bye bye
 		die;
@@ -889,10 +915,10 @@ class GO_XPost_Utilities
 		// Check if author exists, allow it to be hooked if not
 		if ( ! isset( $author->data ) || ! is_object( $author->data ) || ! $post_author = get_user_by( 'email', $author->data->user_email ) )
 		{
-			if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+			if ( go_xpost()->verbose_log() )
 			{
-				apply_filters( 'go_slog', 'go-xpost-get-author', 'author_debug: getting author by go_xpost_unknown_author', $this->user_log_data( $author ) );
-			}
+				apply_filters( 'go_slog', go_xpost()->slog_prefix . 'get-author', 'author_debug: getting author by go_xpost_unknown_author', $this->user_log_data( $author ) );
+			}//end if
 
 			// @TODO: this needs to be fixed: in the case of this not being hooked, it will be $author->ID, however, false, 0, or -1 might be more accurate?
 			return apply_filters( 'go_xpost_unknown_author', 0, $author );
@@ -900,10 +926,10 @@ class GO_XPost_Utilities
 
 		// ID could be different so lets replace it with the local one
 		// @TODO: Pro currently has a lot of email address duplication in user accounts.  This may cause surprising effects here. (see Om and Ingram)
-		if ( isset( $config['slog_get_author'] ) && $config['slog_get_author'] )
+		if ( go_xpost()->verbose_log() )
 		{
-			apply_filters( 'go_slog', 'go-xpost-get-author', 'author_debug: matched local post author ' . $post_author->ID . ' by email', $this->user_log_data( $author ) );
-		}
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'get-author', 'author_debug: matched local post author ' . $post_author->ID . ' by email', $this->user_log_data( $author ) );
+		}//end if
 
 		return $post_author->ID;
 	}// end get_author
@@ -1026,7 +1052,7 @@ class GO_XPost_Utilities
 		// Does the comment's post exist?
 		if ( ! $post_id = $this->post_exists( $comment->post ) )
 		{
-			return $this->error( 'go-xpost-failed-save-comment', 'Comment post not found on destination blog', $comment );
+			return $this->error( 'failed-save-comment', 'Comment post not found on destination blog', $comment );
 		} // END if
 
 		$comment->comment->comment_post_ID = $post_id;
@@ -1037,7 +1063,7 @@ class GO_XPost_Utilities
 			$parent_id = $this->comment_exists( $comment->parent );
 			if ( ! $parent_id )
 			{
-				return $this->error( 'go-xpost-invalid-comment-parent', 'Comment parent ' . $comment->parent->comment_ID . ' not found on destination blog' );
+				return $this->error( 'invalid-comment-parent', 'Comment parent ' . $comment->parent->comment_ID . ' not found on destination blog' );
 			}
 
 			$comment->comment->comment_parent = $parent_id;
@@ -1093,7 +1119,7 @@ class GO_XPost_Utilities
 
 				if ( is_wp_error( $new_term ) )
 				{
-					apply_filters( 'go_slog', 'go-xpost-get_verified_term_ids', 'error creating ' . $taxonomy . ' term: ' . $term_name, $new_term );
+					apply_filters( 'go_slog', go_xpost()->slog_prefix . 'get_verified_term_ids', 'error creating ' . $taxonomy . ' term: ' . $term_name, $new_term );
 					continue;
 				}//END if
 
@@ -1127,7 +1153,7 @@ class GO_XPost_Utilities
 	 */
 	public function error( $code, $message, $data )
 	{
-		apply_filters( 'go_slog', $code, $message, $data );
+		apply_filters( 'go_slog', go_xpost()->slog_prefix . $code, $message, $data );
 		return new WP_Error( $code, $message, $data );
 	}//end error
 

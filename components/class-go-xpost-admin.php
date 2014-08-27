@@ -37,6 +37,7 @@ class GO_XPost_Admin
 
 		$settings = go_xpost()->get_settings();
 		$secret   = go_xpost()->get_secret();
+		$verbose_log = go_xpost()->verbose_log();
 		$method   = go_xpost()->get_request_method();
 		$method   = ! $method ? 'GET' : $method;
 
@@ -75,6 +76,7 @@ class GO_XPost_Admin
 
 		update_option( $this->slug . '-settings', $compiled_settings );
 		update_option( $this->slug . '-secret', $_POST[ $this->slug . '-secret' ] );
+		update_option( $this->slug . '-verbose-log', (bool) $_POST[ $this->slug . '-verbose-log' ] );
 		update_option( $this->slug . '-method', $_POST[ $this->slug . '-method' ] );
 
 		$_POST['updated'] = TRUE;

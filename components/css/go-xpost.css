@@ -18,6 +18,11 @@ a.go-xpost-add-endpoint.button {
 	margin-bottom: 0.5em;
 }
 
+.go-xpost-verbose-log span,
+.go-xpost-xpost-on-edit span {
+	vertical-align: middle;
+}
+
 .go-xpost-settings li .go-xpost-endpoint input {
 	width: 350px;
 }
