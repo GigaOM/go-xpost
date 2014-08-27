@@ -92,6 +92,11 @@
 			<em>check this to add verbose log output to the slog.</em>
 		</div>
 
+		<div class="<?php echo esc_attr( $this->slug ); ?>-xpost-on-edit">
+			<label for="<?php echo esc_attr( $this->slug ); ?>-verbose-log"><strong>xPost on edit?</strong></label>
+			<span><?php echo go_xpost()->config()->xpost_on_edit ? 'TRUE' : 'FALSE'; ?></span>
+		</div>
+
 		<p class="submit">
 			<?php wp_nonce_field( 'save-' . $this->slug . '-settings' ); ?>
 			<input type="hidden" name="<?php echo esc_attr( $this->slug ); ?>-setting-numbers" class="<?php echo esc_attr( $this->slug ); ?>-setting-numbers" value="<?php echo substr( $setting_numbers, 0, -1 ); ?>" />
