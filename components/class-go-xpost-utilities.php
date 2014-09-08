@@ -427,13 +427,21 @@ class GO_XPost_Utilities
 			$endpoint_url = urldecode( $ping_array['source'] );
 
 			// fetch and decode the post
-			$pull_return = wp_remote_request( $endpoint_url, array( 'method' => 'POST', 'body' => $query_array ) );
+			$pull_return = wp_remote_request(
+				$endpoint_url,
+				array(
+					'method' => 'POST',
+					// default is 5, but we were getting frequent timeouts
+					'timeout' => 10,
+					'body' => $query_array,
+				)
+			);
 		} // end else
 
 		// confirm we got a response
 		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
 		{
-			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'response-error', 'Original post could not be retrieved (source: ' . $_REQUEST['source'] . ')', $query_array );
+			apply_filters( 'go_slog', go_xpost()->slog_prefix . 'response-error', 'Original post could not be retrieved (source: ' . $_REQUEST['source'] . ')', array( 'query' => $query_array, 'return' => $pull_return ) );
 			die;
 		}// end if
 
