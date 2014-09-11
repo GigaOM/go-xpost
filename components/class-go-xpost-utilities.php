@@ -1112,6 +1112,11 @@ class GO_XPost_Utilities
 	 */
 	public function get_verified_term_ids( $taxonomy, $term_names )
 	{
+		if ( ! taxonomy_exists( $taxonomy ) )
+		{
+			return array();
+		} // END if
+
 		$term_ids = array();
 		foreach ( $term_names as $term_name )
 		{
@@ -1123,11 +1128,6 @@ class GO_XPost_Utilities
 			}
 			else
 			{
-				if ( ! taxonomy_exists( $taxonomy ) )
-				{
-					continue;
-				} // END if
-
 				$new_term = wp_insert_term( $term_name, $taxonomy );
 
 				if ( is_wp_error( $new_term ) )
