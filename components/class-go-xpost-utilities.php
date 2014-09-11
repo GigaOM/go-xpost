@@ -1123,6 +1123,11 @@ class GO_XPost_Utilities
 			}
 			else
 			{
+				if ( ! taxonomy_exists( $taxonomy ) )
+				{
+					continue;
+				} // END if
+
 				$new_term = wp_insert_term( $term_name, $taxonomy );
 
 				if ( is_wp_error( $new_term ) )
