@@ -158,7 +158,7 @@ class GO_XPost
 		{
 			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', $this->slog_prefix . 'no-filters', 'Processing failed because there are no filters!',
+				do_action( 'go_slog', $this->slog_prefix . 'no-filters', 'Processing failed because there are no filters!',
 					array(
 						'post_id' => $post_id,
 					)
@@ -173,7 +173,7 @@ class GO_XPost
 		{
 			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', $this->slog_prefix . 'is-xpost', 'Processing failed because this post is a xPost!',
+				do_action( 'go_slog', $this->slog_prefix . 'is-xpost', 'Processing failed because this post is a xPost!',
 					array(
 						'post_id' => $post_id,
 					)
@@ -191,7 +191,7 @@ class GO_XPost
 		{
 			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', $this->slog_prefix . 'filter-start', 'Started filtering xPost!',
+				do_action( 'go_slog', $this->slog_prefix . 'filter-start', 'Started filtering xPost!',
 					array(
 						'post_id' => $post_id,
 						'filter'  => $filter_name,
@@ -209,7 +209,7 @@ class GO_XPost
 			if ( $filter_host === $site_url_host || $filter_host === $home_url_host )
 			{
 				// log that we have a bad endpoint configured
-				apply_filters( 'go_slog', $this->slog_prefix . 'bad-endpoint', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': Bad endpoint!',
+				do_action( 'go_slog', $this->slog_prefix . 'bad-endpoint', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': Bad endpoint!',
 					array(
 						'post_id' => $post_id,
 					)
@@ -220,7 +220,7 @@ class GO_XPost
 			if ( $filter->should_send_post( $post_id ) )
 			{
 				// log that we are xposting
-				apply_filters( 'go_slog', $this->slog_prefix . 'start', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': START!',
+				do_action( 'go_slog', $this->slog_prefix . 'start', 'XPost from ' . site_url() . ' to ' . $filter->endpoint . ': START!',
 					array(
 						'post_id'   => $post_id,
 						'post_type' => get_post( $post_id )->post_type,
@@ -231,7 +231,7 @@ class GO_XPost
 			}// end if
 			elseif ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', $this->slog_prefix . 'filter-failed', 'Processing failed because should_send_post returned FALSE!',
+				do_action( 'go_slog', $this->slog_prefix . 'filter-failed', 'Processing failed because should_send_post returned FALSE!',
 					array(
 						'post_id'  => $post_id,
 						'filter'   => $filter_name,
@@ -242,7 +242,7 @@ class GO_XPost
 
 			if ( $this->verbose_log() )
 			{
-				apply_filters( 'go_slog', $this->slog_prefix . 'filter-stop', 'Finished filtering xPost!',
+				do_action( 'go_slog', $this->slog_prefix . 'filter-stop', 'Finished filtering xPost!',
 					array(
 						'post_id' => $post_id,
 						'filter'  => $filter_name,
