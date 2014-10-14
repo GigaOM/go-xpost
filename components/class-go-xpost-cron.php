@@ -73,7 +73,7 @@ class GO_XPost_Cron
 				'Started processing post (GUID: ' . $post->guid . ')',
 				array(
 					'post_id'       => $post->ID,
-					'post_title'    => $post->post_title,
+					'post_title'    => get_the_title( $post->ID ),
 					'post_status'   => $post->post_status,
 					'post_type'     => $post->post_type,
 					'post_date'     => $post->post_date,
@@ -84,7 +84,7 @@ class GO_XPost_Cron
 			go_xpost()->process_post( $post->ID );
 			wp_set_post_terms( $post->ID, go_xpost()->config()->cron_term, $this->slug, TRUE );
 
-			do_action( 'go_slog', go_xpost()->slog_prefix . 'process-end', 'Finished processing post (GUID: ' . $post->guid . ')', array( 'post_id' => $post->ID, 'post_title' => $post->post_title ) );
+			do_action( 'go_slog', go_xpost()->slog_prefix . 'process-end', 'Finished processing post (GUID: ' . $post->guid . ')', array( 'post_id' => $post->ID, 'post_title' => get_the_title( $post->ID ) ) );
 
 			sleep( 2 );
 		} // END foreach
