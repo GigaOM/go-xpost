@@ -12,23 +12,8 @@ class GO_XPost_Cron
 
 	public function __construct()
 	{
-		add_action( 'save_post', array( $this, 'save_post' ) );
-		add_action( 'wp_update_comment_count', array( $this, 'wp_update_comment_count' ) );
+
 	} // END __construct
-
-	/**
-	 * On post save/edit remove the cron xPost term
-	 */
-	public function save_post( $post_id )
-	{
-		// Don't bother with autosaves
-		if ( defined( 'DOING_AUTOSAVE' ) )
-		{
-			return;
-		}//end if
-
-		$this->remove_cron_term( $post_id );
-	} // END save_post
 
 	/**
 	 * Remove all terms the xPost taxonomy for a given post
