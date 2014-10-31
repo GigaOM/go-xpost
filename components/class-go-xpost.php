@@ -33,6 +33,7 @@ class GO_XPost
 		// number, else the xpost'ed comment count will always get overwritten by WP
 		add_action( 'wp_update_comment_count', array( go_xpost_util(), 'update_comment_count' ), 10, 3 );
 		add_action( 'go_xpost_process_cron', array( $this, 'process_cron' ) );
+		add_action( 'save_post', array( $this, 'save_post' ) );
 
 		// If wp-cli is active load the xpost additions
 		if ( defined( 'WP_CLI' ) && WP_CLI )
@@ -385,6 +386,14 @@ class GO_XPost
 	{
 		$this->cron()->process_cron();
 	} // END process_cron
+
+	/**
+	 * On post save/edit remove the cron xPost term
+	 */
+	public function save_post( $post_id )
+	{
+		$this->cron()->remove_cron_term( $post_id );
+	} // END save_post
 }//end class
 
 function go_xpost()
