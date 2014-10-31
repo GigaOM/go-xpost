@@ -392,6 +392,12 @@ class GO_XPost
 	 */
 	public function save_post( $post_id )
 	{
+		// Don't bother with autosaves
+		if ( defined( 'DOING_AUTOSAVE' ) )
+		{
+			return;
+		} // END if
+
 		$this->cron()->remove_cron_term( $post_id );
 	} // END save_post
 }//end class
