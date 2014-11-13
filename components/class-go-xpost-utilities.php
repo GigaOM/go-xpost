@@ -182,6 +182,10 @@ class GO_XPost_Utilities
 			{
 				$r->$mkey = $attachment;
 			}//end if
+			elseif ( go_xpost()->verbose_log() )
+			{
+				$this->error( 'failed-to-get-attachment', 'Failed to get the requested attachment (ATTACHMENT: ' . $mval . ' POST GUID: ' . $r->post->guid . ')', $r->post );
+			} // END else
 		}//end foreach
 
 		//Should fix the 'Creating default object from empty value' error
@@ -774,10 +778,36 @@ class GO_XPost_Utilities
 					if ( $post->$meta_key && $this->post_exists( $post->$meta_key->post ) )
 					{
 						$new_img_id = $this->post_exists( $post->$meta_key->post );
+
+						if ( go_xpost()->verbose_log() )
+						{
+							do_action(
+								'go_slog',
+								go_xpost()->slog_prefix . '-attachment-found',
+								'Attachment found for post (GUID: ' . $post->post->guid . ')',
+								array(
+									'attachment_id' => $new_img_id,
+									'post_id' => $post_id,
+								)
+							);
+						} // END if
 					}//end if
 					else
 					{
 						$new_img_id = $this->save_attachment( $post->$meta_key );
+
+						if ( go_xpost()->verbose_log() )
+						{
+							do_action(
+								'go_slog',
+								go_xpost()->slog_prefix . '-attachment-found',
+								'Saved attachment for post (GUID: ' . $post->post->guid . ')',
+								array(
+									'attachment_id' => $new_img_id,
+									'post_id' => $post_id,
+								)
+							);
+						} // END if
 					}//end else
 
 					if ( isset( $new_img_id ) )
