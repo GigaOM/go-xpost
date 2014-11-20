@@ -182,10 +182,6 @@ class GO_XPost_Utilities
 			{
 				$r->$mkey = $attachment;
 			}//end if
-			elseif ( go_xpost()->verbose_log() )
-			{
-				$this->error( 'failed-to-get-attachment', 'Failed to get the requested attachment (ATTACHMENT: ' . $mval . ' POST GUID: ' . $r->post->guid . ')', $r->post );
-			} // END else
 		}//end foreach
 
 		//Should fix the 'Creating default object from empty value' error
@@ -800,7 +796,7 @@ class GO_XPost_Utilities
 						{
 							do_action(
 								'go_slog',
-								go_xpost()->slog_prefix . '-attachment-found',
+								go_xpost()->slog_prefix . '-attachment-saved',
 								'Saved attachment for post (GUID: ' . $post->post->guid . ')',
 								array(
 									'attachment_id' => $new_img_id,
