@@ -240,14 +240,14 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			// get the post content type
 			// frustratingly, we have to look in multiple places for this
 			if (
-				'video' == go_waterfall_options()->get_type( $post_id )
+				go_waterfall_options()->is_type( $post_id, 'video' )
 				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'video', $xpost->terms['go_syn_media'] ) )
 			)
 			{
 				$xpost->terms['go-type'][] = 'Video';
 			} // end if
 			elseif (
-				'audio' == go_waterfall_options()->get_type( $post_id )
+				go_waterfall_options()->is_type( $post_id, 'audio' )
 				|| ( isset( $xpost->terms['go_syn_media'] ) && in_array( 'podcast', $xpost->terms['go_syn_media'] ) )
 			)
 			{
