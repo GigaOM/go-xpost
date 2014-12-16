@@ -391,6 +391,9 @@ class GO_XPost_Utilities
 		$signature  = $ping_array['signature'];
 		unset( $ping_array['signature'] );
 
+		// we need to compare an encoded hash
+		$signature = $this->remove_bad_characters_in_encoded_hash( rawurlencode( $signature ) );
+
 		// die if user is not Admin and the signature doesn't match
 		if ( ! current_user_can( 'manage_options' ) && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 		{
@@ -438,6 +441,16 @@ class GO_XPost_Utilities
 			);
 		} // end else
 
+		$this->handle_pull_request( $pull_return, $query_array );
+
+		die;
+	}//end receive_ping
+
+	/**
+	 * parses and stores a pull request
+	 */
+	public function handle_pull_request( $pull_return, $query_array )
+	{
 		// confirm we got a response
 		if ( is_wp_error( $pull_return ) || ! ( $body = wp_remote_retrieve_body( $pull_return ) ) )
 		{
@@ -471,8 +484,9 @@ class GO_XPost_Utilities
 
 		// save
 		$post_id = $this->save_post( $post );
-		die;
-	}//end receive_ping
+
+		return $post_id;
+	}//end handle_pull_request
 
 	/**
 	 * Build a GET URL from an endpoint and query_array
@@ -884,6 +898,9 @@ class GO_XPost_Utilities
 			$signature  = $ping_array['signature'];
 			unset( $ping_array['signature'] );
 
+			// we need to compare an encoded hash
+			$signature = $this->remove_bad_characters_in_encoded_hash( rawurlencode( $signature ) );
+
 			// die if the signature doesn't match
 			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
 			{
@@ -993,10 +1010,21 @@ class GO_XPost_Utilities
 		$signature = base64_encode( hash_hmac( 'sha256', $string_to_sign, $secret ) );
 
 		//make sure the signature is url_encoded properly
-		$signature = str_replace( '%7E', '~', rawurlencode( $signature ) );
+		$signature = rawurlencode( $signature );
+		$signature = $this->remove_bad_characters_in_encoded_hash( $signature );
 
 		return $signature;
 	}// end build_identity_hash
+
+	/**
+	 * twiddle encoded identity hash so it doesn't have %7E in it
+	 */
+	public function remove_bad_characters_in_encoded_hash( $hash )
+	{
+		$hash = str_replace( '%7E', '~', $hash );
+
+		return $hash;
+	}//end remove_bad_characters_in_encoded_hash
 
 	/**
 	 * get a comment object and associated data: post, comment meta and
