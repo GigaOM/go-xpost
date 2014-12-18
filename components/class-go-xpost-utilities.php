@@ -392,7 +392,7 @@ class GO_XPost_Utilities
 		unset( $ping_array['signature'] );
 
 		// we need to compare an encoded hash
-		$signature = $this->remove_bad_characters_in_encoded_hash( rawurlencode( $signature ) );
+		$signature = $this->remove_bad_characters_in_encoded_hash( get_magic_quotes_gpc() ? rawurlencode( $signature ) : $signature );
 
 		// die if user is not Admin and the signature doesn't match
 		if ( ! current_user_can( 'manage_options' ) && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
@@ -899,7 +899,7 @@ class GO_XPost_Utilities
 			unset( $ping_array['signature'] );
 
 			// we need to compare an encoded hash
-			$signature = $this->remove_bad_characters_in_encoded_hash( rawurlencode( $signature ) );
+			$signature = $this->remove_bad_characters_in_encoded_hash( get_magic_quotes_gpc() ? rawurlencode( $signature ) : $signature );
 
 			// die if the signature doesn't match
 			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
