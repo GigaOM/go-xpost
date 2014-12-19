@@ -392,7 +392,7 @@ class GO_XPost_Utilities
 		unset( $ping_array['signature'] );
 
 		// we need to compare an encoded hash
-		$signature = $this->remove_bad_characters_in_encoded_hash( get_magic_quotes_gpc() ? rawurlencode( $signature ) : $signature );
+		$signature = $this->maybe_rawurlencode( $signature );
 
 		// die if user is not Admin and the signature doesn't match
 		if ( ! current_user_can( 'manage_options' ) && $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
@@ -899,7 +899,7 @@ class GO_XPost_Utilities
 			unset( $ping_array['signature'] );
 
 			// we need to compare an encoded hash
-			$signature = $this->remove_bad_characters_in_encoded_hash( get_magic_quotes_gpc() ? rawurlencode( $signature ) : $signature );
+			$signature = $this->maybe_rawurlencode( $signature );
 
 			// die if the signature doesn't match
 			if ( $signature != $this->build_identity_hash( $ping_array, go_xpost()->secret ) )
@@ -1010,21 +1010,19 @@ class GO_XPost_Utilities
 		$signature = base64_encode( hash_hmac( 'sha256', $string_to_sign, $secret ) );
 
 		//make sure the signature is url_encoded properly
-		$signature = rawurlencode( $signature );
-		$signature = $this->remove_bad_characters_in_encoded_hash( $signature );
-
-		return $signature;
+		return rawurlencode( $signature );
 	}// end build_identity_hash
 
 	/**
-	 * twiddle encoded identity hash so it doesn't have %7E in it
+	 * rawurlencode $str if it's not already url-encoded. we assume
+	 * $hash contains only valid base64 characters.
+	 *
+	 * @param string $hash a base64-encoded string
 	 */
-	public function remove_bad_characters_in_encoded_hash( $hash )
+	public function maybe_rawurlencode( $hash )
 	{
-		$hash = str_replace( '%7E', '~', $hash );
-
-		return $hash;
-	}//end remove_bad_characters_in_encoded_hash
+		return ( FALSE === strpos( $hash, '%' ) ? rawurlencode( $hash ) : $hash );
+	}//END maybe_rawurlencode
 
 	/**
 	 * get a comment object and associated data: post, comment meta and
