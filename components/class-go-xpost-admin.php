@@ -17,8 +17,10 @@ class GO_XPost_Admin
 
 	public function admin_init()
 	{
+		$js_min = ( defined( 'GO_DEV' ) && GO_DEV ) ? 'lib' : 'min';
+
 		wp_enqueue_style( $this->slug . '-css', plugins_url( '/css/go-xpost.css', __FILE__ ) );
-		wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/go-xpost.js', __FILE__ ), array( 'jquery' ) );
+		wp_enqueue_script( $this->slug . '-js', plugins_url( '/js/' . $js_min . '/go-xpost.js', __FILE__ ), array( 'jquery' ) );
 
 		$this->update_settings();
 	} // end admin_init
