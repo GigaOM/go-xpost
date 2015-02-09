@@ -559,9 +559,11 @@ class GO_XPost_Utilities
 		{
 			$attachment_id = wpcom_vip_download_image( $post->file->url, $parent_id, $post->post_title );
 
+			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-vip-download', 'wpcom_vip_download_image attempted to sideload the image.', $attachment_id );
+
 			if ( ! is_wp_error( $attachment_id ) && go_xpost()->verbose_log() )
 			{
-				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-vip-download-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-vip-download-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url, 'error' => $attachment_id->get_error_message() ) );
 			} // END if
 		} // END if
 		else
@@ -575,9 +577,11 @@ class GO_XPost_Utilities
 			// Remove the action method now that we've captured the attachment_id
 			remove_action( 'add_attachment', array( $this, 'add_attachment' ) );
 
+			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-media-sideload', 'media_sideload_image attempted to sideload the image.', $attachment );
+
 			if ( ! is_wp_error( $attachment ) && go_xpost()->verbose_log() )
 			{
-				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-media-sideload-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-media-sideload-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url, 'error' => $attachment->get_error_message() ) );
 			} // END if
 
 			$attachment_id = $this->attachment_id;
