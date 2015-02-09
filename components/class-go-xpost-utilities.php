@@ -12,6 +12,9 @@ class GO_XPost_Utilities
 	// comment post cache: key = post ID, val = post object
 	public $comment_posts = array();
 
+	// when using media_sideload_image we need to capture the attachment_id via a filter
+	public $attachment_id = NULL;
+
 	/**
 	 * Ends the HTTP connection cleanly
 	 */
@@ -545,106 +548,47 @@ class GO_XPost_Utilities
 	 *
 	 * @return $post_id
 	 */
-	public function save_attachment( $post )
+	public function save_attachment( $post, $parent_id )
 	{
-		// a lot of the code below comes from
-		// http://plugins.svn.wordpress.org/bsuite-drop-folder/trunk/bsuite-drop-folder.php
-		// and
-		// http://core.svn.wordpress.org/tags/2.9.2/wp-admin/import/wordpress.php
-
 		if ( go_xpost()->verbose_log() )
 		{
 			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment', 'Started attachment saving', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
 		}//end if
 
-		// create a location for this file
-		$file = wp_upload_bits( basename( $post->file->url ), null, '', $post->post->post_date );
-
-		// check and enforce limits on file types
-		if ( $file['error'] )
+		if ( function_exists( 'wpcom_vip_download_image' ) )
 		{
-			return $this->error(
-				'attachment-badfiletype',
-				'File upload error for GUID: ' . $post->post->guid . ' (' . $file['error'] . ')',
-				array(
-					'origin_post_id' => $post->origin->ID,
-					'url' => $post->file->url,
-					'error' => $file['error'],
-				)
-			);
-		}//end if
+			$attachment_id = wpcom_vip_download_image( $post->file->url, $parent_id, $post->post_title );
 
-		$file_path = $file['file'];
-
-		// fetch the remote url and write it to the placeholder file
-		$headers = wp_get_http( $post->file->url, $file['file'] );
-
-		//Request failed
-		if ( ! $headers )
-		{
-			@unlink( $file['file'] );
-			return $this->error( 'attachment-unreachable', 'Remote server did not respond for ' . $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
-		}//end if
-
-		// make sure the fetch was successful
-		if ( $headers['response'] != '200' )
-		{
-			@unlink( $file['file'] );
-			return $this->error( 'attachment-unreachable', sprintf( 'Remote file returned error response %1$d %2$s for %3$s', $headers['response'], get_status_header_desc( $headers['response'] ), $post->file->url ), array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
-		}//end if
-		elseif ( isset( $headers['content-length'] ) && filesize( $file['file'] ) != $headers['content-length'] )
-		{
-			@unlink( $file['file'] );
-			return $this->error( 'attachment-badsize', 'Remote file is incorrect size '. $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
-		}//end elseif
-
-		// do actions for replication
-		$file = apply_filters( 'wp_handle_upload', array(
-			'file' => $file['file'],
-			'url' => $file['url'],
-			'type' => $headers['content-type'],
-		), 'go-xpost' );
-
-		do_action( 'wp_create_file_in_uploads', $file['file'] );
-
-		/* @TODO: None of this code does anything remotely useful, but it should, so I'm leaving it for future generations
-		// this is messed up, the parent object is *never* added to an attachment
-		// look up parent post, fail if it doesn't exist
-		if ( isset( $post->parent ) )
-		{
-			// Correct the parent ID in the post object
-			$post->post->post_parent = $this->post_exists( $post->parent );
-			if ( ! $post->post->post_parent )
+			if ( ! is_wp_error( $attachment_id ) && go_xpost()->verbose_log() )
 			{
-				@unlink( $file );
-				return $this->error( 'attachment-noparent', 'Failed to find post parent (GUID: '. $post->parent->guid .') for GUID: '. $post->post->guid, $this->post_log_data( $post ) );
-			}//end if
-		}// end if
-		*/
-		// this is also screwy.  The author object is *never* added to an attachment
-		if ( isset( $post->author ) )
-		{
-			$post->post->post_author = $this->get_author( $post->author );
-		}
-
-		// check if the post exists
-		if ( ! ( $post_id = $this->post_exists( $post->post ) ) )
-		{
-			$post_id = wp_insert_attachment( (array) $post->post, $file['file'] );
-			$action  = 'Inserted';
-		}//end if
+				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-vip-download-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+			} // END if
+		} // END if
 		else
 		{
-			$post->post->ID = $post_id;
-			$post_id = wp_insert_attachment( (array) $post->post, $file['file'] );
-			$action = 'Updated';
-		}//end else
+			// Add an action method to capture the new attachment_id value
+			add_action( 'add_attachment', array( $this, 'add_attachment' ) );
 
-		if ( is_wp_error( $post_id ) )
+			// load the attachment from the URL
+			$attachment = media_sideload_image( $post->file->url, $parent_id, $post->post_title );
+
+			// Remove the action method now that we've captured the attachment_id
+			remove_action( 'add_attachment', array( $this, 'add_attachment' ) );
+
+			if ( ! is_wp_error( $attachment ) && go_xpost()->verbose_log() )
+			{
+				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-media-sideload-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
+			} // END if
+
+			$attachment_id = $this->attachment_id;
+		} // END else
+
+		if ( is_wp_error( $attachment_id ) || ! $attachment_id )
 		{
-			@unlink( $file['file'] );
-			return $this->error( 'failed-save', 'Failed to save attachment (GUID: ' . $post->post->guid . ')', $post_id );
-		}//end if
+			return $this->error( 'saving-attachment-failed', 'Attachment could not be saved ' . $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
+		} // END if
+
+		$post_id = $attachment_id;
 
 		// set the post meta as received for the post
 		foreach ( (array) $post->meta as $meta_key => $meta_values )
@@ -665,12 +609,6 @@ class GO_XPost_Utilities
 					}//end if
 			}//end switch
 		}//end foreach
-
-		// not entirely sure if I should delete postmeta
-		delete_post_meta( $post_id, '_wp_attachment_metadata' );
-
-		// generate and insert new postmeta for attachment
-		wp_update_attachment_metadata( $post_id, wp_generate_attachment_metadata( $post_id, $file_path ) );
 
 		// set any terms on the attachment
 		if ( isset( $post->terms ) )
@@ -693,6 +631,18 @@ class GO_XPost_Utilities
 
 		return $post_id;
 	}//end save_attachment
+
+	/**
+	 * Hook to add_attachment action and capture the attachment_id value when using media_sideload_image
+	 *
+	 * @param $post wp_postobject
+	 *
+	 * @return $post_id
+	 */
+	public function add_attachment( $attachment_id )
+	{
+		$this->attachment_id = $attachment_id;
+	} // END add_attachment
 
 	/**
 	 * Save post
@@ -804,7 +754,7 @@ class GO_XPost_Utilities
 					}//end if
 					else
 					{
-						$new_img_id = $this->save_attachment( $post->$meta_key );
+						$new_img_id = $this->save_attachment( $post->$meta_key, $post_id );
 
 						if ( go_xpost()->verbose_log() )
 						{
