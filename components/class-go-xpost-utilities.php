@@ -585,7 +585,7 @@ class GO_XPost_Utilities
 
 		if ( is_wp_error( $attachment_id ) || ! $attachment_id )
 		{
-			return $this->error( 'saving-attachment-failed', 'Attachment could not be saved ' . $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
+			return $this->error( 'save-attachment-failed', 'Attachment could not be saved ' . $post->file->url, array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid ) );
 		} // END if
 
 		$post_id = $attachment_id;
@@ -642,6 +642,11 @@ class GO_XPost_Utilities
 	public function add_attachment( $attachment_id )
 	{
 		$this->attachment_id = $attachment_id;
+		
+		if ( go_xpost()->verbose_log() )
+		{
+			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-attachment-id', 'Attachment ID', array( 'attachment_id' => $attachment_id ) );
+		} // END if
 	} // END add_attachment
 
 	/**
