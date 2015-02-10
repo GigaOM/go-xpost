@@ -549,7 +549,7 @@ class GO_XPost_Utilities
 	 *
 	 * @return $post_id
 	 */
-	public function save_attachment( $post, $parent_id = FALSE )
+	public function save_attachment( $post, $parent_id )
 	{
 		global $wpdb;
 
