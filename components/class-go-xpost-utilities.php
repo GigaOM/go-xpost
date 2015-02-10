@@ -545,11 +545,14 @@ class GO_XPost_Utilities
 	 * Save post attachment
 	 *
 	 * @param $post wp_postobject $post to save attachment
+	 * @return $parent_id WP post_id of the local version of the parent post
 	 *
 	 * @return $post_id
 	 */
-	public function save_attachment( $post, $parent_id )
+	public function save_attachment( $post, $parent_id = FALSE )
 	{
+		global $wpdb;
+
 		if ( go_xpost()->verbose_log() )
 		{
 			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment', 'Started attachment saving', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url ) );
@@ -559,9 +562,7 @@ class GO_XPost_Utilities
 		{
 			$attachment_id = wpcom_vip_download_image( $post->file->url, $parent_id, $post->post_title );
 
-			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-vip-download', 'wpcom_vip_download_image attempted to sideload the image.', $attachment_id );
-
-			if ( ! is_wp_error( $attachment_id ) && go_xpost()->verbose_log() )
+			if ( is_wp_error( $attachment_id ) && go_xpost()->verbose_log() )
 			{
 				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-vip-download-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url, 'error' => $attachment_id->get_error_message() ) );
 			} // END if
@@ -577,9 +578,7 @@ class GO_XPost_Utilities
 			// Remove the action method now that we've captured the attachment_id
 			remove_action( 'add_attachment', array( $this, 'add_attachment' ) );
 
-			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-media-sideload', 'media_sideload_image attempted to sideload the image.', $attachment );
-
-			if ( ! is_wp_error( $attachment ) && go_xpost()->verbose_log() )
+			if ( is_wp_error( $attachment ) && go_xpost()->verbose_log() )
 			{
 				do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-media-sideload-failed', 'wpcom_vip_download_image failed to sideload the image.', array( 'origin_post_id' => $post->origin->ID, 'guid' => $post->post->guid, 'url' => $post->file->url, 'error' => $attachment->get_error_message() ) );
 			} // END if
@@ -593,6 +592,10 @@ class GO_XPost_Utilities
 		} // END if
 
 		$post_id = $attachment_id;
+
+		// Set the post values
+		$post->post->ID = $post_id;
+		wp_update_post( (array) $post->post );
 
 		// set the post meta as received for the post
 		foreach ( (array) $post->meta as $meta_key => $meta_values )
@@ -627,6 +630,10 @@ class GO_XPost_Utilities
 				}//END foreach
 		}//END if
 
+		// Force update the guid value to match the source, we have to do this here, later in the mix, or it gets put back
+		// This was discussed with WP VIP and they agreed that in this specific situation it does make sense to do this
+		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET guid = %s WHERE ID = %d", $guid, $post_id ) );
+
 		if ( go_xpost()->verbose_log() )
 		{
 			// success log
@@ -639,18 +646,11 @@ class GO_XPost_Utilities
 	/**
 	 * Hook to add_attachment action and capture the attachment_id value when using media_sideload_image
 	 *
-	 * @param $post wp_postobject
-	 *
-	 * @return $post_id
+	 * @param $attachment_id WP post_id of the recently added attachment
 	 */
 	public function add_attachment( $attachment_id )
 	{
 		$this->attachment_id = $attachment_id;
-		
-		if ( go_xpost()->verbose_log() )
-		{
-			do_action( 'go_slog', go_xpost()->slog_prefix . 'save-attachment-attachment-id', 'Attachment ID', array( 'attachment_id' => $attachment_id ) );
-		} // END if
 	} // END add_attachment
 
 	/**
@@ -744,10 +744,8 @@ class GO_XPost_Utilities
 				case '_edit_last': // edit last and lock are unimportant in the destination
 					continue;
 				case strpos( $meta_key, '_thumbnail_id' ) !== FALSE: // Thumbnail Image
-					if ( $post->$meta_key && $this->post_exists( $post->$meta_key->post ) )
+					if ( $post->$meta_key && ( $new_img_id = $this->post_exists( $post->$meta_key->post ) ) )
 					{
-						$new_img_id = $this->post_exists( $post->$meta_key->post );
-
 						if ( go_xpost()->verbose_log() )
 						{
 							do_action(
