@@ -632,7 +632,7 @@ class GO_XPost_Utilities
 
 		// Force update the guid value to match the source, we have to do this here, later in the mix, or it gets put back
 		// This was discussed with WP VIP and they agreed that in this specific situation it does make sense to do this
-		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET guid = %s WHERE ID = %d", $guid, $post_id ) );
+		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET guid = %s WHERE ID = %d", $post->post->guid, $post_id ) );
 
 		if ( go_xpost()->verbose_log() )
 		{
