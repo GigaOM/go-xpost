@@ -255,7 +255,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 			} // end elseif
 			else
 			{
-				$xpost->terms['go-type'][] = 'Blog Post';
+				$xpost->terms['go-type'][] = 'News Post';
 			} // end else
 
 			// multi-page posts with 3 OR MORE pages on GO/pC are also reports
@@ -387,7 +387,7 @@ class GO_XPost_Filter_Search extends GO_XPost_Filter
 		// Default go-type value in case it doesn't get set by something above? Maybe?
 		if ( ! count( $xpost->terms['go-type'] ) )
 		{
-			$xpost->terms['go-type'][] = 'Blog Post';
+			$xpost->terms['go-type'][] = 'News Post';
 		} // end if
 
 		// search does not need the thumbnails
